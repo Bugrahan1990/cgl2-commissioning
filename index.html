@@ -215,6 +215,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     <div class="ab-btns">
       <button class="xbtn get" id="btnGet" onclick="getLatest()" disabled>&#8595; Get Latest</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
+      <button class="xbtn" style="background:var(--Rbg);color:var(--R);border:1px solid var(--Rbdr);font-size:10px" onclick="clearAndRefresh()">Clear Local</button>
     </div>
   </div>
 
@@ -662,6 +663,21 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')nav(1);
   if(e.key==='ArrowLeft')nav(-1);
 });
+
+async function clearAndRefresh(){
+  if(!confirm('Clear all local data on this device?\nOnly do this if you have no unsent work.')) return;
+  try{
+    const tx=DB.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).clear();
+    await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});
+    Object.keys(DS).forEach(k=>delete DS[k]);
+    ST.area=null;ST.equip=null;ST.sub=null;ST.devs=[];ST.idx=null;
+    updProg();updPendLbl();renderNav();
+    document.getElementById('ph').innerHTML='<div class="pht">CGL2 Commissioning Tracker</div><div class="phs">Local data cleared — tap Get Latest to reload</div>';
+    document.getElementById('gw').innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Ready</div><div class="empty-sub">Tap Get Latest to load current data from server.</div></div>';
+    showT('Cleared — now tap Get Latest','info');
+  }catch(e){showT('Error: '+e.message,'err');}
+}
 
 initApp();
 </script>
