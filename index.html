@@ -220,6 +220,22 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .dtype-bar{height:100%;background:var(--G);border-radius:99px}
 .dtype-count{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0}
 .dash-updated{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;text-align:right;margin-top:12px;padding-bottom:8px}
+.dash-section{margin-bottom:8px}
+.dash-section-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);user-select:none}
+.dash-section-hdr:hover{background:var(--sur2)}
+.dash-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3)}
+.dash-section-meta{display:flex;align-items:center;gap:8px}
+.dash-section-pct{font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--navy)}
+.dash-section-arr{font-size:10px;color:var(--tx3);transition:transform .2s;display:inline-block}
+.dash-section.collapsed .dash-section-arr{transform:rotate(-90deg)}
+.dash-section-body{overflow:hidden;transition:max-height .25s ease}
+.dash-section.collapsed .dash-section-body{max-height:0!important}
+.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.gauge-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.gauge-svg{display:block}
+.gauge-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:center}
+.gauge-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
+.gauge-sub{font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace}
 @media(max-width:460px){.nav{width:170px}}
 </style>
 </head>
@@ -729,41 +745,118 @@ function renderDash(){
   const total=allDevs.length;
   const commissioned=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
   const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
+  const notStarted=total-commissioned-inProgress;
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
-  let out='<div class="kpi-row">';
-  out+=kpiCard('done',commissioned,'Commissioned',total?(commissioned/total*100).toFixed(1)+'% of '+total:'...');
-  out+=kpiCard('wip',inProgress,'In Progress','');
-  out+=kpiCard('pending',total-commissioned-inProgress,'Not Started','');
-  out+=kpiCard('unsent',unsent,'Unsent','pending export');
+  const pct=total?Math.round(commissioned/total*100):0;
+  const wipPct=total?Math.round(inProgress/total*100):0;
+
+  let out='<div class="gauge-row">';
+  out+=gaugeCard(pct,'Commissioned',commissioned+' of '+total,'#1a7a3c');
+  out+=gaugeCard(wipPct,'In Progress',inProgress+' devices','#8a5c00');
+  out+=gaugeCard(total?Math.round(notStarted/total*100):0,'Not Started',notStarted+' devices','#9aa0b4');
+  out+=gaugeCard(unsent>0&&total?Math.min(100,Math.round(unsent/total*100)):0,'Unsent',unsent+' pending','#7a5c00');
   out+='</div>';
-  if(!total){out+='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';document.getElementById('dashPanel').innerHTML=out;return;}
-  out+='<div class="section-title">Progress by Area</div><div class="prog-list">';
-  Object.entries(H).forEach(([area,equips])=>{
-    const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
-    const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
-    out+=progBarHTML(area,done,wip,tot);
+
+  if(!total){
+    out+='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
+    document.getElementById('dashPanel').innerHTML=out;
+    return;
+  }
+
+  // ── Collapsible: By Area ─────────────────────────────────────────────
+  out+=collapsibleSection('by-area','Progress by Area',pct+'% overall',()=>{
+    let s='<div class="prog-list" style="padding:8px 0">';
+    Object.entries(H).forEach(([area,equips])=>{
+      const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
+      const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
+      s+=progBarHTML(area,done,wip,tot);
+    });
+    return s+'</div>';
   });
-  out+='</div><div class="section-title">Progress by Equipment</div><div class="prog-list">';
+
+  // ── Collapsible: By Equipment ────────────────────────────────────────
   const eMap={};
   Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
     const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
     eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
   }));
-  Object.entries(eMap).forEach(([eq,v])=>out+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
-  out+='</div><div class="section-title">By Device Type</div><div class="dtype-list">';
+  const eTotal=Object.values(eMap).reduce((a,v)=>a+v.tot,0);
+  const eDone=Object.values(eMap).reduce((a,v)=>a+v.done,0);
+  out+=collapsibleSection('by-equip','Progress by Equipment',eTotal?Math.round(eDone/eTotal*100)+'%':'',()=>{
+    let s='<div class="prog-list" style="padding:8px 0">';
+    Object.entries(eMap).forEach(([eq,v])=>s+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
+    return s+'</div>';
+  });
+
+  // ── Collapsible: By Device Type ──────────────────────────────────────
   const tMap={};
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
     if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
     if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
   })));
   const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
-  Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
-    const p=v.tot?Math.round(v.done/v.tot*100):0;
-    out+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
+  out+=collapsibleSection('by-type','By Device Type','',()=>{
+    let s='<div class="dtype-list" style="padding:8px 0">';
+    Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
+      const p=v.tot?Math.round(v.done/v.tot*100):0;
+      s+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
+    });
+    return s+'</div>';
   });
-  out+=`</div><div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
+
+  out+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
   document.getElementById('dashPanel').innerHTML=out;
+
+  // Restore collapsed state from sessionStorage
+  document.querySelectorAll('.dash-section').forEach(sec=>{
+    const key='dash-collapsed-'+sec.dataset.id;
+    if(sessionStorage.getItem(key)==='1') sec.classList.add('collapsed');
+    const body=sec.querySelector('.dash-section-body');
+    if(body) body.style.maxHeight=sec.classList.contains('collapsed')?'0':body.scrollHeight+'px';
+  });
 }
+
+function collapsibleSection(id,title,meta,contentFn){
+  const content=contentFn();
+  return `<div class="dash-section" data-id="${id}">
+    <div class="dash-section-hdr" onclick="toggleSection('${id}')">
+      <span class="dash-section-title">${title}</span>
+      <span class="dash-section-meta">
+        ${meta?`<span class="dash-section-pct">${meta}</span>`:''}
+        <span class="dash-section-arr">&#9660;</span>
+      </span>
+    </div>
+    <div class="dash-section-body" style="max-height:2000px">${content}</div>
+  </div>`;
+}
+
+function toggleSection(id){
+  const sec=document.querySelector('.dash-section[data-id="'+id+'"]');
+  if(!sec)return;
+  const body=sec.querySelector('.dash-section-body');
+  const collapsed=sec.classList.toggle('collapsed');
+  body.style.maxHeight=collapsed?'0':body.scrollHeight+'px';
+  sessionStorage.setItem('dash-collapsed-'+id,collapsed?'1':'0');
+}
+
+function gaugeCard(pct,lbl,sub,color){
+  const r=44,cx=60,cy=60,stroke=10;
+  const circ=Math.PI*r;
+  const filled=circ*(pct/100);
+  const bg=color+'33';
+  return `<div class="gauge-wrap">
+    <svg class="gauge-svg" width="120" height="70" viewBox="0 0 120 80" role="img" aria-label="${lbl}: ${pct}%">
+      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${bg}" stroke-width="${stroke}" stroke-linecap="round"/>
+      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+        stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}" style="transition:stroke-dashoffset .6s ease"/>
+      <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="16" font-weight="700" font-family="DM Mono,monospace" fill="${color}">${pct}%</text>
+    </svg>
+    <div class="gauge-lbl">${lbl}</div>
+    <div class="gauge-sub">${sub}</div>
+  </div>`;
+}
+
+
 function kpiCard(cls,val,lbl,sub){return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;}
 function progBarHTML(name,done,wip,tot){
   const pct=tot?Math.round(done/tot*100):0,dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
