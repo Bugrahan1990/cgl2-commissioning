@@ -450,7 +450,7 @@ async function initApp(){
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
 async function checkOnline(){
   try{
-    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(5000)});
+    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),5000);return c.signal;})()});
     if(!r.ok) throw new Error();
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
@@ -469,7 +469,7 @@ async function smartSync(){
   const btn=document.getElementById('btnSync');
   btn.disabled=true;btn.textContent='Syncing\u2026';
   try{
-    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(15000)});
+    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),15000);return c.signal;})()});
     if(!r.ok) throw new Error('Cannot reach server');
     const data=await r.json();
     const records=data.records||[];
