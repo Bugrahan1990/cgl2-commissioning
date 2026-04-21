@@ -260,6 +260,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     <div class="ab-btns">
       <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
+      <button class="xbtn" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)" id="btnSearch" onclick="toggleSearch()" title="Search devices">&#9906;</button>
     </div>
   </div>
 
@@ -278,6 +279,9 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     </div>
     <div class="panel">
       <div class="ph" id="ph">
+        <div id="phSearch" style="display:none;padding:6px 0 0">
+          <input id="devSearch" class="ns" placeholder="Search tag or description..." oninput="filterGrid()" style="width:100%;font-size:12px" autocomplete="off">
+        </div>
         <div class="pht">CGL2 Commissioning Tracker</div>
         <div class="phs">Select Area &rsaquo; Equipment &rsaquo; Sub-Equipment</div>
       </div>
@@ -711,6 +715,7 @@ async function saveClose(){
     Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
     Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
     Scope_S:dev.scopeS,Scope_D:dev.scopeD,exported:false,
+    savedAt:new Date().toISOString(),
   });
   await dbPut(DS[dev.tag]);
   showT('Saved','info');
@@ -862,6 +867,45 @@ function progBarHTML(name,done,wip,tot){
   const pct=tot?Math.round(done/tot*100):0,dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
   return `<div class="prog-item"><div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div><div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div><div class="prog-track"><div class="prog-fill-g" style="width:${dW}%"></div><div class="prog-fill-a" style="width:${aW}%"></div><div class="prog-fill-r" style="width:${100-dW-aW}%"></div></div></div>`;
 }
+
+function toggleSearch(){
+  const wrap=document.getElementById('phSearch');
+  const inp=document.getElementById('devSearch');
+  if(!wrap)return;
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  if(!visible){inp.focus();inp.value='';filterGrid();}
+  else{inp.value='';filterGrid();}
+  document.getElementById('btnSearch').style.background=visible?'var(--sur2)':'var(--lblue)';
+}
+
+function filterGrid(){
+  const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
+  const cards=document.querySelectorAll('#gw .card');
+  const labels=document.querySelectorAll('#gw .sl');
+  if(!q){
+    cards.forEach(c=>c.style.display='');
+    labels.forEach(l=>l.style.display='');
+    return;
+  }
+  let lastLabel=null;
+  let lastLabelHasVisible=false;
+  document.querySelectorAll('#gw .grid > *').forEach(el=>{
+    if(el.classList.contains('sl')){
+      if(lastLabel&&!lastLabelHasVisible) lastLabel.style.display='none';
+      lastLabel=el;lastLabelHasVisible=false;el.style.display='';
+    } else if(el.classList.contains('card')){
+      const tag=el.querySelector('.ctag')?.textContent||'';
+      const desc=el.querySelector('.cdesc')?.textContent||'';
+      const scs=el.querySelector('.cscs')?.textContent||'';
+      const match=tag.toLowerCase().includes(q)||desc.toLowerCase().includes(q)||scs.toLowerCase().includes(q);
+      el.style.display=match?'':'none';
+      if(match)lastLabelHasVisible=true;
+    }
+  });
+  if(lastLabel&&!lastLabelHasVisible)lastLabel.style.display='none';
+}
+
 
 initApp();
 </script>
