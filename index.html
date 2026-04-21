@@ -315,8 +315,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 <script>
 // ── GITHUB CONFIG ─────────────────────────────────────────────────────────
 // Update this with your actual GitHub Pages URL after uploading status.json
-// GitHub API URL - no CDN caching, always latest
-const STATUS_URL = 'https://api.github.com/repos/bugrahan1990/cgl2-commissioning/contents/status.json';
+const STATUS_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/status.json';
 
 // ── DEVICE DATA ───────────────────────────────────────────────────────────
 let H={};
@@ -431,16 +430,17 @@ async function initApp(){
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
 async function checkOnline(){
   try{
-    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),5000);
-    const r=await fetch(STATUS_URL,{signal:ctrl.signal,headers:{'Accept':'application/vnd.github.v3+json','Cache-Control':'no-cache'}});
+    const ctrl=new AbortController();
+    setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
     if(!r.ok)throw new Error();
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
     document.getElementById('netLbl').textContent='Online';
-  }catch{
+  }catch(e){
     isOnline=false;
     document.getElementById('netBadge').className='net-badge off';
-    document.getElementById('netLbl').textContent='Offline';
+    document.getElementById('netLbl').textContent='Offline — '+e.message;
   }
   setTimeout(checkOnline,30000);
 }
@@ -451,11 +451,9 @@ async function smartSync(){
   btn.disabled=true;btn.textContent='Syncing…';
   try{
     const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),15000);
-    const r=await fetch(STATUS_URL,{signal:ctrl.signal,headers:{'Accept':'application/vnd.github.v3+json','Cache-Control':'no-cache'}});
+    const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
     if(!r.ok)throw new Error('Cannot reach server ('+r.status+')');
-    const apiResp=await r.json();
-    const decoded=JSON.parse(atob(apiResp.content.replace(/\n/g,'')));
-    const data=decoded;const records=data.records||[];
+    const data=await r.json();const records=data.records||[];
     let updated=0,kept=0;
     for(const row of records){
       const tag=row.Tag_Number;if(!tag)continue;
