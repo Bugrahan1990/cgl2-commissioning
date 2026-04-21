@@ -193,7 +193,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
   @keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 }
 
-/* TABS */
 .tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
 .tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
 .tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
@@ -201,8 +200,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.kpi.done::before{background:var(--G)}.kpi.wip::before{background:var(--A)}
-.kpi.pending::before{background:#ddd}.kpi.unsent::before{background:var(--Y)}
+.kpi.done::before{background:var(--G)}.kpi.wip::before{background:var(--A)}.kpi.pending::before{background:#ddd}.kpi.unsent::before{background:var(--Y)}
 .kpi-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
 .kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3)}
 .kpi-sub{font-size:11px;color:var(--tx2);font-family:'DM Mono',monospace}
@@ -239,11 +237,12 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 
   <div class="ab">
     <div class="ab-left">
+      <div id="loadStatus" style="font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;transition:opacity 1.5s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px"></div>
       <div class="net-badge off" id="netBadge"><div class="nbdot"></div><span id="netLbl">Offline</span></div>
       <div class="pend-lbl" id="pendLbl"></div>
     </div>
     <div class="ab-btns">
-      <button class="xbtn get" id="btnSync" onclick="smartSync()" disabled>&#8595; Sync</button>
+      <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
     </div>
   </div>
@@ -325,52 +324,33 @@ let DEVICES_VERSION=0;
 async function loadDevices(){
   const DEVICES_URL='https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/devices.json';
   showLoadStatus('Loading device list...',false);
-
-  // Try session cache first
   try{
     const c=sessionStorage.getItem('CGL2_devices');
     if(c){
-      const cached=JSON.parse(c);
-      H=cached.hierarchy;
-      DEVICES_VERSION=cached.version||0;
-      renderNav();
+      const cached=JSON.parse(c);H=cached.hierarchy;DEVICES_VERSION=cached.version||0;
+      renderNav();updProg();
       showLoadStatus('Device list ready (v'+DEVICES_VERSION+' · '+cached.total+' devices)',true);
     }
   }catch(e){}
-
-  // Fetch fresh copy from GitHub
   try{
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),20000);
-    const r=await fetch(DEVICES_URL+'?t='+Date.now(),{signal:controller.signal});
-    clearTimeout(timer);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const data=await r.json();
-    const newVer=data.version||1;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),20000);
+    const r=await fetch(DEVICES_URL+'?t='+Date.now(),{signal:ctrl.signal});
+    clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();const newVer=data.version||1;
     if(Object.keys(H).length===0||newVer>DEVICES_VERSION){
-      H=data.hierarchy;
-      DEVICES_VERSION=newVer;
+      H=data.hierarchy;DEVICES_VERSION=newVer;
       try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
-      renderNav();
-      if(ST.sub){renderHead();renderGrid();}
-      showLoadStatus('Device list updated (v'+newVer+' · '+data.total+' devices)',true);
-    }else{
+      renderNav();updProg();if(ST.sub){renderHead();renderGrid();}
       showLoadStatus('Device list v'+newVer+' · '+data.total+' devices',true);
-    }
+    }else{showLoadStatus('Device list v'+newVer+' · up to date',true);}
   }catch(e){
-    if(Object.keys(H).length>0){
-      showLoadStatus('Offline — using cached device list',true);
-    }else{
-      showLoadStatus('⚠ Connect to WiFi to load device list, then refresh',false);
-    }
+    if(Object.keys(H).length>0)showLoadStatus('Offline — using cached device list',true);
+    else showLoadStatus('⚠ Connect to WiFi to load devices, then refresh',false);
   }
 }
-
 function showLoadStatus(msg,fade){
-  const el=document.getElementById('loadStatus');
-  if(!el)return;
-  el.style.opacity='1';
-  el.textContent=msg;
+  const el=document.getElementById('loadStatus');if(!el)return;
+  el.style.opacity='1';el.textContent=msg;
   if(fade)setTimeout(()=>{el.style.opacity='0';},4000);
 }
 
@@ -441,8 +421,7 @@ async function initApp(){
   await openDB();
   const all=await dbGetAll();
   all.forEach(r=>{DS[r.Tag_Number]=r;});
-  updProg();
-  updPendLbl();
+  updProg();updPendLbl();
   checkOnline();
   loadDevices();
 }
@@ -450,55 +429,290 @@ async function initApp(){
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
 async function checkOnline(){
   try{
-    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),5000);return c.signal;})()});
-    if(!r.ok) throw new Error();
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),5000);
+    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:ctrl.signal});
+    if(!r.ok)throw new Error();
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
     document.getElementById('netLbl').textContent='Online';
-    document.getElementById('btnSync').disabled=false;
   }catch{
     isOnline=false;
     document.getElementById('netBadge').className='net-badge off';
     document.getElementById('netLbl').textContent='Offline';
-    document.getElementById('btnSync').disabled=true;
   }
   setTimeout(checkOnline,30000);
 }
 
 async function smartSync(){
+  if(Object.keys(H).length===0){showT('Device list still loading — wait a moment','info');return;}
   const btn=document.getElementById('btnSync');
-  btn.disabled=true;btn.textContent='Syncing\u2026';
+  btn.disabled=true;btn.textContent='Syncing…';
   try{
-    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),15000);return c.signal;})()});
-    if(!r.ok) throw new Error('Cannot reach server');
-    const data=await r.json();
-    const records=data.records||[];
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),15000);
+    const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:ctrl.signal});
+    if(!r.ok)throw new Error('Cannot reach server');
+    const data=await r.json();const records=data.records||[];
     let updated=0,kept=0;
     for(const row of records){
-      const tag=row.Tag_Number;
-      if(!tag) continue;
+      const tag=row.Tag_Number;if(!tag)continue;
       if(DS[tag]&&DS[tag].exported===false){kept++;continue;}
-      DS[tag]={
-        Tag_Number:tag,
-        Comm_Status:row.Comm_Status||'Not Started',
-        Comm_By:row.Comm_By||'',
-        Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
+      DS[tag]={Tag_Number:tag,Comm_Status:row.Comm_Status||'Not Started',
+        Comm_By:row.Comm_By||'',Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
         Approved_By:row.Approved_By||'',Remarks:row.Remarks||'',
         CHK_Direction:row.CHK_Direction||'',CHK_Mechanical:row.CHK_Mechanical||'',
         CHK_TagLabel:row.CHK_TagLabel||'',CHK_Wiring:row.CHK_Wiring||'',
         CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
         CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
         CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
-        CHK_Settings:row.CHK_Settings||'',exported:true,
-      };
+        CHK_Settings:row.CHK_Settings||'',exported:true};
       await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
-    showT(kept>0?'Synced \u2014 '+updated+' updated, '+kept+' unsent kept':'Synced \u2014 '+updated+' updated','ok');
-  }catch(e){showT('Sync failed: '+e.message,'err');}
-  btn.disabled=false;btn.textContent='\u2193 Sync';
+    showT(kept>0?'Synced — '+updated+' updated, '+kept+' unsent kept':'Synced — '+updated+' updated','ok');
+  }catch(e){showT('Sync failed: '+e.message+' — check WiFi','err');}
+  btn.disabled=false;btn.textContent='↓ Sync';
 }
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function openExportSheet(){
+  const all=Object.values(DS);
+  const pending=all.filter(d=>d.exported===false);
+  document.getElementById('expTotal').textContent=all.length;
+  document.getElementById('expPending').textContent=pending.length;
+  document.getElementById('expOv').classList.add('open');
+}
+
+async function doExport(){
+  const pending=Object.values(DS).filter(d=>d.exported===false);
+  if(!pending.length){showT('No new records to export','info');return;}
+
+  // Create JSON file and trigger download
+  const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download='CGL2_export_'+date+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Mark as exported
+  for(const rec of pending){
+    DS[rec.Tag_Number].exported=true;
+    await dbPut(DS[rec.Tag_Number]);
+  }
+
+  document.getElementById('expOv').classList.remove('open');
+  updPendLbl();
+  showT('Exported '+pending.length+' records — send the file to the project manager','ok');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
+function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
+function sCls(s){return{'Commissioned':'commissioned','In Progress':'in-progress','Not Started':'not-started','N/A':'na'}[s]||'not-started';}
+
+function updProg(){
+  const total=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat())).length||0;
+  const done=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
+  document.getElementById('gF').style.width=total?(done/total*100).toFixed(1)+'%':'0%';
+  document.getElementById('gL').textContent=done+'/'+(total||'...');
+}
+
+function updPendLbl(){
+  const n=Object.values(DS).filter(d=>d.exported===false).length;
+  const el=document.getElementById('pendLbl');
+  el.textContent=n?n+' unsent':'';
+}
+
+function showT(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast show '+type;
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function renderNav(){
+  const el=document.getElementById('nl');el.innerHTML='';
+  const q=document.getElementById('ns').value.toLowerCase();
+  Object.entries(H).forEach(([area,equips])=>{
+    const allD=Object.values(equips).flatMap(e=>Object.values(e).flat());
+    const done=allD.filter(d=>getS(d.tag)==='Commissioned').length;
+    const pct=allD.length?done/allD.length:0;
+    const aMatch=!q||area.toLowerCase().includes(q)||
+      Object.entries(equips).some(([e,subs])=>e.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q)));
+    if(q&&!aMatch) return;
+    const ai=document.createElement('div');
+    ai.className='ai'+(OA[area]?' open':'');
+    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span class="aa">&#9658;</span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
+    ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
+    el.appendChild(ai);
+    if(!OA[area]&&!q) return;
+    Object.entries(equips).forEach(([equip,subs])=>{
+      const eKey=area+'|'+equip;
+      const eMatch=!q||equip.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q));
+      if(q&&!eMatch) return;
+      const ei=document.createElement('div');
+      ei.className='ei'+(OE[eKey]?' open':'');
+      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span class="ea">&#9658;</span></div>';
+      ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
+      el.appendChild(ei);
+      if(!OE[eKey]&&!q) return;
+      Object.entries(subs).forEach(([sub,devs])=>{
+        if(q&&!sub.toLowerCase().includes(q)&&!eMatch) return;
+        const done2=devs.filter(d=>getS(d.tag)==='Commissioned').length;
+        const pct2=devs.length?done2/devs.length:0;
+        const hasPend=devs.some(d=>isUnsent(d.tag));
+        const si=document.createElement('div');
+        si.className='si'+(ST.area===area&&ST.equip===equip&&ST.sub===sub?' active':'');
+        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+Math.round(pct2*100)+'%"></div></div><span class="sc2">'+devs.length+'</span></div>';
+        si.onclick=e=>{e.stopPropagation();selectSub(area,equip,sub,devs);};
+        el.appendChild(si);
+      });
+    });
+  });
+}
+
+function selectSub(area,equip,sub,devs){
+  ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;
+  renderNav();renderHead();renderGrid();
+}
+
+function renderHead(){
+  const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0;
+  ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;});
+  document.getElementById('ph').innerHTML=
+    '<div class="pht">'+ST.sub+'</div>'+
+    '<div class="phs">'+ST.area+' &rsaquo; '+ST.equip+' &middot; '+ST.devs.length+' devices</div>'+
+    '<div class="phc">'+
+    (c.Commissioned?'<div class="chip g"><div class="cd" style="background:var(--G)"></div>'+c.Commissioned+' Done</div>':'')+
+    (c['In Progress']?'<div class="chip a"><div class="cd" style="background:var(--A)"></div>'+c['In Progress']+' WIP</div>':'')+
+    (c['Not Started']?'<div class="chip r"><div class="cd" style="background:var(--R)"></div>'+c['Not Started']+' Pending</div>':'')+
+    (c['N/A']?'<div class="chip gr"><div class="cd" style="background:var(--Gr)"></div>'+c['N/A']+' N/A</div>':'')+
+    (pend?'<div class="chip y"><div class="cd" style="background:var(--A)"></div>'+pend+' Unsent</div>':'')+
+    '</div>';
+}
+
+function renderGrid(){
+  const gw=document.getElementById('gw');gw.innerHTML='';
+  const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
+  const secs={};
+  ST.devs.forEach((d,i)=>{const s=d.section||'General';if(!secs[s])secs[s]=[];secs[s].push({d,i});});
+  const useSec=Object.keys(secs).length<=8;
+  Object.entries(secs).forEach(([sec,items])=>{
+    if(useSec){const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;grid.appendChild(sh);}
+    items.forEach(({d,i})=>{
+      const s=getS(d.tag);const unsent=isUnsent(d.tag);
+      const cls=unsent?'unsynced':sCls(s);
+      const card=document.createElement('div');card.className='card '+cls;
+      const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
+      const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
+      card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+      card.onclick=()=>openM(i);grid.appendChild(card);
+    });
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function ensDS(tag){
+  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,'']))};
+}
+
+function openM(idx){ST.idx=idx;renderM();document.getElementById('ov').classList.add('open');}
+
+function renderM(){
+  const dev=ST.devs[ST.idx];ensDS(dev.tag);const ds=DS[dev.tag];
+  document.getElementById('mBC').textContent=ST.area+' \u203a '+ST.equip+' \u203a '+ST.sub;
+  document.getElementById('mTag').textContent=dev.tag;
+  document.getElementById('mDesc').innerHTML='<span>'+dev.desc+'</span><span class="mbadge">'+dev.type+'</span><span class="mbadge">Qty '+dev.qty+'</span>'+(isUnsent(dev.tag)?'<span class="mbadge" style="border-color:var(--Abdr);color:var(--A)">Unsent</span>':'');
+  const body=document.getElementById('mBody');body.innerHTML='';
+  GROUPS.forEach(g=>{
+    const sec=document.createElement('div');sec.className='grp';
+    sec.innerHTML='<div class="gh"><div class="gnum" style="background:'+g.bg+';color:'+g.c+'">'+g.n+'</div><div><div class="gt" style="color:'+g.c+'">'+g.t+'</div><div class="gsub">'+g.s+'</div></div></div>';
+    g.items.forEach(item=>{
+      const val=ds[item.id]||'';
+      const row=document.createElement('div');row.className='cr';
+      row.innerHTML='<div class="clbl">'+item.l+'<div class="chint">'+item.h+'</div></div>'+
+        '<div class="cbtns">'+
+        '<button class="cbtn '+(val==='OK'?'ok':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'OK\',this)">OK</button>'+
+        '<button class="cbtn '+(val==='N/A'?'na':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'N/A\',this)">N/A</button>'+
+        '<button class="cbtn '+(val==='FAIL'?'fail':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'FAIL\',this)">FAIL</button>'+
+        '</div>';
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  });
+  const sm={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
+  const so=document.createElement('div');so.className='grp';
+  so.innerHTML='<div class="gh"><div class="gnum" style="background:#f0f2f8;color:#444">4</div><div><div class="gt" style="color:#333">Sign-off</div><div class="gsub">Status, dates and approval</div></div></div>'+
+    '<div class="so">'+
+    '<div class="fg"><div class="fl">Status</div><select class="fc '+(sm[ds.Comm_Status]||'sn')+'" id="f_st" onchange="uSel(this)">'+['Not Started','In Progress','Commissioned','N/A'].map(v=>'<option '+(v===ds.Comm_Status?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+
+    '<div class="fg"><div class="fl">Commissioned By</div><input class="fc" type="text" id="f_cb" placeholder="Name / initials" value="'+(ds.Comm_By||'')+'"></div>'+
+    '<div class="fg"><div class="fl">Date</div><input class="fc" type="date" id="f_cd" value="'+(ds.Comm_Date||'')+'"></div>'+
+    '<div class="fg"><div class="fl">Approved By</div><input class="fc" type="text" id="f_ab" placeholder="Supervisor" value="'+(ds.Approved_By||'')+'"></div>'+
+    '<div class="fg full"><div class="fl">Remarks / Issues</div><textarea class="fc" id="f_rm" placeholder="Punch items, notes...">'+(ds.Remarks||'')+'</textarea></div>'+
+    '</div>';
+  body.appendChild(so);
+  setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
+  updMP(dev.tag);
+}
+
+function uSel(sel){
+  sel.className='fc';
+  const m={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
+  if(m[sel.value])sel.classList.add(m[sel.value]);
+}
+
+function setChk(tag,id,val,btn){
+  ensDS(tag);DS[tag][id]=DS[tag][id]===val?'':val;
+  const bs=btn.closest('.cbtns').querySelectorAll('.cbtn');
+  bs.forEach(b=>b.className='cbtn');
+  if(DS[tag][id]){const c={OK:'ok','N/A':'na',FAIL:'fail'}[DS[tag][id]];Array.from(bs).find(b=>b.textContent===DS[tag][id])?.classList.add(c);}
+  updMP(tag);
+}
+
+function updMP(tag){
+  const ds=DS[tag]||{};const done=ACHK.filter(id=>ds[id]&&ds[id]!=='').length;
+  const el=document.getElementById('mP');
+  if(el){el.textContent=done+'/'+ACHK.length+' checks';el.className='mp'+(done===ACHK.length?' done':'');}
+}
+
+function saveForm(tag){
+  if(!tag) return;
+  ensDS(tag);
+  const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  Object.assign(DS[tag],{Comm_Status:g('f_st'),Comm_By:g('f_cb'),Comm_Date:g('f_cd'),Approved_By:g('f_ab'),Remarks:g('f_rm')});
+}
+
+async function saveClose(){
+  const dev=ST.devs[ST.idx];
+  saveForm(dev.tag);
+  Object.assign(DS[dev.tag],{
+    Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
+    Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
+    Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
+    Scope_S:dev.scopeS,Scope_D:dev.scopeD,exported:false,
+  });
+  await dbPut(DS[dev.tag]);
+  showT('Saved','info');
+  closeM();
+  updProg();updPendLbl();renderNav();renderHead();renderGrid();
+}
+
+function closeM(){document.getElementById('ov').classList.remove('open');}
+function nav(d){
+  saveForm(ST.devs[ST.idx]?.tag);
+  const n=ST.idx+d;
+  if(n>=0&&n<ST.devs.length){ST.idx=n;renderM();}
+}
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('ov').classList.contains('open'))return;
+  if(e.key==='Escape')closeM();
+  if(e.key==='ArrowRight')nav(1);
+  if(e.key==='ArrowLeft')nav(-1);
+});
 
 function switchTab(tab){
   document.getElementById('tabMap').classList.toggle('active',tab==='map');
@@ -509,17 +723,18 @@ function switchTab(tab){
 }
 
 function renderDash(){
-  const total=2286;
+  const allDevs=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat()));
+  const total=allDevs.length;
   const commissioned=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
   const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
-  const notStarted=total-commissioned-inProgress;
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
   let out='<div class="kpi-row">';
-  out+=kpiCard('done',commissioned,'Commissioned',(commissioned/total*100).toFixed(1)+'% of total');
+  out+=kpiCard('done',commissioned,'Commissioned',total?(commissioned/total*100).toFixed(1)+'% of '+total:'...');
   out+=kpiCard('wip',inProgress,'In Progress','');
-  out+=kpiCard('pending',notStarted,'Not Started','');
+  out+=kpiCard('pending',total-commissioned-inProgress,'Not Started','');
   out+=kpiCard('unsent',unsent,'Unsent','pending export');
   out+='</div>';
+  if(!total){out+='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';document.getElementById('dashPanel').innerHTML=out;return;}
   out+='<div class="section-title">Progress by Area</div><div class="prog-list">';
   Object.entries(H).forEach(([area,equips])=>{
     const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
@@ -529,38 +744,30 @@ function renderDash(){
   out+='</div><div class="section-title">Progress by Equipment</div><div class="prog-list">';
   const eMap={};
   Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
-    const devs=Object.values(subs).flat();
-    if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
-    eMap[eq].tot+=devs.length;
-    eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;
-    eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
+    eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
   }));
   Object.entries(eMap).forEach(([eq,v])=>out+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
   out+='</div><div class="section-title">By Device Type</div><div class="dtype-list">';
   const tMap={};
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-    if(!tMap[d.type])tMap[d.type]={done:0,tot:0};
-    tMap[d.type].tot++;
+    if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
     if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
   })));
-  const maxT=Math.max(...Object.values(tMap).map(v=>v.tot));
+  const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
   Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
     const p=v.tot?Math.round(v.done/v.tot*100):0;
     out+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
   });
-  out+=`</div><div class="dash-updated">Based on locally synced data &middot; ${new Date().toLocaleString()}</div>`;
+  out+=`</div><div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
   document.getElementById('dashPanel').innerHTML=out;
 }
-
-function kpiCard(cls,val,lbl,sub){
-  return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
-}
-
+function kpiCard(cls,val,lbl,sub){return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;}
 function progBarHTML(name,done,wip,tot){
-  const pct=tot?Math.round(done/tot*100):0;
-  const dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
+  const pct=tot?Math.round(done/tot*100):0,dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
   return `<div class="prog-item"><div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div><div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div><div class="prog-track"><div class="prog-fill-g" style="width:${dW}%"></div><div class="prog-fill-a" style="width:${aW}%"></div><div class="prog-fill-r" style="width:${100-dW-aW}%"></div></div></div>`;
 }
+
 initApp();
 </script>
 </body>
