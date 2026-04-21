@@ -213,9 +213,8 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <div class="pend-lbl" id="pendLbl"></div>
     </div>
     <div class="ab-btns">
-      <button class="xbtn get" id="btnGet" onclick="getLatest()" disabled>&#8595; Get Latest</button>
+      <button class="xbtn get" id="btnSync" onclick="smartSync()" disabled>&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
-      <button class="xbtn" style="background:var(--Rbg);color:var(--R);border:1px solid var(--Rbdr);font-size:10px" onclick="clearAndRefresh()">Clear Local</button>
     </div>
   </div>
 
@@ -267,14 +266,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 <div class="ov" id="expOv" onclick="if(event.target===this)document.getElementById('expOv').classList.remove('open')">
   <div class="sheet">
     <div class="sh-title">Export Data</div>
-    <div class="sh-sub">Downloads your records and opens Outlook with a pre-filled email to Bugra. Attach the downloaded file and hit Send.</div>
+    <div class="sh-sub">Downloads your commissioning records as a JSON file. Send it to the project manager via Teams or email.</div>
     <div class="sh-card">
       <div class="sh-row"><span class="sh-lbl">Records saved locally</span><span class="sh-val" id="expTotal">0</span></div>
       <div class="sh-row"><span class="sh-lbl">Not yet exported</span><span class="sh-val" id="expPending">0</span></div>
     </div>
     <div class="sh-btns">
       <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="doExport()">&#8593; Download &amp; Open Outlook</button>
+      <button class="sh-btn pri" onclick="doExport()">&#8593; Download File</button>
     </div>
   </div>
 </div>
@@ -368,337 +367,59 @@ async function checkOnline(){
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
     document.getElementById('netLbl').textContent='Online';
-    document.getElementById('btnGet').disabled=false;
+    document.getElementById('btnSync').disabled=false;
   }catch{
     isOnline=false;
     document.getElementById('netBadge').className='net-badge off';
     document.getElementById('netLbl').textContent='Offline';
-    document.getElementById('btnGet').disabled=true;
+    document.getElementById('btnSync').disabled=true;
   }
   setTimeout(checkOnline,30000);
 }
 
-async function getLatest(){
-  document.getElementById('btnGet').disabled=true;
-  document.getElementById('btnGet').textContent='Loading...';
+async function smartSync(){
+  const btn=document.getElementById('btnSync');
+  btn.disabled=true;btn.textContent='Syncing…';
   try{
     const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(15000)});
     if(!r.ok) throw new Error('Cannot reach server');
     const data=await r.json();
     const records=data.records||[];
-    let updated=0;
+    let updated=0,kept=0;
     for(const row of records){
       const tag=row.Tag_Number;
       if(!tag) continue;
-      // Don't overwrite local unsent changes
-      if(DS[tag]&&DS[tag].exported===false) continue;
+      if(DS[tag]&&DS[tag].exported===false){kept++;continue;}
       DS[tag]={
         Tag_Number:tag,
         Comm_Status:row.Comm_Status||'Not Started',
         Comm_By:row.Comm_By||'',
-        Comm_Date:row.Comm_Date||'',
+        Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
         Approved_By:row.Approved_By||'',
         Remarks:row.Remarks||'',
-        CHK_Direction:row.CHK_Direction||'',
-        CHK_Mechanical:row.CHK_Mechanical||'',
-        CHK_TagLabel:row.CHK_TagLabel||'',
-        CHK_Wiring:row.CHK_Wiring||'',
-        CHK_IO:row.CHK_IO||'',
-        CHK_PowerSupply:row.CHK_PowerSupply||'',
-        CHK_Enclosure:row.CHK_Enclosure||'',
-        CHK_OpenClose:row.CHK_OpenClose||'',
-        CHK_Calibration:row.CHK_Calibration||'',
-        CHK_Interlock:row.CHK_Interlock||'',
+        CHK_Direction:row.CHK_Direction||'',CHK_Mechanical:row.CHK_Mechanical||'',
+        CHK_TagLabel:row.CHK_TagLabel||'',CHK_Wiring:row.CHK_Wiring||'',
+        CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
+        CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
+        CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
         CHK_Settings:row.CHK_Settings||'',
         exported:true,
       };
       await dbPut(DS[tag]);
       updated++;
     }
-    showT('Updated '+updated+' devices','ok');
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
+    if(kept>0){
+      showT('Synced — '+updated+' updated, '+kept+' unsent kept','ok');
+    }else{
+      showT('Synced — '+updated+' devices updated','ok');
+    }
   }catch(e){
-    showT('Could not get latest: '+e.message,'err');
+    showT('Sync failed: '+e.message,'err');
   }
-  document.getElementById('btnGet').disabled=false;
-  document.getElementById('btnGet').textContent='\u2193 Get Latest';
+  btn.disabled=false;btn.textContent='↓ Sync';
 }
-
-// ── EXPORT ────────────────────────────────────────────────────────────────
-function openExportSheet(){
-  const all=Object.values(DS);
-  const pending=all.filter(d=>d.exported===false);
-  document.getElementById('expTotal').textContent=all.length;
-  document.getElementById('expPending').textContent=pending.length;
-  document.getElementById('expOv').classList.add('open');
-}
-
-async function doExport(){
-  const pending=Object.values(DS).filter(d=>d.exported===false);
-  if(!pending.length){showT('No new records to export','info');return;}
-
-  const date=new Date().toISOString().slice(0,10);
-  const filename='CGL2_export_'+date+'.json';
-  const content=JSON.stringify(pending,null,2);
-
-  // Download the file
-  const blob=new Blob([content],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  // Mark as exported
-  for(const rec of pending){
-    DS[rec.Tag_Number].exported=true;
-    await dbPut(DS[rec.Tag_Number]);
-  }
-
-  document.getElementById('expOv').classList.remove('open');
-  updPendLbl();
-
-  // Open mail client with pre-filled email
-  const subject=encodeURIComponent('CGL2 Commissioning Data — '+date);
-  const body=encodeURIComponent(
-    'Hi Bugra,\n\n'+
-    'Please find attached the CGL2 commissioning export for '+date+'.\n\n'+
-    'File: '+filename+'\n'+
-    'Records: '+pending.length+'\n\n'+
-    'Please attach the downloaded file ('+filename+') to this email before sending.\n\n'+
-    'Regards'
-  );
-  const mailto='mailto:bugrahan.cetinkale@primetals.com?subject='+subject+'&body='+body;
-
-  setTimeout(()=>{
-    window.location.href=mailto;
-  },800);
-
-  showT('File downloaded — Outlook opening, attach the file and send','ok');
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────────────
-function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
-function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
-function sCls(s){return{'Commissioned':'commissioned','In Progress':'in-progress','Not Started':'not-started','N/A':'na'}[s]||'not-started';}
-
-function updProg(){
-  const done=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
-  document.getElementById('gF').style.width=(done/2286*100).toFixed(1)+'%';
-  document.getElementById('gL').textContent=done+'/2286';
-}
-
-function updPendLbl(){
-  const n=Object.values(DS).filter(d=>d.exported===false).length;
-  const el=document.getElementById('pendLbl');
-  el.textContent=n?n+' unsent':'';
-}
-
-function showT(msg,type){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.className='toast show '+type;
-  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3500);
-}
-
-// ── NAVIGATION ────────────────────────────────────────────────────────────
-function renderNav(){
-  const el=document.getElementById('nl');el.innerHTML='';
-  const q=document.getElementById('ns').value.toLowerCase();
-  Object.entries(H).forEach(([area,equips])=>{
-    const allD=Object.values(equips).flatMap(e=>Object.values(e).flat());
-    const done=allD.filter(d=>getS(d.tag)==='Commissioned').length;
-    const pct=allD.length?done/allD.length:0;
-    const aMatch=!q||area.toLowerCase().includes(q)||
-      Object.entries(equips).some(([e,subs])=>e.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q)));
-    if(q&&!aMatch) return;
-    const ai=document.createElement('div');
-    ai.className='ai'+(OA[area]?' open':'');
-    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span class="aa">&#9658;</span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
-    ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
-    el.appendChild(ai);
-    if(!OA[area]&&!q) return;
-    Object.entries(equips).forEach(([equip,subs])=>{
-      const eKey=area+'|'+equip;
-      const eMatch=!q||equip.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q));
-      if(q&&!eMatch) return;
-      const ei=document.createElement('div');
-      ei.className='ei'+(OE[eKey]?' open':'');
-      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span class="ea">&#9658;</span></div>';
-      ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
-      el.appendChild(ei);
-      if(!OE[eKey]&&!q) return;
-      Object.entries(subs).forEach(([sub,devs])=>{
-        if(q&&!sub.toLowerCase().includes(q)&&!eMatch) return;
-        const done2=devs.filter(d=>getS(d.tag)==='Commissioned').length;
-        const pct2=devs.length?done2/devs.length:0;
-        const hasPend=devs.some(d=>isUnsent(d.tag));
-        const si=document.createElement('div');
-        si.className='si'+(ST.area===area&&ST.equip===equip&&ST.sub===sub?' active':'');
-        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+Math.round(pct2*100)+'%"></div></div><span class="sc2">'+devs.length+'</span></div>';
-        si.onclick=e=>{e.stopPropagation();selectSub(area,equip,sub,devs);};
-        el.appendChild(si);
-      });
-    });
-  });
-}
-
-function selectSub(area,equip,sub,devs){
-  ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;
-  renderNav();renderHead();renderGrid();
-}
-
-function renderHead(){
-  const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0;
-  ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;});
-  document.getElementById('ph').innerHTML=
-    '<div class="pht">'+ST.sub+'</div>'+
-    '<div class="phs">'+ST.area+' &rsaquo; '+ST.equip+' &middot; '+ST.devs.length+' devices</div>'+
-    '<div class="phc">'+
-    (c.Commissioned?'<div class="chip g"><div class="cd" style="background:var(--G)"></div>'+c.Commissioned+' Done</div>':'')+
-    (c['In Progress']?'<div class="chip a"><div class="cd" style="background:var(--A)"></div>'+c['In Progress']+' WIP</div>':'')+
-    (c['Not Started']?'<div class="chip r"><div class="cd" style="background:var(--R)"></div>'+c['Not Started']+' Pending</div>':'')+
-    (c['N/A']?'<div class="chip gr"><div class="cd" style="background:var(--Gr)"></div>'+c['N/A']+' N/A</div>':'')+
-    (pend?'<div class="chip y"><div class="cd" style="background:var(--A)"></div>'+pend+' Unsent</div>':'')+
-    '</div>';
-}
-
-function renderGrid(){
-  const gw=document.getElementById('gw');gw.innerHTML='';
-  const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
-  const secs={};
-  ST.devs.forEach((d,i)=>{const s=d.section||'General';if(!secs[s])secs[s]=[];secs[s].push({d,i});});
-  const useSec=Object.keys(secs).length<=8;
-  Object.entries(secs).forEach(([sec,items])=>{
-    if(useSec){const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;grid.appendChild(sh);}
-    items.forEach(({d,i})=>{
-      const s=getS(d.tag);const unsent=isUnsent(d.tag);
-      const cls=unsent?'unsynced':sCls(s);
-      const card=document.createElement('div');card.className='card '+cls;
-      const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
-      const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
-      card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-      card.onclick=()=>openM(i);grid.appendChild(card);
-    });
-  });
-}
-
-// ── MODAL ─────────────────────────────────────────────────────────────────
-function ensDS(tag){
-  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,'']))};
-}
-
-function openM(idx){ST.idx=idx;renderM();document.getElementById('ov').classList.add('open');}
-
-function renderM(){
-  const dev=ST.devs[ST.idx];ensDS(dev.tag);const ds=DS[dev.tag];
-  document.getElementById('mBC').textContent=ST.area+' \u203a '+ST.equip+' \u203a '+ST.sub;
-  document.getElementById('mTag').textContent=dev.tag;
-  document.getElementById('mDesc').innerHTML='<span>'+dev.desc+'</span><span class="mbadge">'+dev.type+'</span><span class="mbadge">Qty '+dev.qty+'</span>'+(isUnsent(dev.tag)?'<span class="mbadge" style="border-color:var(--Abdr);color:var(--A)">Unsent</span>':'');
-  const body=document.getElementById('mBody');body.innerHTML='';
-  GROUPS.forEach(g=>{
-    const sec=document.createElement('div');sec.className='grp';
-    sec.innerHTML='<div class="gh"><div class="gnum" style="background:'+g.bg+';color:'+g.c+'">'+g.n+'</div><div><div class="gt" style="color:'+g.c+'">'+g.t+'</div><div class="gsub">'+g.s+'</div></div></div>';
-    g.items.forEach(item=>{
-      const val=ds[item.id]||'';
-      const row=document.createElement('div');row.className='cr';
-      row.innerHTML='<div class="clbl">'+item.l+'<div class="chint">'+item.h+'</div></div>'+
-        '<div class="cbtns">'+
-        '<button class="cbtn '+(val==='OK'?'ok':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'OK\',this)">OK</button>'+
-        '<button class="cbtn '+(val==='N/A'?'na':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'N/A\',this)">N/A</button>'+
-        '<button class="cbtn '+(val==='FAIL'?'fail':'')+'" onclick="setChk(\''+dev.tag+'\',\''+item.id+'\',\'FAIL\',this)">FAIL</button>'+
-        '</div>';
-      sec.appendChild(row);
-    });
-    body.appendChild(sec);
-  });
-  const sm={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
-  const so=document.createElement('div');so.className='grp';
-  so.innerHTML='<div class="gh"><div class="gnum" style="background:#f0f2f8;color:#444">4</div><div><div class="gt" style="color:#333">Sign-off</div><div class="gsub">Status, dates and approval</div></div></div>'+
-    '<div class="so">'+
-    '<div class="fg"><div class="fl">Status</div><select class="fc '+(sm[ds.Comm_Status]||'sn')+'" id="f_st" onchange="uSel(this)">'+['Not Started','In Progress','Commissioned','N/A'].map(v=>'<option '+(v===ds.Comm_Status?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+
-    '<div class="fg"><div class="fl">Commissioned By</div><input class="fc" type="text" id="f_cb" placeholder="Name / initials" value="'+(ds.Comm_By||'')+'"></div>'+
-    '<div class="fg"><div class="fl">Date</div><input class="fc" type="date" id="f_cd" value="'+(ds.Comm_Date||'')+'"></div>'+
-    '<div class="fg"><div class="fl">Approved By</div><input class="fc" type="text" id="f_ab" placeholder="Supervisor" value="'+(ds.Approved_By||'')+'"></div>'+
-    '<div class="fg full"><div class="fl">Remarks / Issues</div><textarea class="fc" id="f_rm" placeholder="Punch items, notes...">'+(ds.Remarks||'')+'</textarea></div>'+
-    '</div>';
-  body.appendChild(so);
-  setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
-  updMP(dev.tag);
-}
-
-function uSel(sel){
-  sel.className='fc';
-  const m={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
-  if(m[sel.value])sel.classList.add(m[sel.value]);
-}
-
-function setChk(tag,id,val,btn){
-  ensDS(tag);DS[tag][id]=DS[tag][id]===val?'':val;
-  const bs=btn.closest('.cbtns').querySelectorAll('.cbtn');
-  bs.forEach(b=>b.className='cbtn');
-  if(DS[tag][id]){const c={OK:'ok','N/A':'na',FAIL:'fail'}[DS[tag][id]];Array.from(bs).find(b=>b.textContent===DS[tag][id])?.classList.add(c);}
-  updMP(tag);
-}
-
-function updMP(tag){
-  const ds=DS[tag]||{};const done=ACHK.filter(id=>ds[id]&&ds[id]!=='').length;
-  const el=document.getElementById('mP');
-  if(el){el.textContent=done+'/'+ACHK.length+' checks';el.className='mp'+(done===ACHK.length?' done':'');}
-}
-
-function saveForm(tag){
-  if(!tag) return;
-  ensDS(tag);
-  const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
-  Object.assign(DS[tag],{Comm_Status:g('f_st'),Comm_By:g('f_cb'),Comm_Date:g('f_cd'),Approved_By:g('f_ab'),Remarks:g('f_rm')});
-}
-
-async function saveClose(){
-  const dev=ST.devs[ST.idx];
-  saveForm(dev.tag);
-  Object.assign(DS[dev.tag],{
-    Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
-    Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
-    Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
-    Scope_S:dev.scopeS,Scope_D:dev.scopeD,exported:false,
-  });
-  await dbPut(DS[dev.tag]);
-  showT('Saved','info');
-  closeM();
-  updProg();updPendLbl();renderNav();renderHead();renderGrid();
-}
-
-function closeM(){document.getElementById('ov').classList.remove('open');}
-function nav(d){
-  saveForm(ST.devs[ST.idx]?.tag);
-  const n=ST.idx+d;
-  if(n>=0&&n<ST.devs.length){ST.idx=n;renderM();}
-}
-
-document.addEventListener('keydown',e=>{
-  if(!document.getElementById('ov').classList.contains('open'))return;
-  if(e.key==='Escape')closeM();
-  if(e.key==='ArrowRight')nav(1);
-  if(e.key==='ArrowLeft')nav(-1);
-});
-
-async function clearAndRefresh(){
-  if(!confirm('Clear all local data on this device?\nOnly do this if you have no unsent work.')) return;
-  try{
-    const tx=DB.transaction(STORE,'readwrite');
-    tx.objectStore(STORE).clear();
-    await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});
-    Object.keys(DS).forEach(k=>delete DS[k]);
-    ST.area=null;ST.equip=null;ST.sub=null;ST.devs=[];ST.idx=null;
-    updProg();updPendLbl();renderNav();
-    document.getElementById('ph').innerHTML='<div class="pht">CGL2 Commissioning Tracker</div><div class="phs">Local data cleared — tap Get Latest to reload</div>';
-    document.getElementById('gw').innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Ready</div><div class="empty-sub">Tap Get Latest to load current data from server.</div></div>';
-    showT('Cleared — now tap Get Latest','info');
-  }catch(e){showT('Error: '+e.message,'err');}
-}
-
 initApp();
 </script>
 </body>
