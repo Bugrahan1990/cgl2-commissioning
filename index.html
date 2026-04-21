@@ -196,7 +196,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
 .tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
 .tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
-.dash{overflow-y:auto;padding:16px;display:none;flex:1;min-height:0}
+.dash{overflow-y:auto;padding:16px;display:none;flex:1;min-height:0;position:relative}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
@@ -230,7 +230,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .dash-section.collapsed .dash-section-arr{transform:rotate(-90deg)}
 .dash-section-body{overflow:hidden;transition:max-height .25s ease}
 .dash-section.collapsed .dash-section-body{max-height:0!important}
-.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;position:sticky;top:-16px;z-index:10;background:var(--bg);padding:8px 0 4px;margin-top:-8px}
 .gauge-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .gauge-svg{display:block}
 .gauge-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:center}
@@ -279,11 +279,11 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     </div>
     <div class="panel">
       <div class="ph" id="ph">
-        <div id="phSearch" style="display:none;padding:6px 0 0">
-          <input id="devSearch" class="ns" placeholder="Search tag or description..." oninput="filterGrid()" style="width:100%;font-size:12px" autocomplete="off">
-        </div>
         <div class="pht">CGL2 Commissioning Tracker</div>
         <div class="phs">Select Area &rsaquo; Equipment &rsaquo; Sub-Equipment</div>
+      </div>
+      <div id="phSearch" style="display:none;padding:6px 14px;background:var(--sur);border-bottom:1px solid var(--bdr);flex-shrink:0">
+        <input id="devSearch" placeholder="Search tag, description, device type..." oninput="filterGrid()" style="width:100%;background:var(--bg);border:1px solid var(--bdr2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--tx);outline:none;font-family:Inter,sans-serif" autocomplete="off">
       </div>
       <div class="gw" id="gw">
         <div class="empty">
