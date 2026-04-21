@@ -192,6 +192,39 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
   .modal,.sheet{border-radius:var(--rl);max-height:88vh}
   @keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 }
+
+/* TABS */
+.tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
+.tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
+.tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+
+/* DASHBOARD */
+.dash{flex:1;overflow-y:auto;padding:16px;min-height:0;display:none}
+.dash.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.done::before{background:var(--G)}.kpi.wip::before{background:var(--A)}
+.kpi.pending::before{background:#ddd}.kpi.unsent::before{background:var(--Y)}
+.kpi-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
+.kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3)}
+.kpi-sub{font-size:11px;color:var(--tx2);font-family:'DM Mono',monospace}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
+.prog-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.prog-item{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:10px 14px}
+.prog-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.prog-name{font-size:12px;font-weight:500;color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog-pct{font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--navy);flex-shrink:0;margin-left:8px}
+.prog-counts{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;margin-bottom:5px}
+.prog-track{height:8px;background:var(--bdr);border-radius:99px;overflow:hidden;display:flex}
+.prog-fill-g{height:100%;background:var(--G)}.prog-fill-a{height:100%;background:var(--A)}.prog-fill-r{height:100%;background:#e0e0e0}
+.dtype-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:8px}
+.dtype-item{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+.dtype-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--blue);width:44px;flex-shrink:0}
+.dtype-bar-wrap{flex:1;height:6px;background:var(--bdr);border-radius:99px;overflow:hidden}
+.dtype-bar{height:100%;background:var(--G);border-radius:99px}
+.dtype-count{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0}
+.dash-updated{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;text-align:right;margin-top:12px;padding-bottom:8px}
 @media(max-width:460px){.nav{width:170px}}
 </style>
 </head>
@@ -218,7 +251,12 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     </div>
   </div>
 
-  <div class="main">
+  <div class="tabs">
+    <div class="tab active" id="tabMap" onclick="switchTab('map')">&#9776; Devices</div>
+    <div class="tab" id="tabDash" onclick="switchTab('dash')">&#9783; Dashboard</div>
+  </div>
+  <div class="dash" id="dashPanel"></div>
+  <div class="main" id="mainPanel">
     <div class="nav">
       <div class="nh">
         <div class="nt">Navigation</div>
@@ -239,6 +277,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -266,14 +305,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 <div class="ov" id="expOv" onclick="if(event.target===this)document.getElementById('expOv').classList.remove('open')">
   <div class="sheet">
     <div class="sh-title">Export Data</div>
-    <div class="sh-sub">Downloads your commissioning records as a JSON file. Send it to the project manager via Teams or email.</div>
+    <div class="sh-sub">Downloads your commissioning records as a file. Send it to the project manager via Teams or email. They will import it to update the central database.</div>
     <div class="sh-card">
       <div class="sh-row"><span class="sh-lbl">Records saved locally</span><span class="sh-val" id="expTotal">0</span></div>
       <div class="sh-row"><span class="sh-lbl">Not yet exported</span><span class="sh-val" id="expPending">0</span></div>
     </div>
     <div class="sh-btns">
       <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="doExport()">&#8593; Download File</button>
+      <button class="sh-btn pri" onclick="doExport()">Download &amp; Send</button>
     </div>
   </div>
 </div>
@@ -410,15 +449,99 @@ async function smartSync(){
     }
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
-    if(kept>0){
-      showT('Synced — '+updated+' updated, '+kept+' unsent kept','ok');
-    }else{
-      showT('Synced — '+updated+' devices updated','ok');
-    }
+    showT(kept>0?'Synced — '+updated+' updated, '+kept+' unsent kept':'Synced — '+updated+' updated','ok');
   }catch(e){
     showT('Sync failed: '+e.message,'err');
   }
   btn.disabled=false;btn.textContent='↓ Sync';
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('tabMap').classList.toggle('active',tab==='map');
+  document.getElementById('tabDash').classList.toggle('active',tab==='dash');
+  document.getElementById('mainPanel').style.display=tab==='map'?'flex':'none';
+  document.getElementById('dashPanel').style.display=tab==='dash'?'block':'none';
+  if(tab==='dash') renderDash();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function renderDash(){
+  const dp=document.getElementById('dashPanel');
+  const total=2286;
+  const commissioned=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
+  const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
+  const notStarted=total-commissioned-inProgress;
+  const unsent=Object.values(DS).filter(d=>d.exported===false).length;
+  const pct=(commissioned/total*100).toFixed(1);
+
+  let out='<div class="kpi-row">';
+  out+=kpiCard('done',commissioned,'Commissioned',pct+'% of total');
+  out+=kpiCard('wip',inProgress,'In Progress','');
+  out+=kpiCard('pending',notStarted,'Not Started','');
+  out+=kpiCard('unsent',unsent,'Unsent','pending export');
+  out+='</div>';
+
+  out+='<div class="section-title">Progress by Area</div><div class="prog-list">';
+  Object.entries(H).forEach(([area,equips])=>{
+    const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
+    const tot=devs.length;
+    const done=devs.filter(d=>getS(d.tag)==='Commissioned').length;
+    const wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    out+=progBar(area,done,wip,tot);
+  });
+  out+='</div>';
+
+  out+='<div class="section-title">Progress by Equipment</div><div class="prog-list">';
+  const eMap={};
+  Object.values(H).forEach(equips=>{
+    Object.entries(equips).forEach(([eq,subs])=>{
+      const devs=Object.values(subs).flat();
+      if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
+      eMap[eq].tot+=devs.length;
+      eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;
+      eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    });
+  });
+  Object.entries(eMap).forEach(([eq,v])=>{
+    out+=progBar(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot);
+  });
+  out+='</div>';
+
+  out+='<div class="section-title">By Device Type</div><div class="dtype-list">';
+  const tMap={};
+  Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
+    if(!tMap[d.type])tMap[d.type]={done:0,tot:0};
+    tMap[d.type].tot++;
+    if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
+  })));
+  const maxT=Math.max(...Object.values(tMap).map(v=>v.tot));
+  Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
+    const p=v.tot?Math.round(v.done/v.tot*100):0;
+    out+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
+  });
+  out+='</div>';
+  out+=`<div class="dash-updated">Based on locally synced data &middot; ${new Date().toLocaleString()}</div>`;
+  dp.innerHTML=out;
+}
+
+function kpiCard(cls,val,lbl,sub){
+  return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
+}
+
+function progBar(name,done,wip,tot){
+  const pct=tot?Math.round(done/tot*100):0;
+  const dW=tot?Math.round(done/tot*100):0;
+  const aW=tot?Math.round(wip/tot*100):0;
+  return `<div class="prog-item">
+    <div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div>
+    <div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div>
+    <div class="prog-track">
+      <div class="prog-fill-g" style="width:${dW}%"></div>
+      <div class="prog-fill-a" style="width:${aW}%"></div>
+      <div class="prog-fill-r" style="width:${100-dW-aW}%"></div>
+    </div>
+  </div>`;
 }
 initApp();
 </script>
