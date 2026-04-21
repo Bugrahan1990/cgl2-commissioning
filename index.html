@@ -196,7 +196,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
 .tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
 .tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
-.dash{overflow-y:auto;padding:16px;display:none;flex:1;min-height:0;position:relative}
+.dash{display:none;flex-direction:column;flex:1;min-height:0}.dash-gauges{padding:12px 16px 8px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--bdr)}.dash-scroll{overflow-y:auto;padding:12px 16px;flex:1;min-height:0}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
@@ -230,7 +230,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .dash-section.collapsed .dash-section-arr{transform:rotate(-90deg)}
 .dash-section-body{overflow:hidden;transition:max-height .25s ease}
 .dash-section.collapsed .dash-section-body{max-height:0!important}
-.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;position:sticky;top:-16px;z-index:10;background:var(--bg);padding:8px 0 4px;margin-top:-8px}
+.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 .gauge-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .gauge-svg{display:block}
 .gauge-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:center}
@@ -746,7 +746,7 @@ function switchTab(tab){
   document.getElementById('tabMap').classList.toggle('active',tab==='map');
   document.getElementById('tabDash').classList.toggle('active',tab==='dash');
   document.getElementById('mainPanel').style.display=tab==='map'?'flex':'none';
-  document.getElementById('dashPanel').style.display=tab==='dash'?'block':'none';
+  document.getElementById('dashPanel').style.display=tab==='dash'?'flex':'none';
   if(tab==='dash')renderDash();
 }
 
@@ -760,64 +760,65 @@ function renderDash(){
   const pct=total?Math.round(commissioned/total*100):0;
   const wipPct=total?Math.round(inProgress/total*100):0;
 
-  let out='<div class="gauge-row">';
-  out+=gaugeCard(pct,'Commissioned',commissioned+' of '+total,'#1a7a3c');
-  out+=gaugeCard(wipPct,'In Progress',inProgress+' devices','#8a5c00');
-  out+=gaugeCard(total?Math.round(notStarted/total*100):0,'Not Started',notStarted+' devices','#9aa0b4');
-  out+=gaugeCard(unsent>0&&total?Math.min(100,Math.round(unsent/total*100)):0,'Unsent',unsent+' pending','#7a5c00');
-  out+='</div>';
+  const dp=document.getElementById('dashPanel');
+
+  // ── Gauges in fixed top section ──────────────────────────────────────
+  let gaugeHtml='<div class="gauge-row">';
+  gaugeHtml+=gaugeCard(pct,'Commissioned',commissioned+' of '+total,'#1a7a3c');
+  gaugeHtml+=gaugeCard(wipPct,'In Progress',inProgress+' devices','#8a5c00');
+  gaugeHtml+=gaugeCard(total?Math.round(notStarted/total*100):0,'Not Started',notStarted+' devices','#9aa0b4');
+  gaugeHtml+=gaugeCard(unsent>0&&total?Math.min(100,Math.round(unsent/total*100)):0,'Unsent',unsent+' pending','#7a5c00');
+  gaugeHtml+='</div>';
+
+  // ── Scrollable sections ───────────────────────────────────────────────
+  let sectHtml='';
 
   if(!total){
-    out+='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
-    document.getElementById('dashPanel').innerHTML=out;
-    return;
+    sectHtml='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
+  } else {
+    const eMap={};
+    Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
+      const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
+      eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    }));
+    const tMap={};
+    Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
+      if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
+      if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
+    })));
+    const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
+    const eTotal=Object.values(eMap).reduce((a,v)=>a+v.tot,0);
+    const eDone=Object.values(eMap).reduce((a,v)=>a+v.done,0);
+
+    sectHtml+=collapsibleSection('by-area','Progress by Area',pct+'% overall',()=>{
+      let s='<div class="prog-list" style="padding:8px 0">';
+      Object.entries(H).forEach(([area,equips])=>{
+        const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
+        const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
+        s+=progBarHTML(area,done,wip,tot);
+      });
+      return s+'</div>';
+    });
+    sectHtml+=collapsibleSection('by-equip','Progress by Equipment',eTotal?Math.round(eDone/eTotal*100)+'%':'',()=>{
+      let s='<div class="prog-list" style="padding:8px 0">';
+      Object.entries(eMap).forEach(([eq,v])=>s+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
+      return s+'</div>';
+    });
+    sectHtml+=collapsibleSection('by-type','By Device Type','',()=>{
+      let s='<div class="dtype-list" style="padding:8px 0">';
+      Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
+        const p=v.tot?Math.round(v.done/v.tot*100):0;
+        s+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
+      });
+      return s+'</div>';
+    });
+    sectHtml+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
   }
 
-  // ── Collapsible: By Area ─────────────────────────────────────────────
-  out+=collapsibleSection('by-area','Progress by Area',pct+'% overall',()=>{
-    let s='<div class="prog-list" style="padding:8px 0">';
-    Object.entries(H).forEach(([area,equips])=>{
-      const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
-      const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
-      s+=progBarHTML(area,done,wip,tot);
-    });
-    return s+'</div>';
-  });
+  // Render into two separate divs
+  dp.innerHTML=`<div class="dash-gauges">${gaugeHtml}</div><div class="dash-scroll">${sectHtml}</div>`;
 
-  // ── Collapsible: By Equipment ────────────────────────────────────────
-  const eMap={};
-  Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
-    const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
-    eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
-  }));
-  const eTotal=Object.values(eMap).reduce((a,v)=>a+v.tot,0);
-  const eDone=Object.values(eMap).reduce((a,v)=>a+v.done,0);
-  out+=collapsibleSection('by-equip','Progress by Equipment',eTotal?Math.round(eDone/eTotal*100)+'%':'',()=>{
-    let s='<div class="prog-list" style="padding:8px 0">';
-    Object.entries(eMap).forEach(([eq,v])=>s+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
-    return s+'</div>';
-  });
-
-  // ── Collapsible: By Device Type ──────────────────────────────────────
-  const tMap={};
-  Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-    if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
-    if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
-  })));
-  const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
-  out+=collapsibleSection('by-type','By Device Type','',()=>{
-    let s='<div class="dtype-list" style="padding:8px 0">';
-    Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
-      const p=v.tot?Math.round(v.done/v.tot*100):0;
-      s+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
-    });
-    return s+'</div>';
-  });
-
-  out+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
-  document.getElementById('dashPanel').innerHTML=out;
-
-  // Restore collapsed state from sessionStorage
+  // Restore collapsed states
   document.querySelectorAll('.dash-section').forEach(sec=>{
     const key='dash-collapsed-'+sec.dataset.id;
     if(sessionStorage.getItem(key)==='1') sec.classList.add('collapsed');
@@ -825,6 +826,7 @@ function renderDash(){
     if(body) body.style.maxHeight=sec.classList.contains('collapsed')?'0':body.scrollHeight+'px';
   });
 }
+
 
 function collapsibleSection(id,title,meta,contentFn){
   const content=contentFn();
@@ -887,50 +889,54 @@ function toggleSearch(){
 function filterGrid(){
   const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
   const gw=document.getElementById('gw');
+
   if(!q){
-    // Restore normal grid view
     if(ST.sub){renderGrid();}
-    else{
-      gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device above.</div></div>';
-    }
+    else{gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device tag, description or type above.</div></div>';}
     return;
   }
-  // Search across ALL devices in ALL areas
-  const results=[];
-  Object.entries(H).forEach(([area,equips])=>{
-    Object.entries(equips).forEach(([equip,subs])=>{
-      Object.entries(subs).forEach(([sub,devs])=>{
-        devs.forEach((d,i)=>{
-          const haystack=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase();
-          if(haystack.includes(q)){
-            results.push({d,area,equip,sub});
-          }
-        });
-      });
-    });
+
+  // Collect search scope:
+  // If a sub-equipment is already selected → search only within it
+  // Otherwise → search all devices
+  const scope=[];
+  if(ST.sub){
+    ST.devs.forEach(d=>scope.push({d,area:ST.area,equip:ST.equip,sub:ST.sub}));
+  } else {
+    Object.entries(H).forEach(([area,equips])=>
+      Object.entries(equips).forEach(([equip,subs])=>
+        Object.entries(subs).forEach(([sub,devs])=>
+          devs.forEach(d=>scope.push({d,area,equip,sub})))));
+  }
+
+  // Match: tag number, description, device type, section, SCS ref
+  // Also support tag prefix: "265" matches all 265xx tags, "26501" matches equipment 501
+  const results=scope.filter(({d})=>{
+    const haystack=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase();
+    return haystack.includes(q);
   });
-  // Render results
+
   gw.innerHTML='';
   if(!results.length){
-    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try a different tag number, description or device type.</div></div>';
+    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try tag number, description or device type.</div></div>';
     return;
   }
+
   const grid=document.createElement('div');grid.className='grid';
-  // Add result count header
   const hdr=document.createElement('div');
-  hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:4px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
-  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found for "'+q+'"';
+  hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:2px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
+  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found'+(ST.sub?' in '+ST.sub:'');
   grid.appendChild(hdr);
+
   results.forEach(({d,area,equip,sub})=>{
     const s=getS(d.tag);const unsent=isUnsent(d.tag);
     const cls=unsent?'unsynced':sCls(s);
     const card=document.createElement('div');card.className='card '+cls;
-    const loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+area.split(' - ')[1]+' › '+sub+'</div>';
-    const scsLine=d.scs?'<div class="cscs">'+d.scs+'</div>':'';
+    const areaShort=area.split(' - ')[1]||area;
+    const loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+areaShort+' › '+sub+'</div>';
+    const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
     card.innerHTML=loc+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-    // clicking opens modal in context
     card.onclick=()=>{
-      // Navigate to the sub and open device
       selectSub(area,equip,sub,H[area][equip][sub]);
       const idx=ST.devs.findIndex(x=>x.tag===d.tag);
       if(idx>=0)openM(idx);
@@ -939,6 +945,7 @@ function filterGrid(){
   });
   gw.appendChild(grid);
 }
+
 
 
 initApp();
