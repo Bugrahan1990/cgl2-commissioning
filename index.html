@@ -197,10 +197,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
 .tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
 .tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
-
-/* DASHBOARD */
-.dash{flex:1;overflow-y:auto;padding:16px;min-height:0;display:none}
-.dash.active{display:block}
+.dash{overflow-y:auto;padding:16px;display:none;flex:1;min-height:0}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
@@ -277,7 +274,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         </div>
       </div>
     </div>
-  </div>
   </div>
 </div>
 
@@ -418,7 +414,7 @@ async function checkOnline(){
 
 async function smartSync(){
   const btn=document.getElementById('btnSync');
-  btn.disabled=true;btn.textContent='Syncing…';
+  btn.disabled=true;btn.textContent='Syncing\u2026';
   try{
     const r=await fetch(STATUS_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(15000)});
     if(!r.ok) throw new Error('Cannot reach server');
@@ -434,81 +430,60 @@ async function smartSync(){
         Comm_Status:row.Comm_Status||'Not Started',
         Comm_By:row.Comm_By||'',
         Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
-        Approved_By:row.Approved_By||'',
-        Remarks:row.Remarks||'',
+        Approved_By:row.Approved_By||'',Remarks:row.Remarks||'',
         CHK_Direction:row.CHK_Direction||'',CHK_Mechanical:row.CHK_Mechanical||'',
         CHK_TagLabel:row.CHK_TagLabel||'',CHK_Wiring:row.CHK_Wiring||'',
         CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
         CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
         CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
-        CHK_Settings:row.CHK_Settings||'',
-        exported:true,
+        CHK_Settings:row.CHK_Settings||'',exported:true,
       };
-      await dbPut(DS[tag]);
-      updated++;
+      await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
-    showT(kept>0?'Synced — '+updated+' updated, '+kept+' unsent kept':'Synced — '+updated+' updated','ok');
-  }catch(e){
-    showT('Sync failed: '+e.message,'err');
-  }
-  btn.disabled=false;btn.textContent='↓ Sync';
+    showT(kept>0?'Synced \u2014 '+updated+' updated, '+kept+' unsent kept':'Synced \u2014 '+updated+' updated','ok');
+  }catch(e){showT('Sync failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='\u2193 Sync';
 }
 
-// ── TABS ──────────────────────────────────────────────────────────────────
 function switchTab(tab){
   document.getElementById('tabMap').classList.toggle('active',tab==='map');
   document.getElementById('tabDash').classList.toggle('active',tab==='dash');
   document.getElementById('mainPanel').style.display=tab==='map'?'flex':'none';
   document.getElementById('dashPanel').style.display=tab==='dash'?'block':'none';
-  if(tab==='dash') renderDash();
+  if(tab==='dash')renderDash();
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────
 function renderDash(){
-  const dp=document.getElementById('dashPanel');
   const total=2286;
   const commissioned=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
   const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
   const notStarted=total-commissioned-inProgress;
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
-  const pct=(commissioned/total*100).toFixed(1);
-
   let out='<div class="kpi-row">';
-  out+=kpiCard('done',commissioned,'Commissioned',pct+'% of total');
+  out+=kpiCard('done',commissioned,'Commissioned',(commissioned/total*100).toFixed(1)+'% of total');
   out+=kpiCard('wip',inProgress,'In Progress','');
   out+=kpiCard('pending',notStarted,'Not Started','');
   out+=kpiCard('unsent',unsent,'Unsent','pending export');
   out+='</div>';
-
   out+='<div class="section-title">Progress by Area</div><div class="prog-list">';
   Object.entries(H).forEach(([area,equips])=>{
     const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
-    const tot=devs.length;
-    const done=devs.filter(d=>getS(d.tag)==='Commissioned').length;
-    const wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
-    out+=progBar(area,done,wip,tot);
+    const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    out+=progBarHTML(area,done,wip,tot);
   });
-  out+='</div>';
-
-  out+='<div class="section-title">Progress by Equipment</div><div class="prog-list">';
+  out+='</div><div class="section-title">Progress by Equipment</div><div class="prog-list">';
   const eMap={};
-  Object.values(H).forEach(equips=>{
-    Object.entries(equips).forEach(([eq,subs])=>{
-      const devs=Object.values(subs).flat();
-      if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
-      eMap[eq].tot+=devs.length;
-      eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;
-      eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
-    });
-  });
-  Object.entries(eMap).forEach(([eq,v])=>{
-    out+=progBar(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot);
-  });
-  out+='</div>';
-
-  out+='<div class="section-title">By Device Type</div><div class="dtype-list">';
+  Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
+    const devs=Object.values(subs).flat();
+    if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
+    eMap[eq].tot+=devs.length;
+    eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;
+    eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+  }));
+  Object.entries(eMap).forEach(([eq,v])=>out+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
+  out+='</div><div class="section-title">By Device Type</div><div class="dtype-list">';
   const tMap={};
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
     if(!tMap[d.type])tMap[d.type]={done:0,tot:0};
@@ -520,28 +495,18 @@ function renderDash(){
     const p=v.tot?Math.round(v.done/v.tot*100):0;
     out+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
   });
-  out+='</div>';
-  out+=`<div class="dash-updated">Based on locally synced data &middot; ${new Date().toLocaleString()}</div>`;
-  dp.innerHTML=out;
+  out+=`</div><div class="dash-updated">Based on locally synced data &middot; ${new Date().toLocaleString()}</div>`;
+  document.getElementById('dashPanel').innerHTML=out;
 }
 
 function kpiCard(cls,val,lbl,sub){
   return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
 }
 
-function progBar(name,done,wip,tot){
+function progBarHTML(name,done,wip,tot){
   const pct=tot?Math.round(done/tot*100):0;
-  const dW=tot?Math.round(done/tot*100):0;
-  const aW=tot?Math.round(wip/tot*100):0;
-  return `<div class="prog-item">
-    <div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div>
-    <div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div>
-    <div class="prog-track">
-      <div class="prog-fill-g" style="width:${dW}%"></div>
-      <div class="prog-fill-a" style="width:${aW}%"></div>
-      <div class="prog-fill-r" style="width:${100-dW-aW}%"></div>
-    </div>
-  </div>`;
+  const dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
+  return `<div class="prog-item"><div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div><div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div><div class="prog-track"><div class="prog-fill-g" style="width:${dW}%"></div><div class="prog-fill-a" style="width:${aW}%"></div><div class="prog-fill-r" style="width:${100-dW-aW}%"></div></div></div>`;
 }
 initApp();
 </script>
