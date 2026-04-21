@@ -513,9 +513,11 @@ async function doExport(){
   const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  const date=new Date().toISOString().slice(0,10);
+  const now=new Date();
+  const date=now.toISOString().slice(0,10);
+  const time=now.toTimeString().slice(0,8).replace(/:/g,'-');
   a.href=url;
-  a.download='CGL2_export_'+date+'.json';
+  a.download='CGL2_export_'+date+'_'+time+'.json';
   a.click();
   URL.revokeObjectURL(url);
 
@@ -598,6 +600,9 @@ function renderNav(){
 
 function selectSub(area,equip,sub,devs){
   ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;
+  // Clear search when navigating
+  const srch=document.getElementById('devSearch');
+  if(srch&&srch.value){srch.value='';filterGrid();}
   renderNav();renderHead();renderGrid();
 }
 
@@ -881,29 +886,58 @@ function toggleSearch(){
 
 function filterGrid(){
   const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
-  const cards=document.querySelectorAll('#gw .card');
-  const labels=document.querySelectorAll('#gw .sl');
+  const gw=document.getElementById('gw');
   if(!q){
-    cards.forEach(c=>c.style.display='');
-    labels.forEach(l=>l.style.display='');
+    // Restore normal grid view
+    if(ST.sub){renderGrid();}
+    else{
+      gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device above.</div></div>';
+    }
     return;
   }
-  let lastLabel=null;
-  let lastLabelHasVisible=false;
-  document.querySelectorAll('#gw .grid > *').forEach(el=>{
-    if(el.classList.contains('sl')){
-      if(lastLabel&&!lastLabelHasVisible) lastLabel.style.display='none';
-      lastLabel=el;lastLabelHasVisible=false;el.style.display='';
-    } else if(el.classList.contains('card')){
-      const tag=el.querySelector('.ctag')?.textContent||'';
-      const desc=el.querySelector('.cdesc')?.textContent||'';
-      const scs=el.querySelector('.cscs')?.textContent||'';
-      const match=tag.toLowerCase().includes(q)||desc.toLowerCase().includes(q)||scs.toLowerCase().includes(q);
-      el.style.display=match?'':'none';
-      if(match)lastLabelHasVisible=true;
-    }
+  // Search across ALL devices in ALL areas
+  const results=[];
+  Object.entries(H).forEach(([area,equips])=>{
+    Object.entries(equips).forEach(([equip,subs])=>{
+      Object.entries(subs).forEach(([sub,devs])=>{
+        devs.forEach((d,i)=>{
+          const haystack=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase();
+          if(haystack.includes(q)){
+            results.push({d,area,equip,sub});
+          }
+        });
+      });
+    });
   });
-  if(lastLabel&&!lastLabelHasVisible)lastLabel.style.display='none';
+  // Render results
+  gw.innerHTML='';
+  if(!results.length){
+    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try a different tag number, description or device type.</div></div>';
+    return;
+  }
+  const grid=document.createElement('div');grid.className='grid';
+  // Add result count header
+  const hdr=document.createElement('div');
+  hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:4px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
+  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found for "'+q+'"';
+  grid.appendChild(hdr);
+  results.forEach(({d,area,equip,sub})=>{
+    const s=getS(d.tag);const unsent=isUnsent(d.tag);
+    const cls=unsent?'unsynced':sCls(s);
+    const card=document.createElement('div');card.className='card '+cls;
+    const loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+area.split(' - ')[1]+' › '+sub+'</div>';
+    const scsLine=d.scs?'<div class="cscs">'+d.scs+'</div>':'';
+    card.innerHTML=loc+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+    // clicking opens modal in context
+    card.onclick=()=>{
+      // Navigate to the sub and open device
+      selectSub(area,equip,sub,H[area][equip][sub]);
+      const idx=ST.devs.findIndex(x=>x.tag===d.tag);
+      if(idx>=0)openM(idx);
+    };
+    grid.appendChild(card);
+  });
+  gw.appendChild(grid);
 }
 
 
