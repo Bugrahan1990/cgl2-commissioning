@@ -267,14 +267,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 <div class="ov" id="expOv" onclick="if(event.target===this)document.getElementById('expOv').classList.remove('open')">
   <div class="sheet">
     <div class="sh-title">Export Data</div>
-    <div class="sh-sub">Downloads your commissioning records as a file. Send it to the project manager via Teams or email. They will import it to update the central database.</div>
+    <div class="sh-sub">Downloads your records and opens Outlook with a pre-filled email to Bugra. Attach the downloaded file and hit Send.</div>
     <div class="sh-card">
       <div class="sh-row"><span class="sh-lbl">Records saved locally</span><span class="sh-val" id="expTotal">0</span></div>
       <div class="sh-row"><span class="sh-lbl">Not yet exported</span><span class="sh-val" id="expPending">0</span></div>
     </div>
     <div class="sh-btns">
       <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="doExport()">Download &amp; Send</button>
+      <button class="sh-btn pri" onclick="doExport()">&#8593; Download &amp; Open Outlook</button>
     </div>
   </div>
 </div>
@@ -438,13 +438,16 @@ async function doExport(){
   const pending=Object.values(DS).filter(d=>d.exported===false);
   if(!pending.length){showT('No new records to export','info');return;}
 
-  // Create JSON file and trigger download
-  const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
+  const date=new Date().toISOString().slice(0,10);
+  const filename='CGL2_export_'+date+'.json';
+  const content=JSON.stringify(pending,null,2);
+
+  // Download the file
+  const blob=new Blob([content],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  const date=new Date().toISOString().slice(0,10);
   a.href=url;
-  a.download='CGL2_export_'+date+'.json';
+  a.download=filename;
   a.click();
   URL.revokeObjectURL(url);
 
@@ -456,7 +459,24 @@ async function doExport(){
 
   document.getElementById('expOv').classList.remove('open');
   updPendLbl();
-  showT('Exported '+pending.length+' records — send the file to the project manager','ok');
+
+  // Open mail client with pre-filled email
+  const subject=encodeURIComponent('CGL2 Commissioning Data — '+date);
+  const body=encodeURIComponent(
+    'Hi Bugra,\n\n'+
+    'Please find attached the CGL2 commissioning export for '+date+'.\n\n'+
+    'File: '+filename+'\n'+
+    'Records: '+pending.length+'\n\n'+
+    'Please attach the downloaded file ('+filename+') to this email before sending.\n\n'+
+    'Regards'
+  );
+  const mailto='mailto:bugrahan.cetinkale@primetals.com?subject='+subject+'&body='+body;
+
+  setTimeout(()=>{
+    window.location.href=mailto;
+  },800);
+
+  showT('File downloaded — Outlook opening, attach the file and send','ok');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
