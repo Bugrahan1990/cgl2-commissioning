@@ -239,7 +239,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 
   <div class="ab">
     <div class="ab-left">
-      <div id="loadStatus" style="font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px"></div>
       <div class="net-badge off" id="netBadge"><div class="nbdot"></div><span id="netLbl">Offline</span></div>
       <div class="pend-lbl" id="pendLbl"></div>
     </div>
@@ -325,54 +324,54 @@ let DEVICES_VERSION=0;
 
 async function loadDevices(){
   const DEVICES_URL='https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/devices.json';
-  const CACHE_KEY='CGL2_devices_v';
+  showLoadStatus('Loading device list...',false);
 
-  // Check if we have a cached version
+  // Try session cache first
   try{
-    const cached=localStorage.getItem('CGL2_devices');
-    const cachedVer=parseInt(localStorage.getItem('CGL2_devices_version')||'0');
-    if(cached){
-      H=JSON.parse(cached).hierarchy;
-      DEVICES_VERSION=cachedVer;
+    const c=sessionStorage.getItem('CGL2_devices');
+    if(c){
+      const cached=JSON.parse(c);
+      H=cached.hierarchy;
+      DEVICES_VERSION=cached.version||0;
       renderNav();
-      showLoadStatus('Using cached device list (v'+cachedVer+') — checking for updates...',false);
+      showLoadStatus('Device list ready (v'+DEVICES_VERSION+' · '+cached.total+' devices)',true);
     }
-  }catch(e){console.warn('Cache read failed:',e);}
+  }catch(e){}
 
-  // Try to fetch latest from GitHub
+  // Fetch fresh copy from GitHub
   try{
-    const r=await fetch(DEVICES_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(10000)});
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),20000);
+    const r=await fetch(DEVICES_URL+'?t='+Date.now(),{signal:controller.signal});
+    clearTimeout(timer);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
     const newVer=data.version||1;
-
-    if(newVer>DEVICES_VERSION||Object.keys(H).length===0){
+    if(Object.keys(H).length===0||newVer>DEVICES_VERSION){
       H=data.hierarchy;
       DEVICES_VERSION=newVer;
-      try{
-        localStorage.setItem('CGL2_devices',JSON.stringify(data));
-        localStorage.setItem('CGL2_devices_version',String(newVer));
-      }catch(e){console.warn('Cache write failed:',e);}
+      try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
       renderNav();
-      showLoadStatus('Device list loaded (v'+newVer+' &middot; '+data.total+' devices)',true);
+      if(ST.sub){renderHead();renderGrid();}
+      showLoadStatus('Device list updated (v'+newVer+' · '+data.total+' devices)',true);
     }else{
-      showLoadStatus('Device list up to date (v'+newVer+')',true);
+      showLoadStatus('Device list v'+newVer+' · '+data.total+' devices',true);
     }
   }catch(e){
     if(Object.keys(H).length>0){
-      showLoadStatus('Offline — using cached device list',false);
+      showLoadStatus('Offline — using cached device list',true);
     }else{
-      showLoadStatus('ERROR: Cannot load device list. Connect to WiFi and refresh.',true);
+      showLoadStatus('⚠ Connect to WiFi to load device list, then refresh',false);
     }
   }
 }
 
 function showLoadStatus(msg,fade){
   const el=document.getElementById('loadStatus');
-  if(!el) return;
+  if(!el)return;
+  el.style.opacity='1';
   el.textContent=msg;
-  if(fade) setTimeout(()=>{el.style.opacity='0';},3000);
-  else el.style.opacity='1';
+  if(fade)setTimeout(()=>{el.style.opacity='0';},4000);
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────
@@ -442,10 +441,10 @@ async function initApp(){
   await openDB();
   const all=await dbGetAll();
   all.forEach(r=>{DS[r.Tag_Number]=r;});
-  checkOnline();
   updProg();
   updPendLbl();
-  await loadDevices();
+  checkOnline();
+  loadDevices();
 }
 
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
