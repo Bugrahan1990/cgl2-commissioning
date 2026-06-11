@@ -24,7 +24,6 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx)}
 
-/* TOP BAR */
 .tb{background:var(--navy);padding:0 16px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .logo{font-size:14px;font-weight:600;color:#fff;white-space:nowrap}.logo span{color:#90c8f0}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
@@ -32,28 +31,22 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .pf{height:100%;background:#3fb950;border-radius:99px;transition:width .5s}
 .pl{font-size:11px;color:rgba(255,255,255,.65);font-family:'DM Mono',monospace;white-space:nowrap}
 
-/* ACTION BAR */
 .ab{background:var(--sur);border-bottom:1px solid var(--bdr);padding:8px 14px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap}
 .ab-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
 .net-badge{display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap;flex-shrink:0}
 .net-badge.off{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .net-badge.on{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
 .nbdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pend-lbl{font-size:11px;color:var(--A);font-family:'DM Mono',monospace;white-space:nowrap}
 .ab-btns{display:flex;gap:5px;flex-shrink:0}
 .xbtn{padding:6px 12px;border-radius:7px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
 .xbtn.get{background:var(--Gbg);color:var(--G);border:1px solid var(--Gbdr)}
 .xbtn.export{background:var(--navy);color:#fff}
+.xbtn:disabled{opacity:.4;cursor:not-allowed}
 
-/* TABS */
-.tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
-.tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
-.tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
-
-/* LAYOUT */
 .wrap{display:flex;flex-direction:column;height:100%}
 .main{display:flex;flex:1;overflow:hidden;min-height:0}
 
-/* SIDEBAR */
 .nav{width:210px;background:var(--sur);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
 .nh{padding:10px 12px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0}
 .nt{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--tx3);margin-bottom:6px}
@@ -88,7 +81,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .sc2{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}
 .pd{width:5px;height:5px;border-radius:50%;background:var(--A);flex-shrink:0}
 
-/* PANEL */
 .panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .ph{background:var(--sur);border-bottom:1px solid var(--bdr);padding:10px 14px;flex-shrink:0}
 .pht{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px}
@@ -101,19 +93,15 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .chip.gr{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .chip.y{background:var(--Ybg);border-color:var(--Ybdr);color:var(--Y)}
 .cd{width:5px;height:5px;border-radius:50%}
+.chip.g .cd{background:var(--G)}.chip.a .cd{background:var(--A)}
+.chip.r .cd{background:var(--R)}.chip.gr .cd{background:var(--Gr)}.chip.y .cd{background:var(--A)}
 
-/* DEVICE SEARCH */
-#phSearch{display:none;padding:6px 14px;background:var(--sur);border-bottom:1px solid var(--bdr);flex-shrink:0}
-#devSearch{width:100%;background:var(--bg);border:1px solid var(--bdr2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--tx);outline:none;font-family:Inter,sans-serif}
-
-/* GRID */
 .gw{flex:1;overflow-y:auto;padding:10px 12px;min-height:0}
 .gw::-webkit-scrollbar{width:3px}
 .gw::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
 .sl{grid-column:1/-1;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:4px 0 2px;border-bottom:1px solid var(--bdr);margin-bottom:2px}
 
-/* CARDS */
 .card{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:9px 10px;cursor:pointer;position:relative;overflow:hidden;transition:transform .1s}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .card.commissioned::before{background:var(--G)}.card.in-progress::before{background:var(--A)}
@@ -132,17 +120,12 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .not-started .cst{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .na .cst{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .unsynced .cst{background:var(--Ybg);border-color:var(--Ybdr);color:var(--Y)}
-.cbadges{position:absolute;top:5px;right:6px;display:flex;gap:3px}
-.cnfpa{font-size:9px;color:#c0392b;font-weight:700}
-.cinst{font-size:9px;color:var(--blue);font-weight:700;cursor:pointer}
 
-/* EMPTY */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--tx3);text-align:center;padding:30px;height:100%}
 .empty-icon{font-size:32px;opacity:.3}
 .empty-title{font-size:14px;font-weight:500;color:var(--tx2)}
 .empty-sub{font-size:11px;max-width:240px;line-height:1.7}
 
-/* OVERLAY */
 .ov{position:fixed;inset:0;background:rgba(15,20,40,.55);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .ov.open{display:flex}
 .modal{background:var(--sur);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .2s ease}
@@ -155,7 +138,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .mbadge{font-size:9px;padding:2px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bdr);color:var(--tx3);font-family:'DM Mono',monospace}
 .mbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
-/* CHECKLIST GROUPS */
 .grp{padding:12px 20px}.grp+.grp{border-top:1px solid var(--bdr)}
 .gh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .gnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
@@ -170,7 +152,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cbtn.na{background:var(--Ybg);border-color:var(--Ybdr);color:var(--Y)}
 .cbtn.fail{background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)}
 
-/* SIGN OFF */
 .so{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 20px}
 .fg{display:flex;flex-direction:column;gap:4px}.fg.full{grid-column:1/-1}
 .fl{font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
@@ -181,14 +162,12 @@ select.fc.sp{border-color:var(--Abdr);color:var(--A)}
 select.fc.sn{border-color:var(--Grbdr);color:var(--Gr)}
 textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 
-/* MODAL FOOTER */
 .mftr{padding:10px 20px 16px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px;flex-shrink:0;background:var(--bg)}
 .btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx2);font-family:'Inter',sans-serif}
 .btn-s{background:var(--navy);color:#fff;border-color:var(--navy)}
 .btn-x{margin-left:auto}
 .mp{font-size:10px;font-family:'DM Mono',monospace;color:var(--tx3)}.mp.done{color:var(--G)}
 
-/* EXPORT SHEET */
 .sheet{background:var(--sur);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-width:460px;padding:20px 20px 28px;animation:slideUp .2s ease}
 .sh-title{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px}
 .sh-sub{font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.6}
@@ -202,75 +181,30 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .sh-btn.pri{background:var(--navy);color:#fff}
 .sh-btn.sec{background:var(--sur2);color:var(--tx2);border:1px solid var(--bdr)}
 
-/* NFPA MODAL */
-.nfpa-modal{background:var(--sur);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .2s ease;border-top:4px solid #c0392b}
-.nfpa-hdr{padding:12px 20px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:#fff5f5}
-.nfpa-title{font-size:14px;font-weight:700;color:#c0392b;display:flex;align-items:center;gap:8px}
-.nfpa-timer{margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#c0392b;background:#fdeaea;padding:3px 10px;border-radius:99px;border:1px solid #f0a0a0}
-.nfpa-timer.warn{color:#fff;background:#c0392b;animation:pulse .8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-.nfpa-body{flex:1;overflow-y:auto;padding:0}
-.nfpa-item{display:flex;align-items:flex-start;gap:10px;padding:10px 20px;border-bottom:1px solid var(--bdr)}
-.nfpa-item:last-child{border-bottom:none}
-.nfpa-num{width:24px;height:24px;border-radius:50%;background:#c0392b;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.nfpa-text{flex:1}
-.nfpa-step{font-size:12px;font-weight:500;color:var(--tx);line-height:1.4}
-.nfpa-hint{font-size:10px;color:var(--tx3);margin-top:2px;line-height:1.4}
-.nfpa-chk{margin-top:6px;display:flex;gap:6px}
-.nfpa-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--bdr2);background:var(--bg);font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
-.nfpa-btn.pass{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
-.nfpa-btn.fail{background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)}
-.nfpa-ftr{padding:10px 20px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px;background:var(--bg);flex-shrink:0}
-.nfpa-progress{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;display:flex;align-items:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 16px;border-radius:99px;font-size:12px;font-family:'DM Mono',monospace;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{opacity:1}
+.toast.ok{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
+.toast.err{background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)}
+.toast.info{background:var(--Abg);border-color:var(--Abdr);color:var(--A)}
 
-/* INSTRUCTIONS MODAL */
-.inst-modal{background:var(--sur);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .2s ease;border-top:3px solid var(--blue)}
-.inst-hdr{padding:14px 20px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0}
-.inst-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:2px}
-.inst-model{font-size:11px;color:var(--blue);font-family:'DM Mono',monospace;margin-bottom:4px}
-.inst-body{flex:1;overflow-y:auto;padding:14px 20px}
-.inst-section{margin-bottom:16px}
-.inst-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
-.inst-step{display:flex;gap:10px;margin-bottom:8px;padding:8px 10px;background:var(--bg);border-radius:8px}
-.inst-step-num{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.inst-step-text{font-size:11.5px;color:var(--tx);line-height:1.5;flex:1}
-.inst-warn{background:#fff5f5;border:1px solid #f0a0a0;border-radius:8px;padding:8px 12px;font-size:11px;color:#c0392b;margin-bottom:8px;display:flex;gap:8px}
-.inst-note{background:var(--Abg);border:1px solid var(--Abdr);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--A);margin-bottom:8px}
+@media(min-width:600px){
+  .ov{align-items:center;padding:20px}
+  .modal,.sheet{border-radius:var(--rl);max-height:88vh}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+}
 
-/* PIN MODAL */
-.pin-modal{background:var(--sur);border-radius:var(--rl);width:280px;padding:24px;text-align:center;animation:mIn .15s ease}
-@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
-.pin-title{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:4px}
-.pin-sub{font-size:12px;color:var(--tx2);margin-bottom:16px}
-.pin-input{width:100%;text-align:center;font-size:22px;font-family:'DM Mono',monospace;letter-spacing:8px;background:var(--bg);border:2px solid var(--bdr2);border-radius:9px;padding:10px;color:var(--tx);outline:none;margin-bottom:12px}
-.pin-input:focus{border-color:var(--blue)}
-.pin-err{font-size:11px;color:var(--R);margin-bottom:8px;min-height:16px}
-.pin-btns{display:flex;gap:8px}
-
-/* ADMIN BADGE */
-.admin-badge{display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:#fff5f5;border:1px solid #f0a0a0;color:#c0392b;cursor:pointer}
-.admin-badge.show{display:flex}
-
-/* DASHBOARD */
-.dash{display:none;flex-direction:column;flex:1;min-height:0}
-.dash-gauges{padding:12px 16px 8px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--bdr)}
-.dash-scroll{overflow-y:auto;padding:12px 16px;flex:1;min-height:0}
-.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.gauge-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
-.gauge-svg{display:block}
-.gauge-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:center}
-.gauge-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
-.gauge-sub{font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace}
-.dash-section{margin-bottom:8px}
-.dash-section-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);user-select:none}
-.dash-section-hdr:hover{background:var(--sur2)}
-.dash-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3)}
-.dash-section-meta{display:flex;align-items:center;gap:8px}
-.dash-section-pct{font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--navy)}
-.dash-section-arr{font-size:10px;color:var(--tx3);transition:transform .2s;display:inline-block}
-.dash-section.collapsed .dash-section-arr{transform:rotate(-90deg)}
-.dash-section-body{overflow:hidden;transition:max-height .25s ease}
-.dash-section.collapsed .dash-section-body{max-height:0!important}
+.tabs{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);flex-shrink:0;padding:0 14px;gap:2px}
+.tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:'Inter',sans-serif}
+.tab:hover{color:var(--tx2)}.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.dash{display:none;flex-direction:column;flex:1;min-height:0}.dash-gauges{padding:12px 16px 8px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--bdr)}.dash-scroll{overflow-y:auto;padding:12px 16px;flex:1;min-height:0}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.done::before{background:var(--G)}.kpi.wip::before{background:var(--A)}.kpi.pending::before{background:#ddd}.kpi.unsent::before{background:var(--Y)}
+.kpi-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
+.kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3)}
+.kpi-sub{font-size:11px;color:var(--tx2);font-family:'DM Mono',monospace}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
 .prog-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
 .prog-item{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:10px 14px}
 .prog-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
@@ -286,91 +220,80 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .dtype-bar{height:100%;background:var(--G);border-radius:99px}
 .dtype-count{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0}
 .dash-updated{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;text-align:right;margin-top:12px;padding-bottom:8px}
-
-/* SAFETY TAB */
-.safety{display:none;flex-direction:column;flex:1;min-height:0}
-.safety-hdr{padding:10px 16px;background:var(--sur);border-bottom:1px solid var(--bdr);flex-shrink:0;display:flex;align-items:center;gap:10px}
-.safety-title{font-size:13px;font-weight:600;color:#c0392b}
-.safety-sub{font-size:11px;color:var(--tx2)}
-.safety-scroll{flex:1;overflow-y:auto;padding:12px 16px;min-height:0}
-.safety-item{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
-.safety-item-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none}
-.safety-item-hdr:hover{background:var(--sur2)}
-.safety-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.safety-status.pass{background:var(--G)}.safety-status.fail{background:var(--R)}.safety-status.pending{background:#ddd}
-.safety-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--blue);min-width:120px}
-.safety-desc{font-size:11px;color:var(--tx);flex:1}
-.safety-type{font-size:9px;background:#fff5f5;border:1px solid #f0a0a0;color:#c0392b;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
-.safety-arr{font-size:9px;color:var(--tx3);transition:transform .2s}
-.safety-item.open .safety-arr{transform:rotate(180deg)}
-.safety-body{display:none;padding:0 14px 14px;border-top:1px solid var(--bdr)}
-.safety-item.open .safety-body{display:block}
-.safety-proc{font-size:11px;color:var(--tx2);line-height:1.6;margin-bottom:10px;padding:8px;background:var(--bg);border-radius:6px;margin-top:10px}
-.safety-result{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.safety-field{display:flex;flex-direction:column;gap:3px}
-.safety-field label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--tx3)}
-.safety-field input,.safety-field select,.safety-field textarea{background:var(--bg);border:1px solid var(--bdr2);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--tx);outline:none;font-family:inherit;width:100%}
-.safety-field.full{grid-column:1/-1}
-.safety-save-btn{margin-top:10px;width:100%;padding:9px;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 16px;border-radius:99px;font-size:12px;font-family:'DM Mono',monospace;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-.toast.show{opacity:1}
-.toast.ok{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
-.toast.err{background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)}
-.toast.info{background:var(--Abg);border-color:var(--Abdr);color:var(--A)}
-
-@media(min-width:600px){
-  .ov{align-items:center;padding:20px}
-  .modal,.nfpa-modal,.inst-modal{border-radius:var(--rl);max-height:88vh}
-  .sheet{border-radius:var(--rl)}
-  @keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
-}
+.dash-section{margin-bottom:8px}
+.dash-section-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);user-select:none}
+.dash-section-hdr:hover{background:var(--sur2)}
+.dash-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3)}
+.dash-section-meta{display:flex;align-items:center;gap:8px}
+.dash-section-pct{font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--navy)}
+.dash-section-arr{font-size:10px;color:var(--tx3);transition:transform .2s;display:inline-block}
+.dash-section.collapsed .dash-section-arr{transform:rotate(-90deg)}
+.dash-section-body{overflow:hidden;transition:max-height .25s ease}
+.dash-section.collapsed .dash-section-body{max-height:0!important}
+.gauge-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.gauge-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.gauge-svg{display:block}
+.gauge-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:center}
+.gauge-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--tx);line-height:1}
+.gauge-sub{font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace}
 @media(max-width:460px){.nav{width:170px}}
+
+/* NFPA SECTION (inside modal) */
+.nfpa-section{border-top:2px solid #c0392b;background:#fff9f9}
+.nfpa-sec-hdr{display:flex;align-items:center;gap:10px;padding:10px 20px 8px;background:#fff5f5}
+.nfpa-sec-icon{font-size:14px;color:#c0392b}
+.nfpa-sec-title{font-size:12px;font-weight:700;color:#c0392b;flex:1}
+.nfpa-timer-wrap{display:flex;align-items:center;gap:6px}
+.nfpa-timer{font-family:"DM Mono",monospace;font-size:12px;font-weight:700;color:#c0392b;background:#fdeaea;padding:2px 9px;border-radius:99px;border:1px solid #f0a0a0}
+.nfpa-timer.warn{color:#fff;background:#c0392b;animation:npulse .8s infinite}
+@keyframes npulse{0%,100%{opacity:1}50%{opacity:.6}}
+.nfpa-item{display:flex;align-items:flex-start;gap:10px;padding:8px 20px;border-bottom:1px solid #fde8e8}
+.nfpa-item:last-child{border-bottom:none}
+.nfpa-num{width:22px;height:22px;border-radius:50%;background:#c0392b;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.nfpa-text{flex:1}
+.nfpa-step{font-size:11.5px;font-weight:500;color:var(--tx);line-height:1.4}
+.nfpa-hint{font-size:10px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.nfpa-chk{margin-top:5px;display:flex;gap:5px}
+.nfpa-btn{padding:4px 11px;border-radius:6px;border:1px solid var(--bdr2);background:var(--bg);font-size:10px;font-weight:600;cursor:pointer;font-family:"Inter",sans-serif}
+.nfpa-btn.pass{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
+.nfpa-btn.fail{background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)}
+.nfpa-progress{font-size:10px;color:#c0392b;font-family:"DM Mono",monospace;padding:4px 20px 8px;background:#fff5f5}
+
+
+
+
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 
 <div class="wrap">
-  <!-- TOP BAR -->
   <div class="tb">
     <div class="logo">CGL2 <span>Commission</span></div>
     <div class="tb-right">
       <div class="pt"><div class="pf" id="gF" style="width:0%"></div></div>
-      <div class="pl" id="gL">0/...</div>
+      <div class="pl" id="gL">0/2286</div>
     </div>
   </div>
 
-  <!-- ACTION BAR -->
   <div class="ab">
     <div class="ab-left">
+      <div id="loadStatus" style="font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;transition:opacity 1.5s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px"></div>
       <div class="net-badge off" id="netBadge"><div class="nbdot"></div><span id="netLbl">Offline</span></div>
-      <div style="font-size:10px;color:var(--tx3);font-family:DM Mono,monospace;transition:opacity 1.5s;overflow:hidden;text-overflow:ellipsis;max-width:200px;white-space:nowrap" id="loadStatus"></div>
-      <div id="pendLbl" style="font-size:11px;color:var(--A);font-family:DM Mono,monospace;white-space:nowrap"></div>
+      <div class="pend-lbl" id="pendLbl"></div>
     </div>
     <div class="ab-btns">
       <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
-      <button class="xbtn" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)" id="btnSearch" onclick="toggleSearch()">&#9906;</button>
-      <div class="admin-badge" id="adminBadge" onclick="exitAdmin()">&#9733; Admin</div>
-      <button class="xbtn" style="background:#fff5f5;color:#c0392b;border:1px solid #f0a0a0;font-size:10px" onclick="openPinModal()" title="Admin mode">&#9733;</button>
+      <button class="xbtn" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)" id="btnSearch" onclick="toggleSearch()" title="Search devices">&#9906;</button>
     </div>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
     <div class="tab active" id="tabMap" onclick="switchTab('map')">&#9776; Devices</div>
     <div class="tab" id="tabDash" onclick="switchTab('dash')">&#9783; Dashboard</div>
-    <div class="tab" id="tabSafety" onclick="switchTab('safety')" style="color:#c0392b">&#9888; Safety Tests</div>
   </div>
-
-  <!-- DEVICE SEARCH -->
-  <div id="phSearch">
-    <input id="devSearch" placeholder="Search tag, description, device type, model..." oninput="filterGrid()" autocomplete="off">
-  </div>
-
-  <!-- MAIN PANEL (Devices tab) -->
+  <div class="dash" id="dashPanel"></div>
   <div class="main" id="mainPanel">
     <div class="nav">
       <div class="nh">
@@ -382,30 +305,19 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     <div class="panel">
       <div class="ph" id="ph">
         <div class="pht">CGL2 Commissioning Tracker</div>
-        <div class="phs">Select Area &#8250; Equipment &#8250; Sub-Equipment</div>
+        <div class="phs">Select Area &rsaquo; Equipment &rsaquo; Sub-Equipment</div>
+      </div>
+      <div id="phSearch" style="display:none;padding:6px 14px;background:var(--sur);border-bottom:1px solid var(--bdr);flex-shrink:0">
+        <input id="devSearch" placeholder="Search tag, description, device type..." oninput="filterGrid()" style="width:100%;background:var(--bg);border:1px solid var(--bdr2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--tx);outline:none;font-family:Inter,sans-serif" autocomplete="off">
       </div>
       <div class="gw" id="gw">
         <div class="empty">
           <div class="empty-icon">&#9881;</div>
           <div class="empty-title">Select a Location</div>
-          <div class="empty-sub">Works offline. Sync each morning when on WiFi. Export when done to share your work.</div>
+          <div class="empty-sub">Tap Get Latest each morning when on WiFi. Work offline all day. Tap Export when done to send your data.</div>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- DASHBOARD PANEL -->
-  <div class="dash" id="dashPanel" style="display:none"></div>
-
-  <!-- SAFETY PANEL -->
-  <div class="safety" id="safetyPanel" style="display:none">
-    <div class="safety-hdr">
-      <div>
-        <div class="safety-title">&#9888; NFPA 85 Safety Function Tests</div>
-        <div class="safety-sub" id="safetyProgress">Loading...</div>
-      </div>
-    </div>
-    <div class="safety-scroll" id="safetyScroll"></div>
   </div>
 </div>
 
@@ -419,6 +331,20 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <div class="mdesc" id="mDesc"></div>
     </div>
     <div class="mbody" id="mBody"></div>
+    <!-- NFPA 85 SECTION (shown only for ★ marked devices) -->
+    <div id="nfpaSection" style="display:none">
+      <div class="nfpa-section">
+        <div class="nfpa-sec-hdr">
+          <span class="nfpa-sec-icon">&#9733;</span>
+          <span class="nfpa-sec-title">NFPA 85 Commissioning Checklist — Required for this device</span>
+          <div class="nfpa-timer-wrap">
+            <span class="nfpa-timer" id="nfpaTimerDisp">5:00</span>
+          </div>
+        </div>
+        <div class="nfpa-progress" id="nfpaProgressLbl">0/10 completed</div>
+        <div id="nfpaSecBody"></div>
+      </div>
+    </div>
     <div class="mftr">
       <button class="btn" onclick="nav(-1)">&#8592; Prev</button>
       <button class="btn" onclick="nav(1)">Next &#8594;</button>
@@ -429,101 +355,99 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
   </div>
 </div>
 
-<!-- NFPA MODAL -->
-<div class="ov" id="nfpaOv">
-  <div class="nfpa-modal">
-    <div class="nfpa-hdr">
-      <div class="nfpa-title">
-        &#9733; NFPA 85 Commissioning Checklist
-        <span class="nfpa-timer" id="nfpaTimer">5:00</span>
-      </div>
-      <div style="font-size:11px;color:var(--tx2);margin-top:4px;font-family:DM Mono,monospace" id="nfpaTagLbl"></div>
-    </div>
-    <div class="nfpa-body" id="nfpaBody"></div>
-    <div class="nfpa-ftr">
-      <div class="nfpa-progress" id="nfpaProgress">0/10 completed</div>
-      <button class="btn" style="margin-left:auto" onclick="closeNFPA()">Close</button>
-      <button class="btn btn-s" onclick="saveNFPA()">Save &amp; Complete</button>
-    </div>
-  </div>
-</div>
-
-<!-- INSTRUCTIONS MODAL -->
-<div class="ov" id="instOv" onclick="if(event.target===this)closeInst()">
-  <div class="inst-modal">
-    <div class="mhandle"></div>
-    <div class="inst-hdr">
-      <div class="inst-title" id="instTitle"></div>
-      <div class="inst-model" id="instModel"></div>
-    </div>
-    <div class="inst-body" id="instBody"></div>
-    <div class="mftr">
-      <button class="btn btn-x btn-s" onclick="closeInst()">Close</button>
-    </div>
-  </div>
-</div>
-
 <!-- EXPORT SHEET -->
 <div class="ov" id="expOv" onclick="if(event.target===this)document.getElementById('expOv').classList.remove('open')">
   <div class="sheet">
     <div class="sh-title">Export Data</div>
-    <div class="sh-sub">Downloads your commissioning records as a JSON file. Send it to the project manager via Teams or email.</div>
+    <div class="sh-sub">Downloads your commissioning records as a file. Send it to the project manager via Teams or email. They will import it to update the central database.</div>
     <div class="sh-card">
       <div class="sh-row"><span class="sh-lbl">Records saved locally</span><span class="sh-val" id="expTotal">0</span></div>
       <div class="sh-row"><span class="sh-lbl">Not yet exported</span><span class="sh-val" id="expPending">0</span></div>
     </div>
     <div class="sh-btns">
       <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="doExport()">&#8593; Download File</button>
-    </div>
-  </div>
-</div>
-
-<!-- PIN MODAL -->
-<div class="ov" id="pinOv" onclick="if(event.target===this)document.getElementById('pinOv').classList.remove('open')" style="align-items:center">
-  <div class="pin-modal">
-    <div class="pin-title">Admin Mode</div>
-    <div class="pin-sub">Enter PIN to mark NFPA devices</div>
-    <input class="pin-input" id="pinInput" type="password" maxlength="4" placeholder="&#9679;&#9679;&#9679;&#9679;" onkeyup="if(event.key==='Enter')checkPin()">
-    <div class="pin-err" id="pinErr"></div>
-    <div class="pin-btns">
-      <button class="sh-btn sec" onclick="document.getElementById('pinOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="checkPin()">Enter</button>
+      <button class="sh-btn pri" onclick="doExport()">Download &amp; Send</button>
     </div>
   </div>
 </div>
 
 <script>
+// ── GITHUB CONFIG ─────────────────────────────────────────────────────────
+// Update this with your actual GitHub Pages URL after uploading status.json
+const STATUS_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/status.json';
 
-// ── CONFIG ─────────────────────────────────────────────────────────────────
-const STATUS_URL  = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/status.json';
-const DEVICES_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/devices.json';
-const ADMIN_PIN   = '1234';
+// ── DEVICE DATA ───────────────────────────────────────────────────────────
+let H={};
+let DEVICES_VERSION=0;
 
-// ── STATE ──────────────────────────────────────────────────────────────────
-let H={}, DEVICES_VERSION=0;
-let isOnline=false, isAdmin=false;
-const ST={area:null,equip:null,sub:null,devs:[],idx:null};
-const OA={},OE={};
-const DS={};  // local device statuses
-const NFPA_FLAGS={};  // tag -> true if NFPA required
-let nfpaTimer=null;
+async function loadDevices(){
+  showLoadStatus('Loading device list...',false);
+  try{
+    const c=sessionStorage.getItem('CGL2_devices');
+    if(c){
+      const cached=JSON.parse(c);H=cached.hierarchy;DEVICES_VERSION=cached.version||0;
+      renderNav();updProg();
+      showLoadStatus('Device list ready (v'+DEVICES_VERSION+' · '+cached.total+' devices)',true);
+    }
+  }catch(e){}
+  try{
+    // Use raw URL for devices.json - caching is fine since it rarely changes
+    const DEVICES_RAW='https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/devices.json';
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),20000);
+    const r=await fetch(DEVICES_RAW,{signal:ctrl.signal});
+    clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();const newVer=data.version||1;
+    if(Object.keys(H).length===0||newVer>DEVICES_VERSION){
+      H=data.hierarchy;DEVICES_VERSION=newVer;
+      try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
+      renderNav();updProg();if(ST.sub){renderHead();renderGrid();}
+      showLoadStatus('Device list v'+newVer+' · '+data.total+' devices',true);
+    }else{showLoadStatus('Device list v'+newVer+' · up to date',true);}
+  }catch(e){
+    if(Object.keys(H).length>0)showLoadStatus('Offline — using cached device list',true);
+    else showLoadStatus('⚠ Connect to WiFi to load devices, then refresh',false);
+  }
+}
+function showLoadStatus(msg,fade){
+  const el=document.getElementById('loadStatus');if(!el)return;
+  el.style.opacity='1';el.textContent=msg;
+  if(fade)setTimeout(()=>{el.style.opacity='0';},4000);
+}
 
-// NFPA 85 checklist steps for combustion devices
+// ── ADMIN & NFPA CONFIG ──────────────────────────────────────────────────
+// NFPA flags loaded from devices.json (nfpa:true on device)
+// No admin mode needed — NFPA flag set in Excel device list
+let nfpaTimerInterval=null;
+let nfpaTimerSeconds=300;
+let nfpaActiveTag=null;
+
 const NFPA_STEPS=[
-  {id:'nfpa1',l:'Burner Management System (BMS) verified operational',h:'Confirm BMS panel powered, all I/O functional, safety logic loaded and active'},
-  {id:'nfpa2',l:'Fuel supply pressure verified within operating range',h:'Check supply pressure at burner header. Confirm within design spec before any ignition attempt'},
-  {id:'nfpa3',l:'Safety shut-off valve (SSOV) proven closed on loss of flame signal',h:'Simulate loss of flame — verify SSOV closes within required response time per NFPA 85 Sec 8.7'},
-  {id:'nfpa4',l:'High/low fuel pressure switches tested at setpoint',h:'Adjust setpoint temporarily to cause trip. Verify proper BMS response. Restore original setpoint'},
-  {id:'nfpa5',l:'Purge cycle timed and verified (min 4 air changes)',h:'Confirm pre-ignition purge meets NFPA 85 minimum 4 air changes. Document purge time'},
-  {id:'nfpa6',l:'Pilot ignition proven — flame detection confirmed',h:'Ignite pilot, confirm UV/IR flame detector responds within 4 seconds per NFPA 85'},
-  {id:'nfpa7',l:'Main flame established and proven stable',h:'Light main burner from pilot. Confirm stable flame signal. Record scanner output'},
-  {id:'nfpa8',l:'Safety interlock functional test complete',h:'Test all interlocks: high temp, low airflow, door open. Each must cause safe shutdown'},
-  {id:'nfpa9',l:'Leak test on all fuel gas connections confirmed',h:'Pressure test all connections with appropriate medium. No leakage permitted per NFPA 85 Sec 8.4'},
-  {id:'nfpa10',l:'Documentation signed and retained on site',h:'Complete NFPA 85 commissioning record. Retain on site for AHJ inspection'},
+  {id:'nfpa1',l:'Burner Management System (BMS) verified operational',
+   h:'Confirm BMS panel powered, all I/O functional, safety logic loaded and active'},
+  {id:'nfpa2',l:'Fuel supply pressure verified within operating range',
+   h:'Check supply pressure at burner header. Confirm within design spec before any ignition attempt'},
+  {id:'nfpa3',l:'Safety shut-off valve (SSOV) proven closed on loss of flame signal',
+   h:'Simulate loss of flame — verify SSOV closes within required response time per NFPA 85 Sec 8.7'},
+  {id:'nfpa4',l:'High/low fuel pressure switches tested at setpoint',
+   h:'Adjust setpoint temporarily to cause trip. Verify correct BMS response. Restore original setpoint'},
+  {id:'nfpa5',l:'Purge cycle timed and verified (min 4 air changes)',
+   h:'Confirm pre-ignition purge meets NFPA 85 minimum. Document purge time'},
+  {id:'nfpa6',l:'Pilot ignition proven — flame detection confirmed',
+   h:'Ignite pilot, confirm UV/IR flame detector responds within 4 seconds per NFPA 85'},
+  {id:'nfpa7',l:'Main flame established and proven stable',
+   h:'Light main burner from pilot. Confirm stable flame signal. Record scanner output'},
+  {id:'nfpa8',l:'Safety interlock functional test complete',
+   h:'Test all interlocks: high temp, low airflow, door open. Each must cause safe shutdown'},
+  {id:'nfpa9',l:'Leak test on all fuel gas connections confirmed',
+   h:'Pressure test all connections. No leakage permitted per NFPA 85 Sec 8.4'},
+  {id:'nfpa10',l:'Documentation signed and retained on site',
+   h:'Complete NFPA 85 commissioning record. Retain for AHJ inspection'},
 ];
 
-const ACHK=['CHK_Direction','CHK_Mechanical','CHK_TagLabel','CHK_Wiring','CHK_IO','CHK_PowerSupply','CHK_Enclosure','CHK_OpenClose','CHK_Calibration','CHK_Interlock','CHK_Settings'];
+// ── STATE ─────────────────────────────────────────────────────────────────
+const ST={area:null,equip:null,sub:null,devs:[],idx:null};
+const OA={},OE={};
+let isOnline=false;
 
 const GROUPS=[
   {n:1,t:'Installation',s:'Verify physical installation',c:'#0C447C',bg:'#EAF3FB',items:[
@@ -544,46 +468,11 @@ const GROUPS=[
     {id:'CHK_Settings',l:'Settings confirmed (speed, pressure, setpoint)',h:'All parameters set per datasheet / spec'},
   ]},
 ];
+const ACHK=GROUPS.flatMap(g=>g.items.map(i=>i.id));
 
-const INST_BY_MODEL={
-  'Yokogawa EJA110E':{"title":"Yokogawa EJA110E Differential Pressure Transmitter","warn":"Isolate process and depressurise impulse lines before connecting calibration equipment. SIL 2 rated device.","steps":["Verify tag, calibrated range and engineering units match datasheet and P&ID","Check impulse line connections \u2014 high-pressure to \"H\" port, low-pressure to \"L\" port","Confirm 24VDC supply at terminals \u2014 minimum 10.5V required for PROFIBUS PA","Open impulse root valves slowly \u2014 check for leaks before full process pressure","Zero calibration: close both equalising valves, open equaliser, confirm 4mA at zero differential","Span check: apply known differential pressure, verify 20mA at full span","Check 25%, 50%, 75% points \u2014 record as-found and as-left values","Verify PROFIBUS PA address and confirm device visible in DCS","Confirm correct engineering units and display mode via configurator"],"notes":"Ships factory-calibrated. Record serial number, calibration date, range and as-found error. Calibration interval typically 5 years per SIL 2 requirements.","ref":"IM 01C21B01-01E"},
-  'Yokogawa EJA530E':{"title":"Yokogawa EJA530E Gauge Pressure Transmitter","warn":"Isolate process before connecting calibration equipment. Do not exceed maximum working pressure on nameplate.","steps":["Verify tag, range and engineering units match datasheet and P&ID","Check process connection orientation \u2014 no trapped condensate in gas applications","Confirm 24VDC supply. Open root valve slowly and check for leaks","At atmospheric pressure verify 4mA output and correct DCS reading","Apply full-scale pressure via calibrator \u2014 confirm 20mA at span","Check 25/50/75% points \u2014 record as-found and as-left","Confirm PROFIBUS PA address and visibility in control system"],"notes":"Ships factory-calibrated. Record serial number, range and calibration date.","ref":"IM 01C21B04-01E"},
-  'Schubert & Salzer 8021':{"title":"Schubert & Salzer Type 8021 GS3 Sliding Gate Control Valve","warn":"Process must be isolated before mechanical work. Valve closes in flow direction only \u2014 verify flow arrow on body before installation.","steps":["Verify flow direction arrow on valve body matches P&ID \u2014 8021 seals in flow direction only","Centre valve between flanges \u2014 confirm ANSI 150 bolting pattern aligned","Connect instrument air to Siemens PS2 positioner at PZ port \u2014 typically 40-60 PSI supply","Connect PROFIBUS PA signal \u2014 confirm correct bus address and segment","PS2 auto-commissioning: hold % button until display changes, then hold U button to start stroke initialisation","Verify fail-safe: interrupt air supply \u2014 valve must spring-close","Full stroke test from DCS: command 0%, 25%, 50%, 75%, 100% \u2014 verify position feedback at each point","Set positioner deadband (DEBA) and check for hunting \u2014 adjust if oscillating","Check packing and body flange for leakage under operating pressure"],"notes":"Stroke rate: opening 2.5%/sec, closing 2.5%/sec. PS2 positioner: 6DR5510-0NN00-0AA3. DN50 Kvs=45, DN200 Kvs=560.","ref":"Schubert & Salzer Type 8021 Operating Instructions"},
-  'Schubert & Salzer 7010':{"title":"Schubert & Salzer Type 7010 Angle Seat Valve","warn":"Do not operate against closed downstream valve under pressure \u2014 seat damage may result.","steps":["Verify NPT connections are sealed with appropriate thread sealant for the process medium","Confirm spring action direction \u2014 spring closes on loss of air","Connect instrument air to positioner supply port \u2014 check O-rings","Apply control signal and verify valve opens/closes correctly","Check limit switch \u2014 confirm correct state at open and closed positions","Pressurize and leak check all thread connections and packing","Verify solenoid valve energizes/de-energizes correctly from DCS"],"notes":"DN32 angle seat valve for pilot air/gas. Includes 3/2-way solenoid 24VDC and limit switch.","ref":"Schubert & Salzer Type 7010 Operating Instructions"},
-  'EBRO HP111':{"title":"EBRO HP111 High Performance Butterfly Valve","warn":"Install in CLOSED position \u2014 disc damage occurs if flanges are tightened with disc open. No flange gaskets required \u2014 seat seals directly against counterflange. Never exceed 1.5x PS for pressure testing.","steps":["Confirm disc in closed position before inserting between flanges","Centre valve between flanges \u2014 counterflange faces must be smooth and plane-parallel per EN 1092-1","Tighten flange bolts in cross pattern to specified torque","Connect ASCO WT8551 solenoid valve (24VDC) to actuator","Connect TVF-M2GGNEM switch box \u2014 set SPDT switches for open and closed positions","Apply instrument air and cycle valve \u2014 confirm smooth operation, no binding","Verify fail-safe: de-energise solenoid \u2014 valve must fail CLOSED (spring return)","Check beacon: GREEN = open, RED = closed \u2014 confirm correct state at DCS","Pressure test: open valve, test at max 1.0x PS \u2014 record leak-free confirmation"],"notes":"HP111 is double-eccentric high-performance construction. Inconel seat rated to 600C. Maintenance-free design.","ref":"EBRO HP111 Technical Data Sheet"},
-  'Siemens P320':{"title":"Siemens P320 Flow Transmitter (PROFIBUS PA)","warn":"Process fluid must be present and flowing for final calibration.","steps":["Verify tag, flow range and engineering units match datasheet","Check installation \u2014 confirm correct upstream/downstream straight-run requirements","Power up via PROFIBUS PA segment \u2014 confirm minimum 9V at device","Zero transmitter with no-flow condition if accessible","Span check against reference flow \u2014 adjust range if required","Confirm signal in DCS with correct engineering units"],"notes":"Used on atmosphere/seal recirculation flow applications. Confirm PROFIBUS PA bus address before energising.","ref":"Siemens P320 Installation Manual"},
-  'Siemens TS500':{"title":"Siemens TS500 Temperature Transmitter (PT100 RTD)","warn":"Allow 15 minutes thermal stabilisation after process reaches steady state before recording calibration values.","steps":["Confirm PT100 3-wire or 4-wire connection per wiring drawing \u2014 check terminal assignment","Verify thermowell insertion depth \u2014 RTD tip must be in the process stream","Power up \u2014 confirm no fault codes on display or via PROFIBUS","Simulate low temperature using calibrator \u2014 verify mA output and DCS reading","Simulate high temperature \u2014 verify correct span value at DCS","Record in-situ temperature against reference thermometer if accessible","Confirm engineering units (C) and display range in control system"],"notes":"PT100 RTD type. Standard 4-20mA or PROFIBUS PA output depending on configuration.","ref":"Siemens TS500 Installation Manual"},
-  'A-T Controls V8C':{"title":"A-T Controls V8C Series Ball Valve with Siemens PS2 Positioner","warn":"Spring-OPEN actuator \u2014 valve opens on loss of air. Confirm fail position matches design before pressurising. N2 service \u2014 ensure area ventilated.","steps":["Confirm flow direction \u2014 V-port ball valves are directional","Connect FR-10-G filter regulator and instrument air supply at correct pressure","Connect Siemens SIPART PS2 positioner PROFIBUS PA \u2014 confirm bus address","PS2 auto-commissioning: press % button, hold U until actuator strokes \u2014 positioner self-calibrates","Verify fail-safe: interrupt air \u2014 valve must move to OPEN (spring-open) position","Full stroke test from DCS: 0%, 50%, 100% \u2014 verify position feedback at each point","Check limit switches (MLS) \u2014 confirm open/closed state at DCS","Leak test all stainless steel tubing connections"],"notes":"V8C 2-1/2\" V-port carbon steel ball valve. Spring-OPEN actuator (3R300SO). PS2 PROFIBUS PA. FM/CSA Class 1 Div 1 approved.","ref":"A-T Controls V8C Series Installation & Maintenance"},
-  'Kinetrol 127-100':{"title":"Kinetrol 127-100 Vane Actuator","warn":"Keep clear of shaft rotation arc during testing. Confirm end-stop settings before applying process load.","steps":["Confirm actuator mounted correctly \u2014 verify shaft coupler and key/keyway alignment","Set mechanical end stops: drive to CLOSED, set stop. Drive to OPEN, set stop. Allow 2-3 degree clearance","Connect instrument air \u2014 confirm correct supply pressure (typically 60-80 PSI)","Cycle actuator fully open and closed \u2014 confirm smooth rotation and correct end positions","If fitted with positioner: perform auto-commissioning per positioner manual","If fitted with limit switches: confirm open/closed state at switch contacts","Verify fail-safe position on loss of air supply"],"notes":"Kinetrol 127-100 vane actuator for zone damper operation on CGL2.","ref":"Kinetrol 127 Series Installation & Maintenance"},
-  'Kinetrol 107-100':{"title":"Kinetrol 107-100 Vane Actuator","warn":"Keep clear of shaft rotation arc during testing.","steps":["Confirm actuator mounted correctly \u2014 verify shaft coupling and alignment","Set mechanical end stops for OPEN and CLOSED with 2-3 degree clearance","Connect instrument air at correct supply pressure","Cycle actuator and confirm smooth operation and correct end positions","Verify limit switch or position feedback at DCS","Confirm fail-safe position on loss of air"],"notes":"Smaller variant of 127-100. Same commissioning approach.","ref":"Kinetrol 107 Series Installation & Maintenance"},
-  'Siemens DGA211':{"title":"Siemens DGA211 Electric Actuator","warn":"Ensure power is isolated before wiring. Do not operate without travel limits correctly set.","steps":["Confirm mechanical coupling to valve/damper shaft \u2014 check for backlash","Set travel limits: drive to CLOSED, set closed limit. Drive to OPEN, set open limit","Wire actuator per wiring diagram \u2014 confirm correct control signal","Power up and test from local control first \u2014 confirm correct rotation direction","Test from DCS: command open and closed, verify position feedback","Check torque settings do not cause over-travel at end stops"],"notes":"Siemens DGA211 electric actuator. Confirm correct supply voltage per nameplate before energising.","ref":"Siemens DGA Series Operating Manual"},
-  'Reotemp TCX-5331A':{"title":"Reotemp TCX-5331A Thermocouple Transmitter","warn":"Allow process to reach steady-state temperature before calibration. Verify thermocouple type matches DCS configuration.","steps":["Confirm T/C type matches DCS input card configuration (typically Type K for furnace)","Check extension wire polarity \u2014 red wire is negative for Type K","Verify insertion depth \u2014 tip must be in measurement zone","Power up transmitter and confirm no fault on output","Simulate low temperature using T/C calibrator \u2014 confirm correct DCS reading","Simulate high temperature \u2014 confirm correct reading at span","Record in-situ reading against reference if accessible"],"notes":"Reotemp TCX-5331A thermocouple with integral transmitter. Confirm T/C type and range in DCS before commissioning.","ref":"Reotemp TCX Series Installation Manual"},
-  'IFM SM7604':{"title":"IFM SM7604 Calorimetric Flow Monitor","warn":"Sensor must have process fluid present before applying power \u2014 dry running causes damage.","steps":["Confirm correct insertion depth per drawing \u2014 IFM SM series requires specific immersion length","Check flow direction \u2014 arrow on sensor body must match process flow direction","Connect EVC711 cable \u2014 confirm 24VDC, output and ground pin assignment","Power up with process flowing \u2014 confirm green LED indicates flow present","Set switching point: with normal flow present, adjust setpoint for stable ON. Reduce flow to trigger alarm, confirm output switches","Verify DCS signal in correct state for flow/no-flow conditions","Record setpoint value in commissioning record"],"notes":"IFM SM7604 calorimetric flow switch with EVC711 connector. 43 devices on CGL2. Setpoint must be adjusted in-situ with process flowing.","ref":"IFM SM Series Operating Manual"},
-  'IFM SM9604':{"title":"IFM SM9604 Calorimetric Flow Monitor","warn":"Must have process fluid present before powering up.","steps":["Confirm correct installation depth and flow direction alignment","Connect EVC711 cable \u2014 confirm wiring (24VDC, signal, ground)","Power up with process flowing. Confirm LED status","Adjust switching setpoint with normal flow, verify alarm on low flow","Confirm DCS signal in correct state","Record setpoint value"],"notes":"IFM SM9604 \u2014 larger range variant of SM7604. Same commissioning approach.","ref":"IFM SM Series Operating Manual"},
-  'IFM SM6604':{"title":"IFM SM6604 Calorimetric Flow Monitor","warn":"Must have process fluid present before powering up.","steps":["Confirm correct insertion depth and flow direction","Connect EVC711 cable \u2014 confirm wiring","Power up with process flowing. Confirm LED status","Adjust switching setpoint and verify alarm condition","Confirm DCS signal state and record setpoint"],"notes":"IFM SM6604 \u2014 smaller range variant. Same commissioning approach as SM7604.","ref":"IFM SM Series Operating Manual"},
-  'Kuhme KVII':{"title":"Kuhme KVII Valve","warn":"Confirm correct actuator sizing for valve torque requirement before installation.","steps":["Verify valve installation matches P&ID \u2014 confirm flow direction and connection type","Check actuator coupling and confirm actuator size matches valve torque requirement","Apply instrument air and cycle valve \u2014 confirm smooth operation","Verify open and closed positions at DCS via limit switches or position transmitter","Leak check all connections under operating pressure"],"notes":"Kuhme KVII series. Confirm model variant (KVII/F, KVII/FO, KVII/FS) matches design spec.","ref":"Kuhme KVII Series Installation Manual"},
-  'Kuhme KVF':{"title":"Kuhme KVF Valve","steps":["Verify valve installation matches P&ID","Check actuator coupling and torque rating","Apply air and cycle valve \u2014 confirm smooth operation","Verify positions at DCS","Leak check under operating pressure"],"notes":"Kuhme KVF series. Similar commissioning approach to KVII.","ref":"Kuhme KVF Series Installation Manual"},
-  'UEC H100':{"title":"UEC H100 Field Enclosure / Junction Box","steps":["Verify enclosure mounting and cable entry routing \u2014 confirm IP rating maintained with all glands fitted","Check terminal connections match loop drawings \u2014 confirm all shields grounded at one end only","Power up and verify supply voltage at all terminals","Test each I/O channel: confirm correct signal levels at DCS for each connected field device","Check door/cover seal condition \u2014 replace if damaged"],"notes":"UEC H100 field enclosure/junction box. Commissioning is I/O verification rather than device calibration.","ref":"UEC H100 Installation Manual"},
-  'Williamson MW':{"title":"Williamson MW Series Infrared Pyrometer","warn":"Optical path must be clear and window clean. Confirm instrument is rated for ambient temperature at mounting location.","steps":["Confirm mounting angle and sight path are clear of obstructions per installation drawing","Clean optical window before first use using clean dry cloth","Power up and allow 15 minute warm-up period","Set emissivity value per process material specification (typically 0.85-0.95 for steel)","Compare pyrometer reading against reference thermocouple at steady-state temperature","Adjust emissivity correction if required to match reference","Confirm correct 4-20mA output and DCS reading"],"notes":"Emissivity setting is critical \u2014 confirm correct value with process engineer before finalising.","ref":"Williamson Instruments Installation & Operation Manual"},
-  'Siemens SGA21':{"title":"Siemens SGA21 Gas Analyser","warn":"Calibration gases required \u2014 confirm correct span gas cylinder is on site. Ensure adequate ventilation \u2014 some span gases are toxic/flammable.","steps":["Confirm sample conditioning system is clean and operational \u2014 check filters and driers","Connect and check sample inlet and outlet lines \u2014 no leaks permitted","Power up analyser and allow warm-up period (minimum 30 minutes)","Zero calibration: flow zero gas (N2 or clean air) \u2014 set zero","Span calibration: flow span gas of known concentration \u2014 set span","Verify output signal at DCS matches span gas concentration","Confirm alarm setpoints are correct per design specification"],"notes":"Confirm correct measurement component (O2, CO, CO2 etc.) and range match P&ID specification.","ref":"Siemens SGA Series Operating Manual"},
-  'Logika FCS':{"title":"Logika FCS Flow Control System","steps":["Verify flow measurement installation \u2014 confirm upstream/downstream straight run requirements are met","Power up control unit and confirm display","Verify 4-20mA input signal from flow element is correctly received","Configure flow range, units and setpoints per design document","Test control loop: apply test setpoint and confirm output drives correctly","Record configuration settings in commissioning record"],"notes":"Confirm configuration parameters match process design specification before completing commissioning.","ref":"Logika FCS Installation and Configuration Manual"},
-};
-
-// Default commissioning instructions per device type
-const INST_BY_TYPE={
-  FCV:{title:'Flow Control Valve',warn:'Ensure process is isolated before stroke testing.',steps:['Verify valve tag matches P&ID and installation drawing','Check actuator air/power supply — confirm correct signal range (e.g. 4-20mA or 0-100 PSI)','Stroke test: drive to 0%, 50%, 100% — verify actual position matches command','Check for leakage across valve seat at closed position','Confirm fail position (fail-open or fail-closed) matches design intent','Calibrate positioner: set zero and span, verify linearity','Test with DCS: send control signal from system, verify response'],notes:'Record supply pressure, bench set range and full-stroke time in commissioning record.'},
-  FT:{title:'Flow Transmitter',warn:'Process fluid must be present for final calibration.',steps:['Verify transmitter tag, range and engineering units match datasheet','Check process connections — correct installation per flow direction arrow','Power up: confirm 24VDC supply at terminals, check loop wiring','Zero calibration: with process at zero flow (or isolated), set 4mA output','Span calibration: apply known flow or calibrated source, verify 20mA at full scale','Confirm signal at DCS matches transmitter output — check scaling','Perform live functional check with process flowing'],notes:'Record serial number, calibration date and range in commissioning record.'},
-  TT:{title:'Temperature Transmitter / Thermocouple',warn:'Allow adequate warm-up time before calibration.',steps:['Verify thermocouple/RTD type and range matches control system configuration','Check insertion depth and thermowell installation','Power up transmitter, confirm loop current in range','Simulate low temperature: verify 4mA output and correct DCS reading','Simulate high temperature: verify 20mA output and correct DCS reading','Check cold junction compensation (for thermocouples)','Perform in-situ check against reference thermometer if accessible'],notes:'Record T/C type, range, engineering units and calibration date.'},
-  PT:{title:'Pressure Transmitter',warn:'Isolate process before connecting calibration equipment.',steps:['Verify transmitter range matches P&ID and datasheet','Check process connection and isolation valve operation','Apply zero pressure (atmospheric): confirm 4mA output','Apply full scale pressure via calibrator: confirm 20mA output','Check at 25%, 50%, 75% span — record as found and as left values','Confirm correct engineering units and scaling at DCS','Check overrange protection — do not exceed sensor limit'],notes:'Record calibration certificate number, as-found and as-left errors.'},
-  PCV:{title:'Pressure Control Valve',warn:'Confirm inlet pressure is within design limit before stroking.',steps:['Verify valve tag, Cv rating and pressure class match P&ID','Check upstream/downstream isolation and vent valves','Stroke test fully closed to fully open — check for smooth travel','Set regulator setpoint per design document','Test pressure control: vary upstream pressure, verify outlet holds setpoint','Check pilot tubing connections — no leaks under pressure','Confirm fail position and spring range'],notes:'Record inlet/outlet design pressures and regulator setpoint.'},
-  PSH:{title:'High Pressure Switch',warn:'NFPA 85: must be trip-tested before commissioning is complete.',steps:['Verify switch setpoint matches approved design document','Confirm process connection and instrument isolation valve','With process isolated, set setpoint temporarily lower than line pressure','Open isolation — confirm switch trips at setpoint, verify BMS/DCS response','Restore original setpoint — confirm switch resets correctly','Test in-line with process at operating conditions if possible','Record trip point, reset point and hysteresis'],notes:'This is a safety device — functional test is mandatory per NFPA 85.'},
-  PSL:{title:'Low Pressure Switch',warn:'NFPA 85: must be trip-tested before commissioning is complete.',steps:['Verify switch setpoint matches approved design document','Confirm process connection and instrument isolation valve','Reduce pressure below setpoint using calibrator or bleed valve','Confirm switch trips — verify BMS/DCS response is correct','Restore pressure — confirm switch resets correctly','Record trip point, reset point and hysteresis','Document in NFPA 85 safety function test record'],notes:'This is a safety device — functional test is mandatory per NFPA 85.'},
-  ZSO:{title:'Limit Switch / Position Indicator',steps:['Verify switch type (NO/NC) matches DCS I/O configuration','Manually actuate: confirm correct state change at both limits','Check mechanical adjustment — ensure reliable actuation without mechanical stress','Verify DCS reads correct open/closed status','Check cable routing and connection integrity','Test with valve/actuator in motion — confirm no false trips'],notes:'Record open and closed state signal levels in commissioning record.'},
-};
-
-// ── INDEXEDDB ──────────────────────────────────────────────────────────────
+// ── INDEXEDDB ─────────────────────────────────────────────────────────────
 let DB=null;
-const DB_NAME='CGL2v4',DB_VER=1,STORE='records',SAFETY_STORE='safety';
+const DB_NAME='CGL2v3',DB_VER=1,STORE='records';
 
 function openDB(){
   return new Promise((res,rej)=>{
@@ -592,94 +481,63 @@ function openDB(){
       const db=e.target.result;
       if(!db.objectStoreNames.contains(STORE))
         db.createObjectStore(STORE,{keyPath:'Tag_Number'});
-      if(!db.objectStoreNames.contains(SAFETY_STORE))
-        db.createObjectStore(SAFETY_STORE,{keyPath:'id'});
     };
     req.onsuccess=e=>{DB=e.target.result;res();};
     req.onerror=e=>rej(e.target.error);
   });
 }
-async function dbPut(store,rec){
+
+async function dbPut(rec){
   return new Promise((res,rej)=>{
-    const tx=DB.transaction(store,'readwrite');
-    tx.objectStore(store).put(rec);
-    tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);
-  });
-}
-async function dbGetAll(store){
-  return new Promise((res,rej)=>{
-    const tx=DB.transaction(store,'readonly');
-    const req=tx.objectStore(store).getAll();
-    req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e.target.error);
+    const tx=DB.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(rec);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e.target.error);
   });
 }
 
+async function dbGetAll(){
+  return new Promise((res,rej)=>{
+    const tx=DB.transaction(STORE,'readonly');
+    const req=tx.objectStore(STORE).getAll();
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+
+const DS={};
+
 async function initApp(){
   await openDB();
-  const recs=await dbGetAll(STORE);
-  recs.forEach(r=>{DS[r.Tag_Number]=r;});
-  // Load NFPA flags from sessionStorage
-  try{const f=sessionStorage.getItem('NFPA_FLAGS');if(f)Object.assign(NFPA_FLAGS,JSON.parse(f));}catch(e){}
+  const all=await dbGetAll();
+  all.forEach(r=>{DS[r.Tag_Number]=r;});
   updProg();updPendLbl();
   checkOnline();
   loadDevices();
 }
 
-// ── DEVICE LOADING ─────────────────────────────────────────────────────────
-async function loadDevices(){
-  showLoadStatus('Loading device list...',false);
-  try{
-    const c=sessionStorage.getItem('CGL2_devices');
-    if(c){
-      const cached=JSON.parse(c);H=cached.hierarchy;DEVICES_VERSION=cached.version||0;
-      renderNav();updProg();
-      showLoadStatus('Device list ready (v'+DEVICES_VERSION+' \u00b7 '+cached.total+' devices)',true);
-    }
-  }catch(e){}
-  try{
-    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),20000);
-    const r=await fetch(DEVICES_URL,{signal:ctrl.signal});
-    clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);
-    const data=await r.json();const newVer=data.version||1;
-    if(Object.keys(H).length===0||newVer>DEVICES_VERSION){
-      H=data.hierarchy;DEVICES_VERSION=newVer;
-      try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
-      renderNav();updProg();if(ST.sub){renderHead();renderGrid();}
-      showLoadStatus('Device list v'+newVer+' \u00b7 '+data.total+' devices',true);
-    }else{showLoadStatus('Device list v'+newVer+' \u00b7 up to date',true);}
-  }catch(e){
-    if(Object.keys(H).length>0)showLoadStatus('Offline \u2014 using cached device list',true);
-    else showLoadStatus('\u26a0 Connect to WiFi to load devices, then refresh',false);
-  }
-}
-function showLoadStatus(msg,fade){
-  const el=document.getElementById('loadStatus');if(!el)return;
-  el.style.opacity='1';el.textContent=msg;
-  if(fade)setTimeout(()=>{el.style.opacity='0';},4000);
-}
-
-// ── ONLINE CHECK ───────────────────────────────────────────────────────────
+// ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
 async function checkOnline(){
   try{
-    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),8000);
+    const ctrl=new AbortController();
+    setTimeout(()=>ctrl.abort(),8000);
     const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
-    if(!r.ok)throw new Error('HTTP '+r.status);
+    if(!r.ok)throw new Error();
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
     document.getElementById('netLbl').textContent='Online';
   }catch(e){
     isOnline=false;
     document.getElementById('netBadge').className='net-badge off';
-    document.getElementById('netLbl').textContent='Offline \u2014 '+e.message;
+    document.getElementById('netLbl').textContent='Offline — '+e.message;
   }
   setTimeout(checkOnline,30000);
 }
 
-// ── SMART SYNC ─────────────────────────────────────────────────────────────
 async function smartSync(){
-  if(Object.keys(H).length===0){showT('Device list still loading \u2014 wait a moment','info');return;}
+  if(Object.keys(H).length===0){showT('Device list still loading — wait a moment','info');return;}
   const btn=document.getElementById('btnSync');
-  btn.disabled=true;btn.textContent='Syncing\u2026';
+  btn.disabled=true;btn.textContent='Syncing…';
   try{
     const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),15000);
     const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
@@ -697,93 +555,77 @@ async function smartSync(){
         CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
         CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
         CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
-        CHK_Settings:row.CHK_Settings||'',
-        NFPA_Direction:row.NFPA_Direction||'',NFPA_nfpa1:row.NFPA_nfpa1||'',NFPA_nfpa2:row.NFPA_nfpa2||'',
-        NFPA_nfpa3:row.NFPA_nfpa3||'',NFPA_nfpa4:row.NFPA_nfpa4||'',NFPA_nfpa5:row.NFPA_nfpa5||'',
-        NFPA_nfpa6:row.NFPA_nfpa6||'',NFPA_nfpa7:row.NFPA_nfpa7||'',NFPA_nfpa8:row.NFPA_nfpa8||'',
-        NFPA_nfpa9:row.NFPA_nfpa9||'',NFPA_nfpa10:row.NFPA_nfpa10||'',
-        exported:true};
-      await dbPut(STORE,DS[tag]);updated++;
+        CHK_Settings:row.CHK_Settings||'',exported:true};
+      await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
-    showT(kept>0?'Synced \u2014 '+updated+' updated, '+kept+' unsent kept':'Synced \u2014 '+updated+' updated','ok');
-  }catch(e){showT('Sync failed: '+e.message+' \u2014 check WiFi','err');}
-  btn.disabled=false;btn.textContent='\u2193 Sync';
+    showT(kept>0?'Synced — '+updated+' updated, '+kept+' unsent kept':'Synced — '+updated+' updated','ok');
+  }catch(e){showT('Sync failed: '+e.message+' — check WiFi','err');}
+  btn.disabled=false;btn.textContent='↓ Sync';
 }
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function openExportSheet(){
+  const all=Object.values(DS);
+  const pending=all.filter(d=>d.exported===false);
+  document.getElementById('expTotal').textContent=all.length;
+  document.getElementById('expPending').textContent=pending.length;
+  document.getElementById('expOv').classList.add('open');
+}
+
+async function doExport(){
+  const pending=Object.values(DS).filter(d=>d.exported===false);
+  if(!pending.length){showT('No new records to export','info');return;}
+
+  // Create JSON file and trigger download
+  const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const now=new Date();
+  const date=now.toISOString().slice(0,10);
+  const time=now.toTimeString().slice(0,8).replace(/:/g,'-');
+  a.href=url;
+  a.download='CGL2_export_'+date+'_'+time+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Mark as exported
+  for(const rec of pending){
+    DS[rec.Tag_Number].exported=true;
+    await dbPut(DS[rec.Tag_Number]);
+  }
+
+  document.getElementById('expOv').classList.remove('open');
+  updPendLbl();
+  showT('Exported '+pending.length+' records — send the file to the project manager','ok');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
 function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
 function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
 function sCls(s){return{'Commissioned':'commissioned','In Progress':'in-progress','Not Started':'not-started','N/A':'na'}[s]||'not-started';}
-function isNFPA(tag){return!!NFPA_FLAGS[tag];}
-function nfpaComplete(tag){
-  const d=DS[tag]||{};
-  return NFPA_STEPS.every(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail');
-}
+
 function updProg(){
   const total=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat())).length||0;
   const done=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
   document.getElementById('gF').style.width=total?(done/total*100).toFixed(1)+'%':'0%';
   document.getElementById('gL').textContent=done+'/'+(total||'...');
 }
+
 function updPendLbl(){
   const n=Object.values(DS).filter(d=>d.exported===false).length;
-  const el=document.getElementById('pendLbl');if(el){el.textContent=n?n+' unsent':'';}
+  const el=document.getElementById('pendLbl');
+  el.textContent=n?n+' unsent':'';
 }
+
 function showT(msg,type){
   const el=document.getElementById('toast');
   el.textContent=msg;el.className='toast show '+type;
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3500);
 }
 
-// ── ADMIN PIN ──────────────────────────────────────────────────────────────
-function openPinModal(){
-  document.getElementById('pinOv').classList.add('open');
-  document.getElementById('pinInput').value='';
-  document.getElementById('pinErr').textContent='';
-  setTimeout(()=>document.getElementById('pinInput').focus(),200);
-}
-function checkPin(){
-  const val=document.getElementById('pinInput').value;
-  if(val===ADMIN_PIN){
-    isAdmin=true;
-    document.getElementById('pinOv').classList.remove('open');
-    document.getElementById('adminBadge').classList.add('show');
-    showT('Admin mode active \u2014 tap \u2605 on any device to toggle NFPA requirement','info');
-    if(ST.sub){renderGrid();}
-  }else{
-    document.getElementById('pinErr').textContent='Incorrect PIN';
-    document.getElementById('pinInput').value='';
-  }
-}
-function exitAdmin(){
-  isAdmin=false;
-  document.getElementById('adminBadge').classList.remove('show');
-  if(ST.sub){renderGrid();}
-  showT('Admin mode off','info');
-}
-function toggleNFPA(tag,e){
-  e.stopPropagation();
-  if(!isAdmin)return;
-  NFPA_FLAGS[tag]=!NFPA_FLAGS[tag];
-  if(!NFPA_FLAGS[tag])delete NFPA_FLAGS[tag];
-  try{sessionStorage.setItem('NFPA_FLAGS',JSON.stringify(NFPA_FLAGS));}catch(e){}
-  renderGrid();
-}
-
-// ── TABS ───────────────────────────────────────────────────────────────────
-function switchTab(tab){
-  ['map','dash','safety'].forEach(t=>{
-    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.toggle('active',t===tab);
-    const panel=document.getElementById(t==='map'?'mainPanel':t+'Panel');
-    if(panel)panel.style.display=t===tab?(t==='map'?'flex':'flex'):'none';
-  });
-  if(tab==='dash')renderDash();
-  if(tab==='safety')renderSafety();
-}
-
-// ── NAV ────────────────────────────────────────────────────────────────────
+// ── NAVIGATION ────────────────────────────────────────────────────────────
 function renderNav(){
   const el=document.getElementById('nl');el.innerHTML='';
   const q=document.getElementById('ns').value.toLowerCase();
@@ -793,25 +635,25 @@ function renderNav(){
     const pct=allD.length?done/allD.length:0;
     const aMatch=!q||area.toLowerCase().includes(q)||
       Object.entries(equips).some(([e,subs])=>e.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q)));
-    if(q&&!aMatch)return;
+    if(q&&!aMatch) return;
     const ai=document.createElement('div');
     ai.className='ai'+(OA[area]?' open':'');
     ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span class="aa">&#9658;</span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
     ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
     el.appendChild(ai);
-    if(!OA[area]&&!q)return;
+    if(!OA[area]&&!q) return;
     Object.entries(equips).forEach(([equip,subs])=>{
       const eKey=area+'|'+equip;
       const eMatch=!q||equip.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q));
-      if(q&&!eMatch)return;
+      if(q&&!eMatch) return;
       const ei=document.createElement('div');
       ei.className='ei'+(OE[eKey]?' open':'');
       ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span class="ea">&#9658;</span></div>';
       ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
       el.appendChild(ei);
-      if(!OE[eKey]&&!q)return;
+      if(!OE[eKey]&&!q) return;
       Object.entries(subs).forEach(([sub,devs])=>{
-        if(q&&!sub.toLowerCase().includes(q)&&!eMatch)return;
+        if(q&&!sub.toLowerCase().includes(q)&&!eMatch) return;
         const done2=devs.filter(d=>getS(d.tag)==='Commissioned').length;
         const pct2=devs.length?done2/devs.length:0;
         const hasPend=devs.some(d=>isUnsent(d.tag));
@@ -827,32 +669,28 @@ function renderNav(){
 
 function selectSub(area,equip,sub,devs){
   ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;
+  // Clear search when navigating
   const srch=document.getElementById('devSearch');
   if(srch&&srch.value){srch.value='';filterGrid();}
   renderNav();renderHead();renderGrid();
 }
 
-// ── PANEL HEAD ─────────────────────────────────────────────────────────────
 function renderHead(){
-  const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0,nfpa=0;
-  ST.devs.forEach(d=>{
-    const s=getS(d.tag);if(c[s]!==undefined)c[s]++;
-    if(isUnsent(d.tag))pend++;
-    if(isNFPA(d.tag))nfpa++;
-  });
+  const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0;
+  ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;});
   document.getElementById('ph').innerHTML=
     '<div class="pht">'+ST.sub+'</div>'+
-    '<div class="phs">'+ST.area+' \u203a '+ST.equip+' \u00b7 '+ST.devs.length+' devices</div>'+
+    '<div class="phs">'+ST.area+' &rsaquo; '+ST.equip+' &middot; '+ST.devs.length+' devices</div>'+
     '<div class="phc">'+
     (c.Commissioned?'<div class="chip g"><div class="cd" style="background:var(--G)"></div>'+c.Commissioned+' Done</div>':'')+
     (c['In Progress']?'<div class="chip a"><div class="cd" style="background:var(--A)"></div>'+c['In Progress']+' WIP</div>':'')+
     (c['Not Started']?'<div class="chip r"><div class="cd" style="background:var(--R)"></div>'+c['Not Started']+' Pending</div>':'')+
+    (c['N/A']?'<div class="chip gr"><div class="cd" style="background:var(--Gr)"></div>'+c['N/A']+' N/A</div>':'')+
     (pend?'<div class="chip y"><div class="cd" style="background:var(--A)"></div>'+pend+' Unsent</div>':'')+
-    (nfpa?'<div class="chip" style="background:#fff5f5;border-color:#f0a0a0;color:#c0392b">\u2605 '+nfpa+' NFPA</div>':'')+
+    (nfpa_count?'<div class="chip" style="background:#fff5f5;border-color:#f0a0a0;color:#c0392b">★ '+nfpa_count+' NFPA</div>':'')+
     '</div>';
 }
 
-// ── GRID ───────────────────────────────────────────────────────────────────
 function renderGrid(){
   const gw=document.getElementById('gw');gw.innerHTML='';
   const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
@@ -862,120 +700,29 @@ function renderGrid(){
   Object.entries(secs).forEach(([sec,items])=>{
     if(useSec){const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;grid.appendChild(sh);}
     items.forEach(({d,i})=>{
-      const s=getS(d.tag);const unsent=isUnsent(d.tag);const nfpa=isNFPA(d.tag);
+      const s=getS(d.tag);const unsent=isUnsent(d.tag);
       const cls=unsent?'unsynced':sCls(s);
       const card=document.createElement('div');card.className='card '+cls;
       const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
       const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
-      const badges='<div class="cbadges">'+
-        (nfpa?'<span class="cnfpa" title="NFPA 85 required" onclick="toggleNFPA(\''+d.tag+'\',event)">'+(isAdmin?'\u2605':'\u2605')+'</span>':'')+
-        (isAdmin&&!nfpa?'<span style="font-size:9px;color:var(--bdr2);cursor:pointer" title="Click to mark as NFPA" onclick="toggleNFPA(\''+d.tag+'\',event)">\u2606</span>':'')+
-        ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="View commissioning instructions" onclick="openInst(\''+d.tag+'\',\''+d.type+'\',event)">!</span>':'')+
-        '</div>';
-      card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+'<div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+      card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
       card.onclick=()=>openM(i);grid.appendChild(card);
     });
   });
 }
 
-// ── DEVICE SEARCH ──────────────────────────────────────────────────────────
-function toggleSearch(){
-  const wrap=document.getElementById('phSearch');
-  const inp=document.getElementById('devSearch');
-  if(!wrap)return;
-  const visible=wrap.style.display!=='none';
-  wrap.style.display=visible?'none':'block';
-  if(!visible){inp.focus();inp.value='';filterGrid();}
-  else{inp.value='';filterGrid();}
-  document.getElementById('btnSearch').style.background=visible?'var(--sur2)':'var(--lblue)';
-}
-function filterGrid(){
-  const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
-  const gw=document.getElementById('gw');
-  if(!q){
-    if(ST.sub)renderGrid();
-    else gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device tag, description or type above.</div></div>';
-    return;
-  }
-  const scope=[];
-  if(ST.sub){
-    ST.devs.forEach(d=>scope.push({d,area:ST.area,equip:ST.equip,sub:ST.sub}));
-  }else{
-    Object.entries(H).forEach(([area,equips])=>
-      Object.entries(equips).forEach(([equip,subs])=>
-        Object.entries(subs).forEach(([sub,devs])=>
-          devs.forEach(d=>scope.push({d,area,equip,sub})))));
-  }
-  const results=scope.filter(({d})=>{
-    const hay=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')+' '+(d.model||'')).toLowerCase();
-    return hay.includes(q);
-  });
-  gw.innerHTML='';
-  if(!results.length){
-    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try tag number, description, type or model.</div></div>';
-    return;
-  }
-  const grid=document.createElement('div');grid.className='grid';
-  const hdr=document.createElement('div');
-  hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:2px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
-  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found'+(ST.sub?' in '+ST.sub:'');
-  grid.appendChild(hdr);
-  results.forEach(({d,area,equip,sub})=>{
-    const s=getS(d.tag);const unsent=isUnsent(d.tag);const nfpa=isNFPA(d.tag);
-    const cls=unsent?'unsynced':sCls(s);
-    const card=document.createElement('div');card.className='card '+cls;
-    const areaShort=area.split(' - ')[1]||area;
-    card.innerHTML='<div class="cscs" style="color:var(--tx3);font-size:8px">'+areaShort+' \u203a '+sub+'</div>'+
-      (d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'')+
-      (nfpa?'<div style="font-size:9px;color:#c0392b;font-weight:700">\u2605 NFPA 85</div>':'')+
-      '<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+
-      '<div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-    card.onclick=()=>{selectSub(area,equip,sub,H[area][equip][sub]);const idx=ST.devs.findIndex(x=>x.tag===d.tag);if(idx>=0)openM(idx);};
-    grid.appendChild(card);
-  });
-  gw.appendChild(grid);
-}
-
-// ── EXPORT ─────────────────────────────────────────────────────────────────
-function openExportSheet(){
-  const pending=Object.values(DS).filter(d=>d.exported===false);
-  document.getElementById('expTotal').textContent=Object.values(DS).length;
-  document.getElementById('expPending').textContent=pending.length;
-  document.getElementById('expOv').classList.add('open');
-}
-async function doExport(){
-  const pending=Object.values(DS).filter(d=>d.exported===false);
-  if(!pending.length){showT('No new records to export','info');return;}
-  const now=new Date();
-  const date=now.toISOString().slice(0,10);
-  const time=now.toTimeString().slice(0,8).replace(/:/g,'-');
-  const filename='CGL2_export_'+date+'_'+time+'.json';
-  const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
-  URL.revokeObjectURL(url);
-  for(const rec of pending){DS[rec.Tag_Number].exported=true;await dbPut(STORE,DS[rec.Tag_Number]);}
-  document.getElementById('expOv').classList.remove('open');
-  updPendLbl();
-  showT('Exported '+pending.length+' records \u2014 send file via Teams or email','ok');
-}
-
-// ── MODAL ──────────────────────────────────────────────────────────────────
+// ── MODAL ─────────────────────────────────────────────────────────────────
 function ensDS(tag){
-  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,'']).concat(NFPA_STEPS.map(s=>['NFPA_'+s.id,''])))};
+  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,'']))};
 }
+
 function openM(idx){ST.idx=idx;renderM();document.getElementById('ov').classList.add('open');}
+
 function renderM(){
   const dev=ST.devs[ST.idx];ensDS(dev.tag);const ds=DS[dev.tag];
   document.getElementById('mBC').textContent=ST.area+' \u203a '+ST.equip+' \u203a '+ST.sub;
   document.getElementById('mTag').textContent=dev.tag;
-  const nfpa=isNFPA(dev.tag);const model=dev.model||'';
-  document.getElementById('mDesc').innerHTML='<span>'+dev.desc+'</span>'+
-    '<span class="mbadge">'+dev.type+'</span>'+
-    (model?'<span class="mbadge" style="color:var(--blue)">'+model+'</span>':'')+
-    '<span class="mbadge">Qty '+dev.qty+'</span>'+
-    (nfpa?'<span class="mbadge" style="background:#fff5f5;border-color:#f0a0a0;color:#c0392b">\u2605 NFPA 85</span>':'')+
-    (isUnsent(dev.tag)?'<span class="mbadge" style="border-color:var(--Abdr);color:var(--A)">Unsent</span>':'');
+  document.getElementById('mDesc').innerHTML='<span>'+dev.desc+'</span><span class="mbadge">'+dev.type+'</span><span class="mbadge">Qty '+dev.qty+'</span>'+(isUnsent(dev.tag)?'<span class="mbadge" style="border-color:var(--Abdr);color:var(--A)">Unsent</span>':'');
   const body=document.getElementById('mBody');body.innerHTML='';
   GROUPS.forEach(g=>{
     const sec=document.createElement('div');sec.className='grp';
@@ -1001,17 +748,30 @@ function renderM(){
     '<div class="fg"><div class="fl">Commissioned By</div><input class="fc" type="text" id="f_cb" placeholder="Name / initials" value="'+(ds.Comm_By||'')+'"></div>'+
     '<div class="fg"><div class="fl">Date</div><input class="fc" type="date" id="f_cd" value="'+(ds.Comm_Date||'')+'"></div>'+
     '<div class="fg"><div class="fl">Approved By</div><input class="fc" type="text" id="f_ab" placeholder="Supervisor" value="'+(ds.Approved_By||'')+'"></div>'+
-    '<div class="fg full"><div class="fl">Remarks / Issues</div><textarea class="fc" id="f_rm" placeholder="Punch items, notes\u2026">'+(ds.Remarks||'')+'</textarea></div>'+
+    '<div class="fg full"><div class="fl">Remarks / Issues</div><textarea class="fc" id="f_rm" placeholder="Punch items, notes...">'+(ds.Remarks||'')+'</textarea></div>'+
     '</div>';
   body.appendChild(so);
   setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
   updMP(dev.tag);
+  // NFPA section
+  nfpaActiveTag=dev.tag;
+  const nfpaSec=document.getElementById('nfpaSection');
+  if(dev.nfpa){
+    nfpaSec.style.display='block';
+    renderNFPASection(dev.tag);
+    startNFPATimer();
+  }else{
+    nfpaSec.style.display='none';
+    stopNFPATimer();
+  }
 }
+
 function uSel(sel){
   sel.className='fc';
   const m={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
   if(m[sel.value])sel.classList.add(m[sel.value]);
 }
+
 function setChk(tag,id,val,btn){
   ensDS(tag);DS[tag][id]=DS[tag][id]===val?'':val;
   const bs=btn.closest('.cbtns').querySelectorAll('.cbtn');
@@ -1019,152 +779,68 @@ function setChk(tag,id,val,btn){
   if(DS[tag][id]){const c={OK:'ok','N/A':'na',FAIL:'fail'}[DS[tag][id]];Array.from(bs).find(b=>b.textContent===DS[tag][id])?.classList.add(c);}
   updMP(tag);
 }
+
 function updMP(tag){
   const ds=DS[tag]||{};const done=ACHK.filter(id=>ds[id]&&ds[id]!=='').length;
   const el=document.getElementById('mP');
   if(el){el.textContent=done+'/'+ACHK.length+' checks';el.className='mp'+(done===ACHK.length?' done':'');}
 }
+
 function saveForm(tag){
-  if(!tag)return;ensDS(tag);
+  if(!tag) return;
+  ensDS(tag);
   const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
   Object.assign(DS[tag],{Comm_Status:g('f_st'),Comm_By:g('f_cb'),Comm_Date:g('f_cd'),Approved_By:g('f_ab'),Remarks:g('f_rm')});
 }
+
 async function saveClose(){
-  const dev=ST.devs[ST.idx];saveForm(dev.tag);
+  const dev=ST.devs[ST.idx];
+  saveForm(dev.tag);
   const status=DS[dev.tag].Comm_Status;
-  // If trying to commission and NFPA required but not complete — open NFPA
-  if(status==='Commissioned'&&isNFPA(dev.tag)&&!nfpaComplete(dev.tag)){
-    showT('NFPA 85 checklist must be completed first','err');
-    closeM();
-    openNFPA(dev.tag);
+  // Block commissioning if NFPA required but not complete
+  if(status==='Commissioned'&&dev.nfpa&&!nfpaAllDone(dev.tag)){
+    showT('★ Complete all 10 NFPA 85 steps before marking Commissioned','err');
+    // Scroll to NFPA section
+    const sec=document.getElementById('nfpaSection');
+    if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
+  stopNFPATimer();
   Object.assign(DS[dev.tag],{
     Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
     Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
     Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
-    Scope_S:dev.scopeS,Scope_D:dev.scopeD,
-    model:dev.model||'',
-    exported:false,savedAt:new Date().toISOString(),
+    Scope_S:dev.scopeS,Scope_D:dev.scopeD,exported:false,
+    savedAt:new Date().toISOString(),
   });
-  await dbPut(STORE,DS[dev.tag]);
-  showT('Saved','info');closeM();
+  await dbPut(DS[dev.tag]);
+  showT('Saved','info');
+  closeM();
   updProg();updPendLbl();renderNav();renderHead();renderGrid();
 }
-function closeM(){document.getElementById('ov').classList.remove('open');}
+
+function closeM(){stopNFPATimer();document.getElementById('ov').classList.remove('open');}
 function nav(d){
   saveForm(ST.devs[ST.idx]?.tag);
   const n=ST.idx+d;
   if(n>=0&&n<ST.devs.length){ST.idx=n;renderM();}
 }
+
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('ov').classList.contains('open'))return;
   if(e.key==='Escape')closeM();
-  if(e.key==='ArrowRight')nav(1);if(e.key==='ArrowLeft')nav(-1);
+  if(e.key==='ArrowRight')nav(1);
+  if(e.key==='ArrowLeft')nav(-1);
 });
 
-// ── NFPA MODAL ─────────────────────────────────────────────────────────────
-let nfpaTag=null,nfpaTimerInterval=null,nfpaSecondsLeft=300;
-
-function openNFPA(tag){
-  nfpaTag=tag;ensDS(tag);
-  nfpaSecondsLeft=300;
-  clearInterval(nfpaTimerInterval);
-  nfpaTimerInterval=setInterval(()=>{
-    nfpaSecondsLeft--;
-    const el=document.getElementById('nfpaTimer');
-    if(el){
-      const m=Math.floor(nfpaSecondsLeft/60),s=nfpaSecondsLeft%60;
-      el.textContent=m+':'+(s<10?'0':'')+s;
-      if(nfpaSecondsLeft<=60)el.classList.add('warn');
-      else el.classList.remove('warn');
-      if(nfpaSecondsLeft<=0){clearInterval(nfpaTimerInterval);showT('Time expired \u2014 NFPA checklist not saved. Please restart.','err');closeNFPA();}
-    }
-  },1000);
-  renderNFPA();
-  document.getElementById('nfpaOv').classList.add('open');
-}
-function closeNFPA(){
-  clearInterval(nfpaTimerInterval);
-  document.getElementById('nfpaOv').classList.remove('open');
-  nfpaTag=null;
-}
-function renderNFPA(){
-  const ds=DS[nfpaTag]||{};
-  const done=NFPA_STEPS.filter(s=>ds['NFPA_'+s.id]==='pass'||ds['NFPA_'+s.id]==='fail').length;
-  document.getElementById('nfpaTagLbl').textContent=nfpaTag;
-  document.getElementById('nfpaProgress').textContent=done+'/'+NFPA_STEPS.length+' completed';
-  const body=document.getElementById('nfpaBody');body.innerHTML='';
-  NFPA_STEPS.forEach((step,i)=>{
-    const val=ds['NFPA_'+step.id]||'';
-    const item=document.createElement('div');item.className='nfpa-item';
-    item.innerHTML='<div class="nfpa-num">'+(i+1)+'</div>'+
-      '<div class="nfpa-text">'+
-      '<div class="nfpa-step">'+step.l+'</div>'+
-      '<div class="nfpa-hint">'+step.h+'</div>'+
-      '<div class="nfpa-chk">'+
-      '<button class="nfpa-btn '+(val==='pass'?'pass':'')+'" onclick="setNFPA(\''+step.id+'\',\'pass\',this)">&#10003; Pass</button>'+
-      '<button class="nfpa-btn '+(val==='fail'?'fail':'')+'" onclick="setNFPA(\''+step.id+'\',\'fail\',this)">&#10007; Fail/NA</button>'+
-      '</div></div>';
-    body.appendChild(item);
-  });
-}
-function setNFPA(stepId,val,btn){
-  ensDS(nfpaTag);
-  const key='NFPA_'+stepId;
-  DS[nfpaTag][key]=DS[nfpaTag][key]===val?'':val;
-  const btns=btn.closest('.nfpa-chk').querySelectorAll('.nfpa-btn');
-  btns.forEach(b=>b.className='nfpa-btn');
-  if(DS[nfpaTag][key]){
-    const cls=DS[nfpaTag][key]==='pass'?'pass':'fail';
-    btn.classList.add(cls);
-  }
-  const done=NFPA_STEPS.filter(s=>DS[nfpaTag]['NFPA_'+s.id]==='pass'||DS[nfpaTag]['NFPA_'+s.id]==='fail').length;
-  document.getElementById('nfpaProgress').textContent=done+'/'+NFPA_STEPS.length+' completed';
-}
-async function saveNFPA(){
-  const done=NFPA_STEPS.filter(s=>DS[nfpaTag]['NFPA_'+s.id]==='pass'||DS[nfpaTag]['NFPA_'+s.id]==='fail').length;
-  if(done<NFPA_STEPS.length){showT('Complete all '+NFPA_STEPS.length+' steps before saving','err');return;}
-  clearInterval(nfpaTimerInterval);
-  DS[nfpaTag].exported=false;DS[nfpaTag].savedAt=new Date().toISOString();
-  await dbPut(STORE,DS[nfpaTag]);
-  closeNFPA();
-  showT('NFPA 85 checklist saved','ok');
-  if(ST.sub){renderHead();renderGrid();}
+function switchTab(tab){
+  document.getElementById('tabMap').classList.toggle('active',tab==='map');
+  document.getElementById('tabDash').classList.toggle('active',tab==='dash');
+  document.getElementById('mainPanel').style.display=tab==='map'?'flex':'none';
+  document.getElementById('dashPanel').style.display=tab==='dash'?'flex':'none';
+  if(tab==='dash')renderDash();
 }
 
-// ── INSTRUCTIONS MODAL ─────────────────────────────────────────────────────
-function openInst(tag,type,e){
-  e.stopPropagation();
-  const dev=ST.devs.find(d=>d.tag===tag)||{};
-  const model=dev.model||'';
-  const inst=INST_BY_MODEL[model]||INST_BY_TYPE[type];
-  if(!inst)return;
-  document.getElementById('instTitle').textContent=inst.title+' \u2014 Commissioning Guide';
-  document.getElementById('instModel').textContent=model?'Model: '+model:'Type: '+type;
-  const body=document.getElementById('instBody');body.innerHTML='';
-  if(inst.warn){
-    body.innerHTML+='<div class="inst-warn">\u26a0 '+inst.warn+'</div>';
-  }
-  if(inst.steps){
-    const sec=document.createElement('div');sec.className='inst-section';
-    sec.innerHTML='<div class="inst-sec-title">Commissioning Steps</div>';
-    inst.steps.forEach((step,i)=>{
-      sec.innerHTML+='<div class="inst-step"><div class="inst-step-num">'+(i+1)+'</div><div class="inst-step-text">'+step+'</div></div>';
-    });
-    body.appendChild(sec);
-  }
-  if(inst.notes){
-    body.innerHTML+='<div class="inst-note">\uD83D\uDCCB '+inst.notes+'</div>';
-  }
-  if(!inst.steps&&!inst.warn&&!inst.notes){
-    body.innerHTML='<div style="padding:20px;color:var(--tx3);text-align:center">No specific instructions available for this device type.</div>';
-  }
-  document.getElementById('instOv').classList.add('open');
-}
-function closeInst(){document.getElementById('instOv').classList.remove('open');}
-
-// ── DASHBOARD ──────────────────────────────────────────────────────────────
 function renderDash(){
   const allDevs=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat()));
   const total=allDevs.length;
@@ -1175,6 +851,9 @@ function renderDash(){
   const pct=total?Math.round(commissioned/total*100):0;
   const wipPct=total?Math.round(inProgress/total*100):0;
 
+  const dp=document.getElementById('dashPanel');
+
+  // ── Gauges in fixed top section ──────────────────────────────────────
   let gaugeHtml='<div class="gauge-row">';
   gaugeHtml+=gaugeCard(pct,'Commissioned',commissioned+' of '+total,'#1a7a3c');
   gaugeHtml+=gaugeCard(wipPct,'In Progress',inProgress+' devices','#8a5c00');
@@ -1182,10 +861,12 @@ function renderDash(){
   gaugeHtml+=gaugeCard(unsent>0&&total?Math.min(100,Math.round(unsent/total*100)):0,'Unsent',unsent+' pending','#7a5c00');
   gaugeHtml+='</div>';
 
+  // ── Scrollable sections ───────────────────────────────────────────────
   let sectHtml='';
+
   if(!total){
     sectHtml='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
-  }else{
+  } else {
     const eMap={};
     Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
       const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
@@ -1196,14 +877,7 @@ function renderDash(){
       if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
       if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
     })));
-    const mMap={};
-    Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-      const m=d.model||'No Model';
-      if(!mMap[m])mMap[m]={done:0,tot:0};mMap[m].tot++;
-      if(getS(d.tag)==='Commissioned')mMap[m].done++;
-    })));
     const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
-    const maxM=Math.max(...Object.values(mMap).map(v=>v.tot),1);
     const eTotal=Object.values(eMap).reduce((a,v)=>a+v.tot,0);
     const eDone=Object.values(eMap).reduce((a,v)=>a+v.done,0);
 
@@ -1229,101 +903,225 @@ function renderDash(){
       });
       return s+'</div>';
     });
-    sectHtml+=collapsibleSection('by-model','By Device Model','',()=>{
-      let s='<div class="prog-list" style="padding:8px 0">';
-      Object.entries(mMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([model,v])=>{
-        s+=progBarHTML(model,v.done,0,v.tot);
-      });
-      return s+'</div>';
-    });
     sectHtml+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
   }
-  const dp=document.getElementById('dashPanel');
+
+  // Render into two separate divs
   dp.innerHTML=`<div class="dash-gauges">${gaugeHtml}</div><div class="dash-scroll">${sectHtml}</div>`;
+
+  // Restore collapsed states
   document.querySelectorAll('.dash-section').forEach(sec=>{
     const key='dash-collapsed-'+sec.dataset.id;
-    if(sessionStorage.getItem(key)==='1')sec.classList.add('collapsed');
+    if(sessionStorage.getItem(key)==='1') sec.classList.add('collapsed');
     const body=sec.querySelector('.dash-section-body');
-    if(body)body.style.maxHeight=sec.classList.contains('collapsed')?'0':body.scrollHeight+'px';
+    if(body) body.style.maxHeight=sec.classList.contains('collapsed')?'0':body.scrollHeight+'px';
   });
 }
-function gaugeCard(pct,lbl,sub,color){
-  const r=44,cx=60,cy=62,stroke=10,circ=Math.PI*r,filled=circ*(pct/100),bg=color+'33';
-  return `<div class="gauge-wrap"><svg class="gauge-svg" width="120" height="72" viewBox="0 0 120 82"><path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${bg}" stroke-width="${stroke}" stroke-linecap="round"/><path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}" style="transition:stroke-dashoffset .6s ease"/><text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="15" font-weight="700" font-family="DM Mono,monospace" fill="${color}">${pct}%</text></svg><div class="gauge-lbl">${lbl}</div><div class="gauge-sub">${sub}</div></div>`;
-}
+
+
 function collapsibleSection(id,title,meta,contentFn){
   const content=contentFn();
-  return `<div class="dash-section" data-id="${id}"><div class="dash-section-hdr" onclick="toggleSection('${id}')"><span class="dash-section-title">${title}</span><span class="dash-section-meta">${meta?`<span class="dash-section-pct">${meta}</span>`:''}<span class="dash-section-arr">&#9660;</span></span></div><div class="dash-section-body" style="max-height:2000px">${content}</div></div>`;
+  return `<div class="dash-section" data-id="${id}">
+    <div class="dash-section-hdr" onclick="toggleSection('${id}')">
+      <span class="dash-section-title">${title}</span>
+      <span class="dash-section-meta">
+        ${meta?`<span class="dash-section-pct">${meta}</span>`:''}
+        <span class="dash-section-arr">&#9660;</span>
+      </span>
+    </div>
+    <div class="dash-section-body" style="max-height:2000px">${content}</div>
+  </div>`;
 }
+
 function toggleSection(id){
-  const sec=document.querySelector('.dash-section[data-id="'+id+'"]');if(!sec)return;
-  const body=sec.querySelector('.dash-section-body');const collapsed=sec.classList.toggle('collapsed');
+  const sec=document.querySelector('.dash-section[data-id="'+id+'"]');
+  if(!sec)return;
+  const body=sec.querySelector('.dash-section-body');
+  const collapsed=sec.classList.toggle('collapsed');
   body.style.maxHeight=collapsed?'0':body.scrollHeight+'px';
   sessionStorage.setItem('dash-collapsed-'+id,collapsed?'1':'0');
 }
+
+function gaugeCard(pct,lbl,sub,color){
+  const r=44,cx=60,cy=60,stroke=10;
+  const circ=Math.PI*r;
+  const filled=circ*(pct/100);
+  const bg=color+'33';
+  return `<div class="gauge-wrap">
+    <svg class="gauge-svg" width="120" height="70" viewBox="0 0 120 80" role="img" aria-label="${lbl}: ${pct}%">
+      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${bg}" stroke-width="${stroke}" stroke-linecap="round"/>
+      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+        stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}" style="transition:stroke-dashoffset .6s ease"/>
+      <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="16" font-weight="700" font-family="DM Mono,monospace" fill="${color}">${pct}%</text>
+    </svg>
+    <div class="gauge-lbl">${lbl}</div>
+    <div class="gauge-sub">${sub}</div>
+  </div>`;
+}
+
+
+function kpiCard(cls,val,lbl,sub){return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;}
 function progBarHTML(name,done,wip,tot){
   const pct=tot?Math.round(done/tot*100):0,dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
   return `<div class="prog-item"><div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div><div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div><div class="prog-track"><div class="prog-fill-g" style="width:${dW}%"></div><div class="prog-fill-a" style="width:${aW}%"></div><div class="prog-fill-r" style="width:${100-dW-aW}%"></div></div></div>`;
 }
-function kpiCard(cls,val,lbl,sub){return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;}
 
-// ── SAFETY TAB ─────────────────────────────────────────────────────────────
-const SAFETY_TESTS=[
-  {id:'s1',tag:'26501-PSH-0021',desc:'High natural gas pressure switch',type:'Trip Test',proc:'Temporarily lower switch setpoint below operating pressure. Verify BMS initiates safe shutdown — gas SSOV closes, burner shuts down. Restore original setpoint and confirm reset.',fields:['Setpoint (design)','Setpoint (test)','Trip confirmed','BMS response correct','Restored setpoint','Comments']},
-  {id:'s2',tag:'26501-PSL-0021',desc:'Low natural gas pressure switch',type:'Trip Test',proc:'Reduce upstream pressure below switch setpoint using bleed valve. Confirm switch trips and BMS responds correctly. Restore pressure and verify reset.',fields:['Setpoint (design)','Setpoint (test)','Trip confirmed','BMS response correct','Restored setpoint','Comments']},
-  {id:'s3',tag:'26501-FCV-0011',desc:'Natural gas SSOV — leak test',type:'Leak Test',proc:'Isolate valve. Pressurize upstream side. Monitor downstream pressure over 5 minutes. Zero pressure rise confirms no leakage per NFPA 85 Sec 8.4.',fields:['Test pressure','Duration (min)','Downstream pressure start','Downstream pressure end','Leak confirmed (Y/N)','Comments']},
-  {id:'s4',tag:'26502-PSH-0022',desc:'High gas pressure — 2HS section',type:'Trip Test',proc:'Same procedure as s1. Adjust setpoint temporarily, verify BMS trip response, restore and document.',fields:['Setpoint (design)','Setpoint (test)','Trip confirmed','BMS response correct','Restored setpoint','Comments']},
-];
+function toggleSearch(){
+  const wrap=document.getElementById('phSearch');
+  const inp=document.getElementById('devSearch');
+  if(!wrap)return;
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  if(!visible){inp.focus();inp.value='';filterGrid();}
+  else{inp.value='';filterGrid();}
+  document.getElementById('btnSearch').style.background=visible?'var(--sur2)':'var(--lblue)';
+}
 
-let safetyData={};
+function filterGrid(){
+  const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
+  const gw=document.getElementById('gw');
 
-async function renderSafety(){
-  // Load from DB
-  const recs=await dbGetAll(SAFETY_STORE);
-  recs.forEach(r=>{safetyData[r.id]=r;});
-  const scroll=document.getElementById('safetyScroll');
-  const total=SAFETY_TESTS.length;
-  const passed=SAFETY_TESTS.filter(t=>safetyData[t.id]?.result==='pass').length;
-  document.getElementById('safetyProgress').textContent=passed+'/'+total+' tests complete';
-  scroll.innerHTML='';
-  SAFETY_TESTS.forEach(test=>{
-    const data=safetyData[test.id]||{};
-    const status=data.result||'pending';
-    const item=document.createElement('div');item.className='safety-item';
-    item.innerHTML='<div class="safety-item-hdr" onclick="toggleSafetyItem(\''+test.id+'\')">'+
-      '<div class="safety-status '+status+'"></div>'+
-      '<div class="safety-tag">'+test.tag+'</div>'+
-      '<div class="safety-desc">'+test.desc+'</div>'+
-      '<span class="safety-type">'+test.type+'</span>'+
-      '<span class="safety-arr">&#9660;</span></div>'+
-      '<div class="safety-body">'+
-      '<div class="safety-proc">'+test.proc+'</div>'+
-      '<div class="safety-result" id="sf-'+test.id+'">'+
-      test.fields.map((f,i)=>'<div class="safety-field'+(i===test.fields.length-1?' full':'')+'"><label>'+f+'</label><input type="text" id="sf-'+test.id+'-'+i+'" value="'+(data['f'+i]||'')+'" placeholder="Enter value"></div>').join('')+
-      '<div class="safety-field"><label>Result</label><select id="sf-'+test.id+'-result"><option value="">-- Select --</option><option value="pass" '+(status==='pass'?'selected':'')+'>Pass</option><option value="fail" '+(status==='fail'?'selected':'')+'>Fail</option></select></div>'+
-      '<div class="safety-field"><label>Engineer</label><input type="text" id="sf-'+test.id+'-eng" value="'+(data.engineer||'')+'" placeholder="Name / initials"></div>'+
-      '</div>'+
-      '<button class="safety-save-btn" onclick="saveSafety(\''+test.id+'\')">Save Test Result</button>'+
+  if(!q){
+    if(ST.sub){renderGrid();}
+    else{gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device tag, description or type above.</div></div>';}
+    return;
+  }
+
+  // Collect search scope:
+  // If a sub-equipment is already selected → search only within it
+  // Otherwise → search all devices
+  const scope=[];
+  if(ST.sub){
+    ST.devs.forEach(d=>scope.push({d,area:ST.area,equip:ST.equip,sub:ST.sub}));
+  } else {
+    Object.entries(H).forEach(([area,equips])=>
+      Object.entries(equips).forEach(([equip,subs])=>
+        Object.entries(subs).forEach(([sub,devs])=>
+          devs.forEach(d=>scope.push({d,area,equip,sub})))));
+  }
+
+  // Match: tag number, description, device type, section, SCS ref
+  // Also support tag prefix: "265" matches all 265xx tags, "26501" matches equipment 501
+  const results=scope.filter(({d})=>{
+    const haystack=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase();
+    return haystack.includes(q);
+  });
+
+  gw.innerHTML='';
+  if(!results.length){
+    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try tag number, description or device type.</div></div>';
+    return;
+  }
+
+  const grid=document.createElement('div');grid.className='grid';
+  const hdr=document.createElement('div');
+  hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:2px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
+  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found'+(ST.sub?' in '+ST.sub:'');
+  grid.appendChild(hdr);
+
+  results.forEach(({d,area,equip,sub})=>{
+    const s=getS(d.tag);const unsent=isUnsent(d.tag);
+    const cls=unsent?'unsynced':sCls(s);
+    const card=document.createElement('div');card.className='card '+cls;
+    const areaShort=area.split(' - ')[1]||area;
+    const loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+areaShort+' › '+sub+'</div>';
+    const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
+    card.innerHTML=loc+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+    card.onclick=()=>{
+      selectSub(area,equip,sub,H[area][equip][sub]);
+      const idx=ST.devs.findIndex(x=>x.tag===d.tag);
+      if(idx>=0)openM(idx);
+    };
+    grid.appendChild(card);
+  });
+  gw.appendChild(grid);
+}
+
+
+
+function isNFPA(tag){
+  // Check device hierarchy for nfpa:true flag (set in Excel, built into devices.json)
+  if(!H||!ST.area)return false;
+  const devs=(H[ST.area]&&H[ST.area][ST.equip]&&H[ST.area][ST.equip][ST.sub])||[];
+  const d=devs.find(x=>x.tag===tag);
+  return!!(d&&d.nfpa);
+}
+function nfpaAllDone(tag){
+  const d=DS[tag]||{};
+  return NFPA_STEPS.every(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail');
+}
+
+// ── NFPA TIMER ─────────────────────────────────────────────────────────────
+function startNFPATimer(){
+  nfpaTimerSeconds=300;
+  clearInterval(nfpaTimerInterval);
+  nfpaTimerInterval=setInterval(()=>{
+    nfpaTimerSeconds--;
+    const el=document.getElementById('nfpaTimerDisp');
+    if(el){
+      const m=Math.floor(nfpaTimerSeconds/60),s=nfpaTimerSeconds%60;
+      el.textContent=m+':'+(s<10?'0':'')+s;
+      if(nfpaTimerSeconds<=60)el.classList.add('warn');
+      else el.classList.remove('warn');
+      if(nfpaTimerSeconds<=0){
+        clearInterval(nfpaTimerInterval);
+        showT('NFPA timer expired — checklist not saved. Reopen device to restart.','err');
+        // Hide NFPA section - force restart
+        const sec=document.getElementById('nfpaSection');
+        if(sec)sec.style.display='none';
+      }
+    }
+  },1000);
+}
+function stopNFPATimer(){clearInterval(nfpaTimerInterval);}
+
+// ── NFPA STEP TOGGLE ───────────────────────────────────────────────────────
+function setNFPA(stepId,val,btn){
+  const tag=nfpaActiveTag;if(!tag)return;
+  ensDS(tag);
+  const key='NFPA_'+stepId;
+  DS[tag][key]=DS[tag][key]===val?'':val;
+  const btns=btn.closest('.nfpa-chk').querySelectorAll('.nfpa-btn');
+  btns.forEach(b=>b.className='nfpa-btn');
+  if(DS[tag][key]){btn.classList.add(DS[tag][key]==='pass'?'pass':'fail');}
+  // Update progress
+  const done=NFPA_STEPS.filter(s=>DS[tag]['NFPA_'+s.id]==='pass'||DS[tag]['NFPA_'+s.id]==='fail').length;
+  const el=document.getElementById('nfpaProgressLbl');
+  if(el)el.textContent=done+'/'+NFPA_STEPS.length+' completed';
+}
+
+
+function renderNFPASection(tag){
+  ensDS(tag);
+  const d=DS[tag]||{};
+  const done=NFPA_STEPS.filter(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail').length;
+  const hdr=document.getElementById('nfpaSecHdr');
+  const body=document.getElementById('nfpaSecBody');
+  if(!hdr||!body)return;
+  // Update progress label
+  const pl=document.getElementById('nfpaProgressLbl');
+  if(pl)pl.textContent=done+'/'+NFPA_STEPS.length+' completed';
+  // Render steps
+  body.innerHTML='';
+  NFPA_STEPS.forEach((step,i)=>{
+    const val=d['NFPA_'+step.id]||'';
+    const item=document.createElement('div');item.className='nfpa-item';
+    item.innerHTML=
+      '<div class="nfpa-num">'+(i+1)+'</div>'+
+      '<div class="nfpa-text">'+
+        '<div class="nfpa-step">'+step.l+'</div>'+
+        '<div class="nfpa-hint">'+step.h+'</div>'+
+        '<div class="nfpa-chk">'+
+          '<button class="nfpa-btn '+(val==='pass'?'pass':'')+'" onclick="setNFPA(''+step.id+'','pass',this)">&#10003; Pass</button>'+
+          '<button class="nfpa-btn '+(val==='fail'?'fail':'')+'" onclick="setNFPA(''+step.id+'','fail',this)">&#10007; Fail/NA</button>'+
+        '</div>'+
       '</div>';
-    scroll.appendChild(item);
+    body.appendChild(item);
   });
 }
-function toggleSafetyItem(id){
-  const item=document.querySelector('.safety-item:has(#sf-'+id+')');
-  if(item)item.classList.toggle('open');
-}
-async function saveSafety(id){
-  const test=SAFETY_TESTS.find(t=>t.id===id);if(!test)return;
-  const rec={id,tag:test.tag,result:document.getElementById('sf-'+id+'-result')?.value||'',engineer:document.getElementById('sf-'+id+'-eng')?.value||'',savedAt:new Date().toISOString()};
-  test.fields.forEach((_,i)=>{rec['f'+i]=document.getElementById('sf-'+id+'-'+i)?.value||'';});
-  safetyData[id]=rec;
-  await dbPut(SAFETY_STORE,rec);
-  showT('Safety test saved','ok');
-  renderSafety();
-}
+
 
 initApp();
-
 </script>
 </body>
 </html>
