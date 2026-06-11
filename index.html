@@ -709,7 +709,7 @@ function renderGrid(){
       const nfpa=d.nfpa;
       const badges='<div class="cbadges">'+
         (nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
-        ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" onclick="openInst(''+d.tag+'',''+d.type+'',event)">!</span>':'')+
+        ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">!</span>':'')+
         '</div>';
       card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+'<div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
       card.onclick=()=>openM(i);grid.appendChild(card);
@@ -1063,6 +1063,7 @@ function startNFPATimer(){
   },1000);
 }
 function stopNFPATimer(){clearInterval(nfpaTimerInterval);}
+function setNFPAEvt(btn){setNFPA(btn.dataset.sid,btn.dataset.val,btn);}
 function setNFPA(stepId,val,btn){
   const tag=nfpaActiveTag;if(!tag)return;
   ensDS(tag);
@@ -1090,13 +1091,14 @@ function renderNFPASection(tag){
         '<div class="nfpa-step">'+step.l+'</div>'+
         '<div class="nfpa-hint">'+step.h+'</div>'+
         '<div class="nfpa-chk">'+
-          '<button class="nfpa-btn '+(val==='pass'?'pass':'')+'" onclick="setNFPA(''+step.id+'','pass',this)">✓ Pass</button>'+
-          '<button class="nfpa-btn '+(val==='fail'?'fail':'')+'" onclick="setNFPA(''+step.id+'','fail',this)">✗ Fail/NA</button>'+
+          '<button class="nfpa-btn '+(val==='pass'?'pass':'')+'" data-sid="'+step.id+'" data-val="pass" onclick="setNFPAEvt(this)">✓ Pass</button>'+
+          '<button class="nfpa-btn '+(val==='fail'?'fail':'')+'" data-sid="'+step.id+'" data-val="fail" onclick="setNFPAEvt(this)">✗ Fail/NA</button>'+
         '</div>'+
       '</div>';
     body.appendChild(item);
   });
 }
+function openInstEvt(el,e){openInst(el.dataset.tag,el.dataset.type,e);}
 function openInst(tag,type,e){
   e.stopPropagation();
   const dev=ST.devs.find(d=>d.tag===tag)||{};
