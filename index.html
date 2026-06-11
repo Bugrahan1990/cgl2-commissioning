@@ -523,7 +523,7 @@ async function checkOnline(){
   try{
     const ctrl=new AbortController();
     setTimeout(()=>ctrl.abort(),8000);
-    const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
+    const r=await fetch(STATUS_URL+'?nc='+Date.now(),{method:'HEAD',signal:ctrl.signal});
     if(!r.ok)throw new Error();
     isOnline=true;
     document.getElementById('netBadge').className='net-badge on';
@@ -531,7 +531,7 @@ async function checkOnline(){
   }catch(e){
     isOnline=false;
     document.getElementById('netBadge').className='net-badge off';
-    document.getElementById('netLbl').textContent='Offline — '+e.message;
+    document.getElementById('netLbl').textContent='Offline';
   }
   setTimeout(checkOnline,30000);
 }
