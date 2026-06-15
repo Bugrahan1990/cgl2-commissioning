@@ -136,7 +136,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .mtag{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--blue);margin-bottom:3px}
 .mdesc{font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .mbadge{font-size:9px;padding:2px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bdr);color:var(--tx3);font-family:'DM Mono',monospace}
-.mbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mbody-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}.mbody{}
 
 .grp{padding:12px 20px}.grp+.grp{border-top:1px solid var(--bdr)}
 .gh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -271,9 +271,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .nfpa-sec-hdr{display:flex;align-items:center;gap:8px;padding:11px 20px 7px;background:#fff5f5;border-bottom:1px solid #fde8e8}
 .nfpa-sec-icon{font-size:15px;color:#c0392b}
 .nfpa-sec-title{font-size:12px;font-weight:700;color:#c0392b;flex:1}
-.nfpa-timer{font-family:"DM Mono",monospace;font-size:12px;font-weight:700;color:#c0392b;background:#fdeaea;padding:3px 10px;border-radius:99px;border:1px solid #f0a0a0}
-.nfpa-timer.warn{color:#fff;background:#c0392b;animation:npulse .8s infinite}
-@keyframes npulse{0%,100%{opacity:1}50%{opacity:.6}}
+
 .nfpa-progress-bar-wrap{padding:0 20px 8px;background:#fff5f5}
 .nfpa-progress-track{height:5px;background:#fde8e8;border-radius:99px;overflow:hidden;margin-bottom:4px}
 .nfpa-progress-fill{height:100%;background:#c0392b;border-radius:99px;transition:width .4s}
@@ -364,14 +362,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <div class="mtag" id="mTag"></div>
       <div class="mdesc" id="mDesc"></div>
     </div>
-    <div class="mbody" id="mBody"></div>
+    <div class="mbody-wrap" id="mBodyWrap"><div class="mbody" id="mBody"></div>
     <!-- NFPA 85 section — shown only for devices with nfpa:true -->
     <div id="nfpaSection" style="display:none">
       <div class="nfpa-section">
         <div class="nfpa-sec-hdr">
           <span class="nfpa-sec-icon">★</span>
           <span class="nfpa-sec-title">NFPA 85 — Safety Commissioning Checklist</span>
-          <span class="nfpa-timer" id="nfpaTimerDisp">5:00</span>
+          
         </div>
         <div class="nfpa-progress-bar-wrap">
           <div class="nfpa-progress-track"><div class="nfpa-progress-fill" id="nfpaProgressFill" style="width:0%"></div></div>
@@ -380,6 +378,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <div id="nfpaSecBody"></div>
       </div>
     </div>
+    </div><!-- /mbody-wrap -->
     <div class="mftr">
       <button class="btn" onclick="nav(-1)">&#8592; Prev</button>
       <button class="btn" onclick="nav(1)">Next &#8594;</button>
@@ -421,6 +420,8 @@ async function loadDevices(){
     const c=sessionStorage.getItem('CGL2_devices');
     if(c){
       const cached=JSON.parse(c);H=cached.hierarchy;DEVICES_VERSION=cached.version||0;
+      if(cached.model_instructions)INST_BY_MODEL=cached.model_instructions;
+      if(cached.type_instructions)INST_BY_TYPE=cached.type_instructions;
       renderNav();updProg();
       showLoadStatus('Device list ready (v'+DEVICES_VERSION+' · '+cached.total+' devices)',true);
     }
@@ -439,7 +440,11 @@ async function loadDevices(){
       try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
       renderNav();updProg();if(ST.sub){renderHead();renderGrid();}
       showLoadStatus('Device list v'+newVer+' · '+data.total+' devices',true);
-    }else{showLoadStatus('Device list v'+newVer+' · up to date',true);}
+    }else{
+      if(data.model_instructions)INST_BY_MODEL=data.model_instructions;
+      if(data.type_instructions)INST_BY_TYPE=data.type_instructions;
+      if(ST.sub){renderHead();renderGrid();}
+      showLoadStatus('Device list v'+newVer+' · up to date',true);}
   }catch(e){
     if(Object.keys(H).length>0)showLoadStatus('Offline — using cached device list',true);
     else showLoadStatus('⚠ Connect to WiFi to load devices, then refresh',false);
@@ -458,10 +463,69 @@ let isOnline=false;
 
 // Instructions loaded from devices.json via loadDevices()
 let INST_BY_MODEL={};
-let INST_BY_TYPE={};
+let INST_BY_TYPE={
+  'FCV':{'title':'Flow Control Valve','warn':'Isolate process before stroke testing.',
+    'steps':['Verify tag matches P&ID','Check actuator air/power supply and signal range',
+    'Stroke test: drive to 0%, 50%, 100% — verify position matches command',
+    'Check for leakage at closed position','Confirm fail position matches design intent',
+    'Calibrate positioner: set zero and span','Test with DCS and verify response']},
+  'FT':{'title':'Flow Transmitter','warn':'Process fluid must be present for final calibration.',
+    'steps':['Verify tag, range and units match datasheet','Check installation per flow direction arrow',
+    'Power up: confirm 24VDC and loop wiring','Zero calibration at zero flow — confirm 4mA',
+    'Span calibration: apply known flow — verify 20mA','Confirm signal at DCS matches output']},
+  'TT':{'title':'Temperature Transmitter','warn':'Allow warm-up time before calibration.',
+    'steps':['Verify T/C or RTD type matches DCS configuration','Check insertion depth and thermowell',
+    'Simulate low temperature — verify 4mA and DCS reading',
+    'Simulate high temperature — verify 20mA and DCS reading']},
+  'PT':{'title':'Pressure Transmitter','warn':'Isolate process before calibration.',
+    'steps':['Verify range matches P&ID','Check process connection and isolation valve',
+    'Apply zero pressure — confirm 4mA','Apply full scale — confirm 20mA',
+    'Check 25%, 50%, 75% span — record as-found and as-left']},
+  'PSH':{'title':'High Pressure Switch','warn':'NFPA 85: must be trip-tested before commissioning is complete.',
+    'steps':['Verify setpoint matches design document','Temporarily lower setpoint below line pressure',
+    'Open isolation — confirm switch trips at setpoint','Verify BMS response correct',
+    'Restore original setpoint — confirm reset','Record trip point and hysteresis']},
+  'PSL':{'title':'Low Pressure Switch','warn':'NFPA 85: must be trip-tested before commissioning is complete.',
+    'steps':['Verify setpoint matches design document','Reduce pressure below setpoint',
+    'Confirm switch trips and BMS responds correctly',
+    'Restore pressure — confirm switch resets','Record trip point and hysteresis']},
+  'SSV':{'title':'Safety Shutoff Valve','warn':'NFPA 85: proof-of-closure switch must be verified.',
+    'steps':['Verify tag matches P&ID and datasheet','Check manual operator and reset function',
+    'Energise — confirm valve opens fully','De-energise — confirm valve closes tightly',
+    'Verify proof-of-closure switch activates on close',
+    'Confirm BMS / interlock logic responds correctly']},
+  'ZS':{'title':'Position / Limit Switch',
+    'steps':['Verify switch type (NO/NC) matches DCS I/O configuration',
+    'Manually actuate — confirm correct state change at both limits',
+    'Verify DCS reads correct open/closed status']},
+  'PCV':{'title':'Pressure Control Valve','warn':'Confirm inlet pressure within design limit before stroking.',
+    'steps':['Verify tag, Cv rating and pressure class match P&ID',
+    'Stroke test fully closed to fully open — check for smooth travel',
+    'Set regulator setpoint per design document',
+    'Test pressure control — vary upstream, verify outlet holds setpoint']},
+  'IE':{'title':'Ionisation / Ignition Rod','warn':'High voltage — isolate before handling.',
+    'steps':['Verify rod insertion depth matches burner OEM spec',
+    'Check electrode gap per burner manual',
+    'Energise ignition transformer — confirm spark',
+    'Verify ionisation signal detected by BMS during flame-on']},
+  'EX':{'title':'Voltage / Ignition Transformer',
+    'steps':['Verify input voltage and output voltage per nameplate',
+    'Check wiring polarity','Energise and measure output voltage',
+    'Confirm output drives ignition rod correctly']},
+  'MKL':{'title':'Motor / Drive','steps':['Check motor rotation direction','Verify drive parameters match spec','Confirm interlock and run permissives active','Test at low speed before full speed run']},
+  'JB':{'title':'Junction / Connection Box','steps':['Verify all cable glands sealed and IP rating maintained','Check all terminations match loop drawings','Megger test cables if required','Label all wires per drawing']},
+  'EH':{'title':'Electric Resistance Heater','warn':'High voltage — isolate before work.',
+    'steps':['Verify element resistance matches datasheet','Check thermocouple type and wiring','Apply power at low level — confirm temperature rise','Confirm over-temperature trip functions correctly']},
+  'TCV':{'title':'Temperature Control Valve',
+    'steps':['Verify tag and Cv rating match P&ID','Stroke test 0-100% — check travel smooth','Confirm fail position on loss of signal','Test temperature control loop response']},
+  'FV':{'title':'Shutoff / Flow Valve',
+    'steps':['Verify tag and valve type match P&ID','Check actuator air supply and signal','Open and close — confirm full stroke and end positions','Verify position feedback at DCS']},
+  'LT':{'title':'Level Transmitter','steps':['Verify range and units match datasheet','Check process connection and isolation valve','Calibrate zero and span','Confirm DCS reading matches process']},
+  'BWL':{'title':'Position Transducer','steps':['Verify mechanical coupling secure','Zero transducer at known position','Check span at full travel','Confirm DCS signal matches physical position']}
+};
 
 // NFPA 85 checklist — shown for devices with nfpa:true in devices.json
-let nfpaTimerInterval=null,nfpaTimerSeconds=300,nfpaActiveTag=null;
+let nfpaActiveTag=null;
 
 const NFPA_STEPS=[
   {id:'nfpa1',l:'BMS verified operational',h:'Confirm BMS panel powered, all I/O functional, safety logic loaded and active'},
@@ -1068,26 +1132,8 @@ function nfpaAllDone(tag){
   const d=DS[tag]||{};
   return NFPA_STEPS.every(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail');
 }
-function startNFPATimer(){
-  nfpaTimerSeconds=300;
-  clearInterval(nfpaTimerInterval);
-  nfpaTimerInterval=setInterval(()=>{
-    nfpaTimerSeconds--;
-    const el=document.getElementById('nfpaTimerDisp');
-    if(el){
-      const m=Math.floor(nfpaTimerSeconds/60),s=nfpaTimerSeconds%60;
-      el.textContent=m+':'+(s<10?'0':'')+s;
-      if(nfpaTimerSeconds<=60)el.classList.add('warn');else el.classList.remove('warn');
-      if(nfpaTimerSeconds<=0){
-        clearInterval(nfpaTimerInterval);
-        showT('NFPA timer expired — reopen device to restart','err');
-        const sec=document.getElementById('nfpaSection');
-        if(sec)sec.style.display='none';
-      }
-    }
-  },1000);
-}
-function stopNFPATimer(){clearInterval(nfpaTimerInterval);}
+function startNFPATimer(){}
+function stopNFPATimer(){}
 function setNFPAEvt(btn){setNFPA(btn.dataset.sid,btn.dataset.val,btn);}
 function setNFPA(stepId,val,btn){
   const tag=nfpaActiveTag;if(!tag)return;
