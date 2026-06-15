@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CGL2 Debug</title>
+<style>
+body{font-family:monospace;padding:16px;background:#1a1a2e;color:#e0e0e0;font-size:13px}
+h2{color:#90c8f0;margin:0 0 12px}
+.section{background:#0d0d1a;border:1px solid #333;border-radius:8px;padding:14px;margin-bottom:14px}
+.ok{color:#3fb950}.err{color:#f85149}.warn{color:#f0c040}.info{color:#90c8f0}
+.row{margin:4px 0;padding:4px 0;border-bottom:1px solid #222}
+.label{color:#888;margin-right:8px}
+pre{white-space:pre-wrap;word-break:break-all;color:#aaa;font-size:11px;max-height:200px;overflow-y:auto}
+button{background:#1F4E79;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;margin-top:8px}
+button:hover{background:#2E75B6}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;margin:2px;border:1px solid}
+.tag.has{background:#0d2a0d;border-color:#3fb950;color:#3fb950}
+.tag.no{background:#2a0d0d;border-color:#f85149;color:#f85149}
+</style>
+</head>
+<body>
+<h2>🔍 CGL2 Debug — devices.json Inspector</h2>
+
+<div class="section">
+  <div id="fetchStatus" class="info">⏳ Fetching devices.json from GitHub...</div>
+</div>
+
+<div class="section" id="summarySection" style="display:none">
+  <div style="color:#90c8f0;font-weight:bold;margin-bottom:8px">📦 JSON Structure</div>
+  <div id="summary"></div>
+</div>
+
+<div class="section" id="instSection" style="display:none">
+  <div style="color:#90c8f0;font-weight:bold;margin-bottom:8px">📖 Instructions Check</div>
+  <div id="instCheck"></div>
+</div>
+
+<div class="section" id="nfpaSection" style="display:none">
+  <div style="color:#90c8f0;font-weight:bold;margin-bottom:8px">★ NFPA Device Check</div>
+  <div id="nfpaCheck"></div>
+</div>
+
+<div class="section" id="sampleSection" style="display:none">
+  <div style="color:#90c8f0;font-weight:bold;margin-bottom:8px">🗂 First 5 Devices</div>
+  <div id="sampleDevs"></div>
+</div>
+
+<div class="section">
+  <div style="color:#90c8f0;font-weight:bold;margin-bottom:8px">💾 sessionStorage Cache</div>
+  <div id="cacheCheck"></div>
+  <button onclick="clearCache()">Clear sessionStorage Cache</button>
+</div>
+
+<script>
+const DEVICES_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/devices.json';
+
+async function run() {
+  // ── Check sessionStorage cache ─────────────────────────
+  const cacheEl = document.getElementById('cacheCheck');
+  const cached = sessionStorage.getItem('CGL2_devices');
+  if (cached) {
+    try {
+      const c = JSON.parse(cached);
+      const hasM = !!c.model_instructions && Object.keys(c.model_instructions).length > 0;
+      const hasT = !!c.type_instructions && Object.keys(c.type_instructions).length > 0;
+      cacheEl.innerHTML =
+        '<div class="row"><span class="label">Cache exists:</span><span class="ok">YES — v'+c.version+' ('+c.total+' devices)</span></div>' +
+        '<div class="row"><span class="label">model_instructions in cache:</span><span class="'+(hasM?'ok':'err')+'">'+(hasM?'YES ('+Object.keys(c.model_instructions).length+' entries)':'NO — this is why 📖 disappears on reload!')+'</span></div>' +
+        '<div class="row"><span class="label">type_instructions in cache:</span><span class="'+(hasT?'ok':'err')+'">'+(hasT?'YES ('+Object.keys(c.type_instructions).length+' entries)':'NO — this is why 📖 disappears on reload!')+'</span></div>';
+    } catch(e) {
+      cacheEl.innerHTML = '<span class="warn">Cache exists but failed to parse: '+e.message+'</span>';
+    }
+  } else {
+    cacheEl.innerHTML = '<span class="info">No cache in sessionStorage (first load or cleared)</span>';
+  }
+
+  // ── Fetch live devices.json ────────────────────────────
+  const statusEl = document.getElementById('fetchStatus');
+  let data;
+  try {
+    const r = await fetch(DEVICES_URL + '?nc=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    data = await r.json();
+    statusEl.innerHTML = '<span class="ok">✓ devices.json fetched successfully</span>';
+  } catch(e) {
+    statusEl.innerHTML = '<span class="err">✗ Fetch failed: ' + e.message + ' — are you online?</span>';
+    return;
+  }
+
+  // ── Summary ────────────────────────────────────────────
+  document.getElementById('summarySection').style.display = 'block';
+  const topKeys = Object.keys(data);
+  const hasHierarchy = !!data.hierarchy;
+  const hasModelInst = !!data.model_instructions;
+  const hasTypeInst = !!data.type_instructions;
+  const modelInstCount = hasModelInst ? Object.keys(data.model_instructions).length : 0;
+  const typeInstCount = hasTypeInst ? Object.keys(data.type_instructions).length : 0;
+
+  // Count all devices
+  let totalDevices = 0, nfpaCount = 0, withModel = 0;
+  const typesSeen = {};
+  const allDevs = [];
+  if (hasHierarchy) {
+    Object.values(data.hierarchy).forEach(equips =>
+      Object.values(equips).forEach(subs =>
+        Object.values(subs).forEach(devs =>
+          devs.forEach(d => {
+            totalDevices++;
+            if (d.nfpa) nfpaCount++;
+            if (d.model && d.model.trim()) withModel++;
+            typesSeen[d.type] = (typesSeen[d.type]||0) + 1;
+            allDevs.push(d);
+          })
+        )
+      )
+    );
+  }
+
+  document.getElementById('summary').innerHTML =
+    '<div class="row"><span class="label">Top-level keys:</span>' + topKeys.map(k=>'<span class="tag has">'+k+'</span>').join('') + '</div>' +
+    '<div class="row"><span class="label">version:</span>' + (data.version||'missing') + '</div>' +
+    '<div class="row"><span class="label">total field:</span>' + (data.total||'missing') + '</div>' +
+    '<div class="row"><span class="label">Devices counted:</span>' + totalDevices + '</div>' +
+    '<div class="row"><span class="label">hierarchy present:</span><span class="'+(hasHierarchy?'ok':'err')+'">'+(hasHierarchy?'YES':'NO — CRITICAL')+'</span></div>' +
+    '<div class="row"><span class="label">model_instructions:</span><span class="'+(hasModelInst?'ok':'warn')+'">'+(hasModelInst?'YES ('+modelInstCount+' models)':'NOT PRESENT in JSON')+'</span></div>' +
+    '<div class="row"><span class="label">type_instructions:</span><span class="'+(hasTypeInst?'ok':'warn')+'">'+(hasTypeInst?'YES ('+typeInstCount+' types)':'NOT PRESENT in JSON')+'</span></div>' +
+    '<div class="row"><span class="label">NFPA devices:</span><span class="'+(nfpaCount>0?'ok':'warn')+'">' + nfpaCount + '</span></div>' +
+    '<div class="row"><span class="label">Devices with model code:</span>' + withModel + '</div>' +
+    '<div class="row"><span class="label">Device types found:</span>' + Object.entries(typesSeen).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([t,n])=>'<span class="tag has">'+t+' ('+n+')</span>').join('') + '</div>';
+
+  // ── Instructions check ─────────────────────────────────
+  document.getElementById('instSection').style.display = 'block';
+  let instHtml = '';
+
+  if (!hasTypeInst) {
+    instHtml += '<div class="err">✗ type_instructions key is MISSING from devices.json</div>';
+    instHtml += '<div class="warn">  → Re-run build_devices_json_fixed.py to regenerate devices.json</div>';
+  } else {
+    const typeInstKeys = Object.keys(data.type_instructions);
+    instHtml += '<div class="ok">✓ type_instructions present: ' + typeInstKeys.join(', ') + '</div>';
+    // Check which device types in the data have instructions
+    const typesWithInst = Object.keys(typesSeen).filter(t => data.type_instructions[t]);
+    const typesWithout = Object.keys(typesSeen).filter(t => !data.type_instructions[t]);
+    const coveredCount = allDevs.filter(d => data.type_instructions[d.type]).length;
+    instHtml += '<div class="row"><span class="label">Types WITH instructions:</span>' + typesWithInst.map(t=>'<span class="tag has">'+t+'</span>').join('') + '</div>';
+    instHtml += '<div class="row"><span class="label">Types WITHOUT instructions:</span>' + (typesWithout.length ? typesWithout.map(t=>'<span class="tag no">'+t+'</span>').join('') : '<span class="ok">none</span>') + '</div>';
+    instHtml += '<div class="row"><span class="label">Devices that WILL show 📖:</span><span class="'+(coveredCount>0?'ok':'err')+'">'+coveredCount+' of '+totalDevices+'</span></div>';
+  }
+
+  if (!hasModelInst) {
+    instHtml += '<div class="warn">⚠ model_instructions not in JSON (ok if no Instructions sheet in Excel)</div>';
+  } else {
+    const modelInstKeys = Object.keys(data.model_instructions);
+    instHtml += '<div class="ok">✓ model_instructions: ' + modelInstKeys.join(', ') + '</div>';
+    const devsWithModelInst = allDevs.filter(d => d.model && data.model_instructions[d.model]);
+    instHtml += '<div class="row"><span class="label">Devices matched by model:</span><span class="ok">' + devsWithModelInst.length + '</span></div>';
+  }
+
+  document.getElementById('instCheck').innerHTML = instHtml;
+
+  // ── NFPA check ─────────────────────────────────────────
+  document.getElementById('nfpaSection').style.display = 'block';
+  let nfpaHtml = '';
+  if (nfpaCount === 0) {
+    nfpaHtml += '<div class="err">✗ ZERO devices have nfpa:true in devices.json</div>';
+    nfpaHtml += '<div class="warn">  → Check your source data: NFPA_Required column must contain "Yes" (not "YES", "yes", "y", or "NULL")</div>';
+    // Show sample nfpa values
+    const sample = allDevs.slice(0, 5);
+    nfpaHtml += '<div class="row">Sample nfpa field values from first 5 devices:<br>';
+    sample.forEach(d => {
+      nfpaHtml += '<span class="tag '+(d.nfpa?'has':'no')+'">'+d.tag+': nfpa='+JSON.stringify(d.nfpa)+'</span> ';
+    });
+    nfpaHtml += '</div>';
+  } else {
+    nfpaHtml += '<div class="ok">✓ '+nfpaCount+' devices have nfpa:true</div>';
+    const nfpaDevs = allDevs.filter(d=>d.nfpa).slice(0,5);
+    nfpaHtml += '<div class="row">Examples: ' + nfpaDevs.map(d=>'<span class="tag has">'+d.tag+' ('+d.type+')</span>').join('') + '</div>';
+  }
+  document.getElementById('nfpaCheck').innerHTML = nfpaHtml;
+
+  // ── Sample devices ─────────────────────────────────────
+  document.getElementById('sampleSection').style.display = 'block';
+  let sampleHtml = '';
+  allDevs.slice(0, 5).forEach(d => {
+    sampleHtml += '<div class="row" style="margin-bottom:8px">'+
+      '<span class="label">tag:</span>'+d.tag+
+      ' <span class="label">type:</span>'+d.type+
+      ' <span class="label">nfpa:</span><span class="'+(d.nfpa?'ok':'err')+'">'+d.nfpa+'</span>'+
+      ' <span class="label">model:</span>'+(d.model||'—')+
+      '</div>';
+  });
+  document.getElementById('sampleDevs').innerHTML = sampleHtml;
+}
+
+function clearCache() {
+  sessionStorage.removeItem('CGL2_devices');
+  document.getElementById('cacheCheck').innerHTML = '<span class="ok">Cache cleared. Reload the main app to re-fetch from GitHub.</span>';
+}
+
+run();
+</script>
+</body>
+</html>
