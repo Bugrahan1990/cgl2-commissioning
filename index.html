@@ -405,11 +405,17 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     <div class="sh-sub">Downloads your commissioning records as a file. Send it to the project manager via Teams or email. They will import it to update the central database.</div>
     <div class="sh-card">
       <div class="sh-row"><span class="sh-lbl">Records saved locally</span><span class="sh-val" id="expTotal">0</span></div>
-      <div class="sh-row"><span class="sh-lbl">Not yet exported</span><span class="sh-val" id="expPending">0</span></div>
+      <div class="sh-row"><span class="sh-lbl">Unsent (not exported yet)</span><span class="sh-val" id="expPending">0</span></div>
+      <div class="sh-row"><span class="sh-lbl">Sent (awaiting PM import)</span><span class="sh-val" id="expSent">0</span></div>
     </div>
-    <div class="sh-btns">
-      <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')">Cancel</button>
-      <button class="sh-btn pri" onclick="doExport()">Download &amp; Send</button>
+    <div class="sh-sub" style="margin-top:8px;font-size:11px;color:var(--tx3)">
+      <b>Export new</b> — only unsent records (recommended).<br>
+      <b>Re-export all</b> — all saved records including already sent ones. Use if PM lost the file.
+    </div>
+    <div class="sh-btns" style="flex-direction:column;gap:8px">
+      <button class="sh-btn pri" onclick="doExport(false)">↓ Export new records</button>
+      <button class="sh-btn sec" onclick="doExport(true)" style="font-size:12px">↓ Re-export all saved records</button>
+      <button class="sh-btn sec" onclick="document.getElementById('expOv').classList.remove('open')" style="font-size:11px;color:var(--tx3)">Cancel</button>
     </div>
   </div>
 </div>
@@ -751,41 +757,55 @@ async function doSync(){
 function openExportSheet(){
   const all=Object.values(DS);
   const pending=all.filter(d=>d.exported===false);
+  const sent=all.filter(d=>d.exported==='sent');
   document.getElementById('expTotal').textContent=all.length;
   document.getElementById('expPending').textContent=pending.length;
+  document.getElementById('expSent').textContent=sent.length;
   document.getElementById('expOv').classList.add('open');
 }
 
-async function doExport(){
-  const pending=Object.values(DS).filter(d=>d.exported===false);
-  if(!pending.length){showT('No new records to export','info');return;}
+async function doExport(forceAll){
+  // forceAll=true  → export everything saved (re-export, even sent/confirmed)
+  // forceAll=false → export only unsent (normal daily export)
+  const all=Object.values(DS);
+  const toExport=forceAll
+    ? all.filter(d=>d.exported!==null) // all touched records
+    : all.filter(d=>d.exported===false); // only unsent
 
-  // Create JSON file and trigger download
-  const blob=new Blob([JSON.stringify(pending,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
+  if(!toExport.length){
+    showT(forceAll?'No saved records to export':'No unsent records — nothing to export','info');
+    return;
+  }
+
+  const engName=getEngineerName();
   const now=new Date();
   const date=now.toISOString().slice(0,10);
   const time=now.toTimeString().slice(0,8).replace(/:/g,'-');
+  const suffix=forceAll?'_ALL':'';
+  const filename='CGL2_'+engName+'_'+date+'_'+time+suffix+'.json';
+
+  const blob=new Blob([JSON.stringify(toExport,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
   a.href=url;
-  a.download='CGL2_export_'+date+'_'+time+'.json';
+  a.download=filename;
   a.click();
   URL.revokeObjectURL(url);
 
-  // Mark as sent (file exported, waiting for PM to import)
+  // Mark all exported records as 'sent' (even if they were already sent)
   const exportedTags=[];
-  for(const rec of pending){
+  for(const rec of toExport){
     DS[rec.Tag_Number].exported='sent';
     DS[rec.Tag_Number]._sentHash=hashRecord(DS[rec.Tag_Number]);
     exportedTags.push(rec.Tag_Number);
     await dbPut(DS[rec.Tag_Number]);
   }
   addPendingPM(exportedTags);
-  updPendLbl();
 
   document.getElementById('expOv').classList.remove('open');
   updPendLbl();
-  showT('Exported '+pending.length+' records — send the file to the project manager','ok');
+  if(ST.sub){renderHead();renderGrid();}
+  showT((forceAll?'Re-exported all ':('Exported '+toExport.length+' new '))+' records — send '+filename+' to the PM','ok');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
