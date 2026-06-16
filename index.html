@@ -784,13 +784,45 @@ async function doExport(forceAll){
   const suffix=forceAll?'_ALL':'';
   const filename='CGL2_'+engName+'_'+date+'_'+time+suffix+'.json';
 
-  const blob=new Blob([JSON.stringify(toExport,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  const jsonStr=JSON.stringify(toExport,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
+
+  // iOS standalone PWA: use Web Share API (opens share sheet → Teams/Mail)
+  // Desktop/Android: fall back to standard download link
+  if(navigator.canShare&&navigator.share){
+    try{
+      const file=new File([blob],filename,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({
+          files:[file],
+          title:'CGL2 Export',
+          text:'CGL2 commissioning data — '+filename,
+        });
+        // Share sheet opened — don't mark as sent yet, user may cancel
+        // We'll mark after the share resolves (user tapped share target)
+      } else {
+        // canShare returned false — fall through to download
+        throw new Error('canShare false');
+      }
+    } catch(err){
+      if(err.name==='AbortError'){
+        // User cancelled share sheet — don't mark as sent
+        showT('Export cancelled','info');
+        return;
+      }
+      // Share API unavailable or failed — fall back to download
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=filename;a.click();
+      URL.revokeObjectURL(url);
+    }
+  } else {
+    // Non-iOS or desktop — standard download
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;a.click();
+    URL.revokeObjectURL(url);
+  }
 
   // Mark all exported records as 'sent' (even if they were already sent)
   const exportedTags=[];
