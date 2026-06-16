@@ -545,6 +545,7 @@ const GROUPS=[
     {id:'CHK_Direction',l:'Direction / orientation correct',h:'Installed in correct flow direction per P&ID'},
     {id:'CHK_Mechanical',l:'Mechanical fixing and supports secure',h:'Bolts torqued, supports in place, no movement'},
     {id:'CHK_TagLabel',l:'Tag label fitted and legible',h:'Tag matches drawing number, clearly readable'},
+    {id:'CHK_CompressedAir',l:'Compressed air connected',h:'Air supply connected, correct pressure confirmed, no leaks'},
   ]},
   {n:2,t:'Electrical',s:'Wiring, power and I/O verification',c:'#633806',bg:'#FFF3DC',items:[
     {id:'CHK_Wiring',l:'Wiring terminated correctly',h:'Terminations match loop drawing, correct terminals'},
@@ -642,7 +643,7 @@ async function smartSync(){
         Comm_By:row.Comm_By||'',Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
         Approved_By:row.Approved_By||'',Remarks:row.Remarks||'',
         CHK_Direction:row.CHK_Direction||'',CHK_Mechanical:row.CHK_Mechanical||'',
-        CHK_TagLabel:row.CHK_TagLabel||'',CHK_Wiring:row.CHK_Wiring||'',
+        CHK_TagLabel:row.CHK_TagLabel||'',CHK_CompressedAir:row.CHK_CompressedAir||'',CHK_Wiring:row.CHK_Wiring||'',
         CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
         CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
         CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
@@ -652,6 +653,7 @@ async function smartSync(){
         NFPA_nfpa5:row.NFPA_nfpa5||'',NFPA_nfpa6:row.NFPA_nfpa6||'',
         NFPA_nfpa7:row.NFPA_nfpa7||'',NFPA_nfpa8:row.NFPA_nfpa8||'',
         NFPA_nfpa9:row.NFPA_nfpa9||'',NFPA_nfpa10:row.NFPA_nfpa10||'',
+        Connection_Cabinet:row.Connection_Cabinet||'',Manufacturer:row.Manufacturer||'',
         exported:true};
       await dbPut(DS[tag]);updated++;
     }
@@ -817,7 +819,7 @@ function renderGrid(){
 
 // ── MODAL ─────────────────────────────────────────────────────────────────
 function ensDS(tag){
-  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,''])),...Object.fromEntries(NFPA_STEPS.map(s=>['NFPA_'+s.id,'']))};
+  if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',Connection_Cabinet:'',Manufacturer:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,''])),...Object.fromEntries(NFPA_STEPS.map(s=>['NFPA_'+s.id,'']))};
 }
 
 function openM(idx){ST.idx=idx;renderM();document.getElementById('ov').classList.add('open');}
@@ -828,7 +830,9 @@ function renderM(){
   document.getElementById('mTag').textContent=dev.tag;
   document.getElementById('mDesc').innerHTML='<span>'+dev.desc+'</span>'+
     '<span class="mbadge">'+dev.type+'</span>'+
-    (dev.model?'<span class="mbadge" style="color:var(--blue)">'+dev.model+'</span>':'')+(INST_BY_MODEL[dev.model]||INST_BY_TYPE[dev.type]?'<span class="mbadge" style="cursor:pointer;background:var(--lblue);border-color:#90c0e0;color:var(--navy)" data-tag="'+dev.tag+'" data-type="'+dev.type+'" onclick="openInstEvt(this,event)">📖 Guide</span>':'')+
+    (dev.model?'<span class="mbadge" style="color:var(--blue)">'+dev.model+'</span>':'')+
+    (dev.manufacturer?'<span class="mbadge" style="color:#805000;background:#fff8e6;border-color:#f0c040">'+dev.manufacturer+'</span>':'')+
+    (dev.connection?'<span class="mbadge" style="color:#1a5c1a;background:#e6f7ee;border-color:#a8dbb8">🔌 '+dev.connection+'</span>':'')+(INST_BY_MODEL[dev.model]||INST_BY_TYPE[dev.type]?'<span class="mbadge" style="cursor:pointer;background:var(--lblue);border-color:#90c0e0;color:var(--navy)" data-tag="'+dev.tag+'" data-type="'+dev.type+'" onclick="openInstEvt(this,event)">📖 Guide</span>':'')+
     '<span class="mbadge">Qty '+dev.qty+'</span>'+
     (dev.nfpa?'<span class="mbadge" style="background:#fff5f5;border-color:#f0a0a0;color:#c0392b">★ NFPA 85</span>':'')+
     (isUnsent(dev.tag)?'<span class="mbadge" style="border-color:var(--Abdr);color:var(--A)">Unsent</span>':'');
@@ -908,7 +912,9 @@ async function saveClose(){
     Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
     Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
     Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
-    Scope_S:dev.scopeS,Scope_D:dev.scopeD,exported:false,
+    Scope_S:dev.scopeS,Scope_D:dev.scopeD,
+    Connection_Cabinet:dev.connection||'',Manufacturer:dev.manufacturer||'',
+    exported:false,
     savedAt:new Date().toISOString(),
   });
   await dbPut(DS[dev.tag]);
