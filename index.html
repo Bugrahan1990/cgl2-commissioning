@@ -714,9 +714,9 @@ async function smartSync(){
   }
   doSync();
 }
-function confirmSync(){
+async function confirmSync(){
   document.getElementById('syncConfirmOv').classList.remove('open');
-  doSync();
+  await doSync();
 }
 async function doSync(){
   const btn=document.getElementById('btnSync');
@@ -754,7 +754,7 @@ async function doSync(){
     if(ST.sub){renderHead();renderGrid();}
     showT('Synced — '+updated+' records updated','ok');
   }catch(e){showT('Sync failed: '+e.message+' — check WiFi','err');}
-  btn.disabled=false;btn.textContent='↓ Sync';
+  finally{btn.disabled=false;btn.textContent='↓ Sync';}
 }
 
 // ── EXPORT ────────────────────────────────────────────────────────────────
@@ -914,7 +914,7 @@ function renderGrid(){
   ST.devs.forEach((d,i)=>{
     const s=d.section||'General';
     if(!secs[s])secs[s]={};
-    const t=d.type||'Other';
+    const t=d.type||(d.tag.match(/-(\w+)-\d+$/)||[])[1]||'Other';
     if(!secs[s][t])secs[s][t]=[];
     secs[s][t].push({d,i});
   });
