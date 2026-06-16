@@ -909,55 +909,48 @@ function renderGrid(){
   const gw=document.getElementById('gw');gw.innerHTML='';
   const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
 
-  // Group by section, then by device type within each section
-  const secs={};
+  // Group by device TYPE only — section shown on each card
+  const byType={};
   ST.devs.forEach((d,i)=>{
-    const s=d.section||'General';
-    if(!secs[s])secs[s]={};
     const t=d.type||(d.tag.match(/-(\w+)-\d+$/)||[])[1]||'Other';
-    if(!secs[s][t])secs[s][t]=[];
-    secs[s][t].push({d,i});
+    if(!byType[t])byType[t]=[];
+    byType[t].push({d,i});
   });
 
-  const secKeys=Object.keys(secs);
-  const useSec=secKeys.length<=8;
+  // Sort type groups alphabetically
+  Object.keys(byType).sort().forEach(type=>{
+    const items=byType[type];
+    // Type group header
+    const tg=document.createElement('div');tg.className='tg';
+    tg.innerHTML='<div class="tg-lbl">'+type+'</div>'+
+      '<div class="tg-line"></div>'+
+      '<div class="tg-count">'+items.length+'</div>';
+    grid.appendChild(tg);
 
-  secKeys.forEach(sec=>{
-    // Section header
-    if(useSec){
-      const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;
-      grid.appendChild(sh);
-    }
-    const types=secs[sec];
-    // Sort type groups alphabetically
-    Object.keys(types).sort().forEach(type=>{
-      const items=types[type];
-      // Type group header
-      const tg=document.createElement('div');tg.className='tg';
-      tg.innerHTML='<div class="tg-lbl">'+type+'</div>'+
-        '<div class="tg-line"></div>'+
-        '<div class="tg-count">'+items.length+'</div>';
-      grid.appendChild(tg);
-      // Cards for this type
-      items.forEach(({d,i})=>{
-        const s=getS(d.tag);const unsent=isUnsent(d.tag);
-        const cls=unsent?'unsynced':sCls(s);
-        const card=document.createElement('div');card.className='card '+cls;
-        const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
-        const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
-        const connLine=d.connection?'<div class="cconn">🔌 '+d.connection+'</div>':'';
-        const nfpa=d.nfpa;
-        const badges='<div class="cbadges">'+
-          (nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
-          ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
-          '</div>';
-        card.innerHTML=secLine+scsLine+connLine+
-          '<div class="ctag">'+d.tag+'</div>'+
-          '<div class="cdesc">'+d.desc+'</div>'+
-          badges+
-          '<div class="cfoot"><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-        card.onclick=()=>openM(i);grid.appendChild(card);
-      });
+    // Cards — sorted by section then tag within each type group
+    items.sort((a,b)=>{
+      const sd=(a.d.section||'').localeCompare(b.d.section||'');
+      return sd!==0?sd:a.d.tag.localeCompare(b.d.tag);
+    });
+
+    items.forEach(({d,i})=>{
+      const s=getS(d.tag);const unsent=isUnsent(d.tag);
+      const cls=unsent?'unsynced':sCls(s);
+      const card=document.createElement('div');card.className='card '+cls;
+      // Always show section on card since we removed section headers
+      const secLine=d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
+      const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
+      const connLine=d.connection?'<div class="cconn">🔌 '+d.connection+'</div>':'';
+      const badges='<div class="cbadges">'+
+        (d.nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
+        ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
+        '</div>';
+      card.innerHTML=secLine+scsLine+connLine+
+        '<div class="ctag">'+d.tag+'</div>'+
+        '<div class="cdesc">'+d.desc+'</div>'+
+        badges+
+        '<div class="cfoot"><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+      card.onclick=()=>openM(i);grid.appendChild(card);
     });
   });
 }
