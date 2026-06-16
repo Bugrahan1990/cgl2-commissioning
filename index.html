@@ -655,6 +655,8 @@ async function smartSync(){
         NFPA_nfpa9:row.NFPA_nfpa9||'',NFPA_nfpa10:row.NFPA_nfpa10||'',
         Connection_Cabinet:row.Connection_Cabinet||'',Manufacturer:row.Manufacturer||'',
         exported:true};
+      // Store baseline so we can detect if engineer reverts to original values
+      DS[tag]._baseline={...DS[tag]};
       await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
@@ -703,6 +705,17 @@ async function doExport(){
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
 function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
+
+function recordMatchesBaseline(tag){
+  const d=DS[tag];
+  if(!d||!d._baseline) return false; // no baseline = never synced = treat as changed
+  const b=d._baseline;
+  // Compare all user-editable fields
+  const userFields=['Comm_Status','Comm_By','Comm_Date','Approved_By','Remarks',
+    ...ACHK,
+    ...NFPA_STEPS.map(s=>'NFPA_'+s.id)];
+  return userFields.every(k=>(d[k]||'')===(b[k]||''));
+}
 function sCls(s){return{'Commissioned':'commissioned','In Progress':'in-progress','Not Started':'not-started','N/A':'na'}[s]||'not-started';}
 
 function updProg(){
@@ -914,9 +927,15 @@ async function saveClose(){
     Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
     Scope_S:dev.scopeS,Scope_D:dev.scopeD,
     Connection_Cabinet:dev.connection||'',Manufacturer:dev.manufacturer||'',
-    exported:false,
     savedAt:new Date().toISOString(),
   });
+  // Smart dirty check — only flag unsent if something changed from the synced baseline
+  if(!recordMatchesBaseline(dev.tag)){
+    DS[dev.tag].exported=false;
+  } else if(DS[dev.tag].exported===false){
+    // User reverted all changes back to baseline — clear the unsent flag
+    DS[dev.tag].exported=DS[dev.tag]._baseline?true:null;
+  }
   await dbPut(DS[dev.tag]);
   showT('Saved','info');
   closeM();
