@@ -37,6 +37,14 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .net-badge.off{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .net-badge.on{background:var(--Gbg);border-color:var(--Gbdr);color:var(--G)}
 .nbdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.eng-name{font-size:10px;color:var(--blue);font-weight:600;cursor:pointer;white-space:nowrap;padding:2px 6px;border-radius:5px;border:1px solid var(--bdr2);background:var(--bg);font-family:"DM Mono",monospace}
+.eng-name:hover{background:var(--lblue);border-color:#90c0e0}
+.name-modal{background:var(--sur);border-radius:var(--rl);width:88%;max-width:340px;padding:28px 24px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.name-modal h3{font-size:15px;font-weight:700;color:var(--navy);margin:0 0 6px}
+.name-modal p{font-size:12px;color:var(--tx3);margin:0 0 16px;line-height:1.5}
+.name-input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid var(--bdr2);font-size:14px;font-family:"Inter",sans-serif;background:var(--bg);color:var(--tx);outline:none}
+.name-input:focus{border-color:var(--blue)}
+.name-btns{display:flex;gap:8px;margin-top:14px}
 .pend-lbl{font-size:11px;color:var(--A);font-family:'DM Mono',monospace;white-space:nowrap}
 .ab-btns{display:flex;gap:5px;flex-shrink:0}
 .xbtn{padding:6px 12px;border-radius:7px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
@@ -313,6 +321,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <div id="loadStatus" style="font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;transition:opacity 1.5s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px"></div>
       <div class="net-badge off" id="netBadge"><div class="nbdot"></div><span id="netLbl">Offline</span></div>
       <div class="pend-lbl" id="pendLbl"></div>
+      <button class="eng-name" id="engNameBtn" onclick="promptName()" title="Tap to change your name"></button>
     </div>
     <div class="ab-btns">
       <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
@@ -604,8 +613,39 @@ async function initApp(){
   const all=await dbGetAll();
   all.forEach(r=>{DS[r.Tag_Number]=r;});
   updProg();updPendLbl();
+  initEngineerName();
   checkOnline();
   loadDevices();
+}
+
+// ── ENGINEER NAME ──────────────────────────────────────────────
+function initEngineerName(){
+  const name=localStorage.getItem('CGL2_eng_name')||'';
+  const btn=document.getElementById('engNameBtn');
+  if(name){
+    btn.textContent='👷 '+name;
+  } else {
+    btn.textContent='👷 Set your name';
+    setTimeout(()=>promptName(true),900);
+  }
+}
+function promptName(firstTime){
+  const input=document.getElementById('nameInput');
+  input.value=localStorage.getItem('CGL2_eng_name')||'';
+  document.getElementById('nameOv').classList.add('open');
+  setTimeout(()=>input.focus(),100);
+  input.onkeydown=e=>{if(e.key==='Enter')saveName();};
+}
+function saveName(){
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name){showT('Please enter your name','err');return;}
+  localStorage.setItem('CGL2_eng_name',name);
+  document.getElementById('engNameBtn').textContent='👷 '+name;
+  document.getElementById('nameOv').classList.remove('open');
+  showT('Name saved','info');
+}
+function getEngineerName(){
+  return (localStorage.getItem('CGL2_eng_name')||'Unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
 }
 
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
@@ -628,6 +668,20 @@ async function checkOnline(){
 
 async function smartSync(){
   if(Object.keys(H).length===0){showT('Device list still loading — wait a moment','info');return;}
+  // Warn if engineer has unsent records that would be overwritten
+  const unsent=Object.values(DS).filter(d=>d.exported===false);
+  if(unsent.length>0){
+    document.getElementById('syncUnsentCount').textContent=unsent.length;
+    document.getElementById('syncConfirmOv').classList.add('open');
+    return;
+  }
+  doSync();
+}
+function confirmSync(){
+  document.getElementById('syncConfirmOv').classList.remove('open');
+  doSync();
+}
+async function doSync(){
   const btn=document.getElementById('btnSync');
   btn.disabled=true;btn.textContent='Syncing…';
   try{
@@ -635,10 +689,9 @@ async function smartSync(){
     const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
     if(!r.ok)throw new Error('Cannot reach server ('+r.status+')');
     const data=await r.json();const records=data.records||[];
-    let updated=0,kept=0;
+    let updated=0;
     for(const row of records){
       const tag=row.Tag_Number;if(!tag)continue;
-      if(DS[tag]&&DS[tag].exported===false){kept++;continue;}
       DS[tag]={Tag_Number:tag,Comm_Status:row.Comm_Status||'Not Started',
         Comm_By:row.Comm_By||'',Comm_Date:row.Comm_Date?row.Comm_Date.slice(0,10):'',
         Approved_By:row.Approved_By||'',Remarks:row.Remarks||'',
@@ -655,13 +708,12 @@ async function smartSync(){
         NFPA_nfpa9:row.NFPA_nfpa9||'',NFPA_nfpa10:row.NFPA_nfpa10||'',
         Connection_Cabinet:row.Connection_Cabinet||'',Manufacturer:row.Manufacturer||'',
         exported:true};
-      // Store hash of server values — persists in IndexedDB with the record
       DS[tag]._syncHash=hashRecord(DS[tag]);
       await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
-    showT(kept>0?'Synced — '+updated+' updated, '+kept+' unsent kept':'Synced — '+updated+' updated','ok');
+    showT('Synced — '+updated+' records updated','ok');
   }catch(e){showT('Sync failed: '+e.message+' — check WiFi','err');}
   btn.disabled=false;btn.textContent='↓ Sync';
 }
@@ -1306,6 +1358,32 @@ function closeInst(){document.getElementById('instOv').classList.remove('open');
 
 initApp();
 </script>
+
+<!-- ENGINEER NAME MODAL -->
+<div class="ov" id="nameOv" style="align-items:center">
+  <div class="name-modal">
+    <h3>👷 Who are you?</h3>
+    <p>Your name is added to export filenames so the PM knows who sent the file. You only need to enter this once — tap your name in the top bar to change it later.</p>
+    <input class="name-input" id="nameInput" type="text" placeholder="e.g. John Smith" maxlength="40" autocomplete="name">
+    <div class="name-btns">
+      <button class="btn" style="flex:1" onclick="saveName()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC CONFIRMATION MODAL -->
+<div class="ov" id="syncConfirmOv" style="align-items:center">
+  <div class="name-modal">
+    <h3>⚠️ Unsent Records</h3>
+    <p>You have <b><span id="syncUnsentCount">0</span> unsent record(s)</b> that have not been exported yet.<br><br>
+    Syncing will reset them to the latest status uploaded by the PM — your local changes will be lost.<br><br>
+    <b>Tap Cancel, export your data first, then Sync.</b></p>
+    <div class="name-btns">
+      <button class="btn btn-s" style="flex:1" onclick="document.getElementById('syncConfirmOv').classList.remove('open')">Cancel — go back</button>
+      <button class="btn" style="flex:1;background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)" onclick="confirmSync()">Sync anyway</button>
+    </div>
+  </div>
+</div>
 
 <!-- INSTRUCTIONS MODAL -->
 <div class="ov" id="instOv" onclick="if(event.target===this)closeInst()">
