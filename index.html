@@ -646,7 +646,13 @@ async function smartSync(){
         CHK_IO:row.CHK_IO||'',CHK_PowerSupply:row.CHK_PowerSupply||'',
         CHK_Enclosure:row.CHK_Enclosure||'',CHK_OpenClose:row.CHK_OpenClose||'',
         CHK_Calibration:row.CHK_Calibration||'',CHK_Interlock:row.CHK_Interlock||'',
-        CHK_Settings:row.CHK_Settings||'',exported:true};
+        CHK_Settings:row.CHK_Settings||'',
+        NFPA_nfpa1:row.NFPA_nfpa1||'',NFPA_nfpa2:row.NFPA_nfpa2||'',
+        NFPA_nfpa3:row.NFPA_nfpa3||'',NFPA_nfpa4:row.NFPA_nfpa4||'',
+        NFPA_nfpa5:row.NFPA_nfpa5||'',NFPA_nfpa6:row.NFPA_nfpa6||'',
+        NFPA_nfpa7:row.NFPA_nfpa7||'',NFPA_nfpa8:row.NFPA_nfpa8||'',
+        NFPA_nfpa9:row.NFPA_nfpa9||'',NFPA_nfpa10:row.NFPA_nfpa10||'',
+        exported:true};
       await dbPut(DS[tag]);updated++;
     }
     updProg();updPendLbl();renderNav();
