@@ -115,7 +115,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .card.commissioned::before{background:var(--G)}.card.in-progress::before{background:var(--A)}
 .card.not-started::before{background:#ddd}.card.na::before{background:var(--Gr)}
 .card.commissioned{border-color:var(--Gbdr)}.card.in-progress{border-color:var(--Abdr)}
-.card.unsynced{border-style:dashed;border-color:var(--Abdr)}
+.card.unsynced{border-style:dashed;border-color:var(--Abdr)}.sent{border-style:dashed;border-color:var(--blue)}
 .card:active{transform:scale(.96)}
 .cscs{font-size:8.5px;color:var(--tx3);font-family:'DM Mono',monospace;margin-bottom:2px}
 .ctag{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--blue);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -127,7 +127,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .in-progress .cst{background:var(--Abg);border-color:var(--Abdr);color:var(--A)}
 .not-started .cst{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
 .na .cst{background:var(--Grbg);border-color:var(--Grbdr);color:var(--Gr)}
-.unsynced .cst{background:var(--Ybg);border-color:var(--Ybdr);color:var(--Y)}
+.unsynced .cst{background:var(--Ybg);border-color:var(--Ybdr);color:var(--Y)}.sent .cst{background:var(--lblue);border-color:#90c0e0;color:var(--blue)}
 
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--tx3);text-align:center;padding:30px;height:100%}
 .empty-icon{font-size:32px;opacity:.3}
@@ -700,18 +700,8 @@ async function smartSync(){
     document.getElementById('syncConfirmOv').classList.add('open');
     return;
   }
-  // Warn: exported but PM may not have imported yet
-  const pending=pendingPMCount();
-  if(pending>0){
-    document.getElementById('syncUnsentCount').textContent=pending;
-    document.getElementById('syncWarnType').textContent='pending PM import';
-    document.getElementById('syncWarnDetail').innerHTML=
-      'You exported <b>'+pending+' record(s)</b> that the PM may not have imported into the system yet.'+
-      '<br><br>If you Sync now, those records may be reset to an older state.'+
-      '<br><br><b>Only Sync after the PM confirms they have imported your file.</b>';
-    document.getElementById('syncConfirmOv').classList.add('open');
-    return;
-  }
+  // 'sent' records are safe to sync over — PM already has the file
+  // Only warn on 'unsent' (false) — those haven't been exported yet
   doSync();
 }
 async function confirmSync(){
@@ -782,10 +772,11 @@ async function doExport(){
   a.click();
   URL.revokeObjectURL(url);
 
-  // Mark as exported and add to pendingPM (waiting for PM to import)
+  // Mark as sent (file exported, waiting for PM to import)
   const exportedTags=[];
   for(const rec of pending){
-    DS[rec.Tag_Number].exported=true;
+    DS[rec.Tag_Number].exported='sent';
+    DS[rec.Tag_Number]._sentHash=hashRecord(DS[rec.Tag_Number]);
     exportedTags.push(rec.Tag_Number);
     await dbPut(DS[rec.Tag_Number]);
   }
@@ -800,6 +791,13 @@ async function doExport(){
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
 function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
+function isSent(tag){return DS[tag]&&DS[tag].exported==='sent';}
+function getCardState(tag){
+  if(!DS[tag])return 'normal';
+  if(DS[tag].exported===false)return 'unsent';
+  if(DS[tag].exported==='sent')return 'sent';
+  return 'normal';
+}
 function hashRecord(d){
   // Build a stable string of all user-editable field values
   const fields=['Comm_Status','Comm_By','Comm_Date','Approved_By','Remarks',
@@ -809,7 +807,7 @@ function hashRecord(d){
 function isDirty(tag){
   const d=DS[tag];
   if(!d) return false;
-  if(!d._syncHash) return d.exported===false; // no server baseline ever — use exported flag
+  if(!d._syncHash) return d.exported===false||d.exported==='sent';
   return hashRecord(d)!==d._syncHash;
 }
 
@@ -824,11 +822,12 @@ function updProg(){
 
 function updPendLbl(){
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
-  const pending=pendingPMCount();
+  const sent=Object.values(DS).filter(d=>d.exported==='sent').length;
   const el=document.getElementById('pendLbl');
-  if(unsent>0)      el.textContent=unsent+' unsent';
-  else if(pending>0)el.textContent=pending+' awaiting PM';
-  else              el.textContent='';
+  if(unsent>0&&sent>0) el.textContent=unsent+' unsent · '+sent+' sent';
+  else if(unsent>0)    el.textContent=unsent+' unsent';
+  else if(sent>0)      el.textContent=sent+' sent ✓';
+  else                 el.textContent='';
 }
 
 function showT(msg,type){
@@ -892,12 +891,14 @@ function selectSub(area,equip,sub,devs){
 
 function renderHead(){
   const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0;
-  ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;});
+  let sent=0;
+  ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;if(isSent(d.tag))sent++;});
   document.getElementById('ph').innerHTML=
     '<div class="pht">'+ST.sub+'</div>'+
     '<div class="phs">'+ST.area+' &rsaquo; '+ST.equip+' &middot; '+ST.devs.length+' devices</div>'+
     '<div class="phc">'+
     (c.Commissioned?'<div class="chip g"><div class="cd" style="background:var(--G)"></div>'+c.Commissioned+' Done</div>':'')+
+    (sent?'<div class="chip" style="background:var(--lblue);border-color:#90c0e0"><div class="cd" style="background:var(--blue)"></div>'+sent+' Sent</div>':'')+
     (c['In Progress']?'<div class="chip a"><div class="cd" style="background:var(--A)"></div>'+c['In Progress']+' WIP</div>':'')+
     (c['Not Started']?'<div class="chip r"><div class="cd" style="background:var(--R)"></div>'+c['Not Started']+' Pending</div>':'')+
     (c['N/A']?'<div class="chip gr"><div class="cd" style="background:var(--Gr)"></div>'+c['N/A']+' N/A</div>':'')+
@@ -934,13 +935,13 @@ function renderGrid(){
     });
 
     items.forEach(({d,i})=>{
-      const s=getS(d.tag);const unsent=isUnsent(d.tag);
-      const cls=unsent?'unsynced':sCls(s);
+      const s=getS(d.tag);const cs=getCardState(d.tag);
+      const cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
       const card=document.createElement('div');card.className='card '+cls;
-      // Always show section on card since we removed section headers
       const secLine=d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
       const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
       const connLine=d.connection?'<div class="cconn">🔌 '+d.connection+'</div>':'';
+      const statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent ✓':s;
       const badges='<div class="cbadges">'+
         (d.nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
         ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
@@ -949,7 +950,7 @@ function renderGrid(){
         '<div class="ctag">'+d.tag+'</div>'+
         '<div class="cdesc">'+d.desc+'</div>'+
         badges+
-        '<div class="cfoot"><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+        '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
       card.onclick=()=>openM(i);grid.appendChild(card);
     });
   });
@@ -1054,11 +1055,18 @@ async function saveClose(){
     Connection_Cabinet:dev.connection||'',Manufacturer:dev.manufacturer||'',
     savedAt:new Date().toISOString(),
   });
-  // Smart dirty check — compare current values to last synced server state
+  // Smart dirty check — three-state lifecycle
   if(isDirty(dev.tag)){
-    DS[dev.tag].exported=false;   // something changed vs server → mark unsent
+    // If already sent to PM, keep as 'sent' — don't downgrade to unsent
+    // unless the engineer made NEW changes after sending
+    const prev=DS[dev.tag].exported;
+    if(prev==='sent'&&hashRecord(DS[dev.tag])===DS[dev.tag]._sentHash){
+      DS[dev.tag].exported='sent'; // same as what was sent — keep sent
+    } else {
+      DS[dev.tag].exported=false;  // new changes after sending → back to unsent
+    }
   } else {
-    DS[dev.tag].exported=true;    // matches server exactly → not unsent
+    DS[dev.tag].exported=true; // matches server → fully confirmed
   }
   await dbPut(DS[dev.tag]);
   showT('Saved','info');
