@@ -59,7 +59,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .ai{padding:5px 8px;margin-bottom:1px;cursor:pointer;border-radius:7px;border:1px solid transparent}
 .ai:hover{background:var(--sur2)}.ai.open{background:var(--lblue);border-color:#90c0e0}
 .ar{display:flex;align-items:center;justify-content:space-between}
-.an{font-size:12px;font-weight:600;color:var(--navy)}
+.an{font-size:12px;font-weight:600;color:var(--navy)}.apct{font-size:10px;font-family:"DM Mono",monospace;color:var(--tx3);white-space:nowrap;margin-right:4px}.ai.open .apct{color:var(--navy)}.epct{font-size:10px;font-family:"DM Mono",monospace;color:var(--tx3);white-space:nowrap;margin-right:4px}.ei.open .epct{color:var(--navy)}.spct{font-size:10px;font-family:"DM Mono",monospace;color:var(--tx3);white-space:nowrap}.si.active .spct{color:var(--blue)}
 .aa{font-size:9px;color:var(--tx3);transition:transform .15s;display:inline-block}
 .ai.open .aa{transform:rotate(90deg)}
 .ap{height:3px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-top:4px}
@@ -735,17 +735,20 @@ function renderNav(){
     if(q&&!aMatch) return;
     const ai=document.createElement('div');
     ai.className='ai'+(OA[area]?' open':'');
-    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span class="aa">&#9658;</span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
+    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="apct">'+done+'/'+allD.length+' &nbsp;'+Math.round(pct*100)+'%</span><span class="aa">&#9658;</span></span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
     ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
     el.appendChild(ai);
     if(!OA[area]&&!q) return;
     Object.entries(equips).forEach(([equip,subs])=>{
       const eKey=area+'|'+equip;
+      const eDevs=Object.values(subs).flat();
+      const eDone=eDevs.filter(d=>getS(d.tag)==='Commissioned').length;
+      const ePct=eDevs.length?Math.round(eDone/eDevs.length*100):0;
       const eMatch=!q||equip.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q));
       if(q&&!eMatch) return;
       const ei=document.createElement('div');
       ei.className='ei'+(OE[eKey]?' open':'');
-      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span class="ea">&#9658;</span></div>';
+      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="epct">'+eDone+'/'+eDevs.length+' &nbsp;'+ePct+'%</span><span class="ea">&#9658;</span></span></div>';
       ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
       el.appendChild(ei);
       if(!OE[eKey]&&!q) return;
@@ -756,7 +759,7 @@ function renderNav(){
         const hasPend=devs.some(d=>isUnsent(d.tag));
         const si=document.createElement('div');
         si.className='si'+(ST.area===area&&ST.equip===equip&&ST.sub===sub?' active':'');
-        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+Math.round(pct2*100)+'%"></div></div><span class="sc2">'+devs.length+'</span></div>';
+        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+Math.round(pct2*100)+'%"></div></div><span class="spct">'+done2+'/'+devs.length+'&nbsp;'+Math.round(pct2*100)+'%</span></div>';
         si.onclick=e=>{e.stopPropagation();selectSub(area,equip,sub,devs);};
         el.appendChild(si);
       });
