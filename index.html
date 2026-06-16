@@ -108,7 +108,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .gw::-webkit-scrollbar{width:3px}
 .gw::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
-.sl{grid-column:1/-1;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:4px 0 2px;border-bottom:1px solid var(--bdr);margin-bottom:2px}
+.sl{grid-column:1/-1;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:4px 0 2px;border-bottom:1px solid var(--bdr);margin-bottom:2px}.tg{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:6px 0 2px}.tg-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--blue);background:var(--lblue);border:1px solid #90c0e0;border-radius:99px;padding:2px 9px;white-space:nowrap}.tg-line{flex:1;height:1px;background:var(--bdr)}.tg-count{font-size:9px;color:var(--tx3);font-family:'DM Mono',monospace;white-space:nowrap}.cconn{font-size:8px;font-family:'DM Mono',monospace;color:var(--tx3);background:var(--bg);border:1px solid var(--bdr2);border-radius:4px;padding:1px 5px;margin-bottom:3px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .card{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:9px 10px;cursor:pointer;position:relative;overflow:hidden;transition:transform .1s}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
@@ -648,6 +648,24 @@ function getEngineerName(){
   return (localStorage.getItem('CGL2_eng_name')||'Unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
 }
 
+// ── PENDING PM IMPORT TRACKING ─────────────────────────────────────────
+// Tags exported but not yet confirmed back from server via Sync
+function getPendingPM(){
+  try{return new Set(JSON.parse(localStorage.getItem('CGL2_pendingPM')||'[]'));}
+  catch{return new Set();}
+}
+function addPendingPM(tags){
+  const s=getPendingPM();
+  tags.forEach(t=>s.add(t));
+  localStorage.setItem('CGL2_pendingPM',JSON.stringify([...s]));
+}
+function clearPendingPM(tags){
+  const s=getPendingPM();
+  tags.forEach(t=>s.delete(t));
+  localStorage.setItem('CGL2_pendingPM',JSON.stringify([...s]));
+}
+function pendingPMCount(){return getPendingPM().size;}
+
 // ── ONLINE CHECK & GET LATEST ─────────────────────────────────────────────
 async function checkOnline(){
   try{
@@ -668,10 +686,29 @@ async function checkOnline(){
 
 async function smartSync(){
   if(Object.keys(H).length===0){showT('Device list still loading — wait a moment','info');return;}
-  // Warn if engineer has unsent records that would be overwritten
+  // Block sync if offline
+  if(!isOnline){showT('You are offline — connect to WiFi first','err');return;}
+  // Warn: unsent records (not yet exported)
   const unsent=Object.values(DS).filter(d=>d.exported===false);
   if(unsent.length>0){
     document.getElementById('syncUnsentCount').textContent=unsent.length;
+    document.getElementById('syncWarnType').textContent='unsent';
+    document.getElementById('syncWarnDetail').innerHTML=
+      'You have <b>'+unsent.length+' unsent record(s)</b> that have not been exported yet.'+
+      '<br><br>Syncing will overwrite them with the server state — your work will be lost.'+
+      '<br><br><b>Cancel and export first.</b>';
+    document.getElementById('syncConfirmOv').classList.add('open');
+    return;
+  }
+  // Warn: exported but PM may not have imported yet
+  const pending=pendingPMCount();
+  if(pending>0){
+    document.getElementById('syncUnsentCount').textContent=pending;
+    document.getElementById('syncWarnType').textContent='pending PM import';
+    document.getElementById('syncWarnDetail').innerHTML=
+      'You exported <b>'+pending+' record(s)</b> that the PM may not have imported into the system yet.'+
+      '<br><br>If you Sync now, those records may be reset to an older state.'+
+      '<br><br><b>Only Sync after the PM confirms they have imported your file.</b>';
     document.getElementById('syncConfirmOv').classList.add('open');
     return;
   }
@@ -689,7 +726,7 @@ async function doSync(){
     const r=await fetch(STATUS_URL+'?nc='+Date.now(),{signal:ctrl.signal});
     if(!r.ok)throw new Error('Cannot reach server ('+r.status+')');
     const data=await r.json();const records=data.records||[];
-    let updated=0;
+    let updated=0;const pendingToClear=[];
     for(const row of records){
       const tag=row.Tag_Number;if(!tag)continue;
       DS[tag]={Tag_Number:tag,Comm_Status:row.Comm_Status||'Not Started',
@@ -710,7 +747,9 @@ async function doSync(){
         exported:true};
       DS[tag]._syncHash=hashRecord(DS[tag]);
       await dbPut(DS[tag]);updated++;
+      pendingToClear.push(tag);
     }
+    clearPendingPM(pendingToClear);
     updProg();updPendLbl();renderNav();
     if(ST.sub){renderHead();renderGrid();}
     showT('Synced — '+updated+' records updated','ok');
@@ -743,11 +782,15 @@ async function doExport(){
   a.click();
   URL.revokeObjectURL(url);
 
-  // Mark as exported
+  // Mark as exported and add to pendingPM (waiting for PM to import)
+  const exportedTags=[];
   for(const rec of pending){
     DS[rec.Tag_Number].exported=true;
+    exportedTags.push(rec.Tag_Number);
     await dbPut(DS[rec.Tag_Number]);
   }
+  addPendingPM(exportedTags);
+  updPendLbl();
 
   document.getElementById('expOv').classList.remove('open');
   updPendLbl();
@@ -780,9 +823,12 @@ function updProg(){
 }
 
 function updPendLbl(){
-  const n=Object.values(DS).filter(d=>d.exported===false).length;
+  const unsent=Object.values(DS).filter(d=>d.exported===false).length;
+  const pending=pendingPMCount();
   const el=document.getElementById('pendLbl');
-  el.textContent=n?n+' unsent':'';
+  if(unsent>0)      el.textContent=unsent+' unsent';
+  else if(pending>0)el.textContent=pending+' awaiting PM';
+  else              el.textContent='';
 }
 
 function showT(msg,type){
@@ -862,24 +908,56 @@ function renderHead(){
 function renderGrid(){
   const gw=document.getElementById('gw');gw.innerHTML='';
   const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
+
+  // Group by section, then by device type within each section
   const secs={};
-  ST.devs.forEach((d,i)=>{const s=d.section||'General';if(!secs[s])secs[s]=[];secs[s].push({d,i});});
-  const useSec=Object.keys(secs).length<=8;
-  Object.entries(secs).forEach(([sec,items])=>{
-    if(useSec){const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;grid.appendChild(sh);}
-    items.forEach(({d,i})=>{
-      const s=getS(d.tag);const unsent=isUnsent(d.tag);
-      const cls=unsent?'unsynced':sCls(s);
-      const card=document.createElement('div');card.className='card '+cls;
-      const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
-      const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
-      const nfpa=d.nfpa;
-      const badges='<div class="cbadges">'+
-        (nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
-        ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
-        '</div>';
-      card.innerHTML=secLine+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+'<div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-      card.onclick=()=>openM(i);grid.appendChild(card);
+  ST.devs.forEach((d,i)=>{
+    const s=d.section||'General';
+    if(!secs[s])secs[s]={};
+    const t=d.type||'Other';
+    if(!secs[s][t])secs[s][t]=[];
+    secs[s][t].push({d,i});
+  });
+
+  const secKeys=Object.keys(secs);
+  const useSec=secKeys.length<=8;
+
+  secKeys.forEach(sec=>{
+    // Section header
+    if(useSec){
+      const sh=document.createElement('div');sh.className='sl';sh.textContent=sec;
+      grid.appendChild(sh);
+    }
+    const types=secs[sec];
+    // Sort type groups alphabetically
+    Object.keys(types).sort().forEach(type=>{
+      const items=types[type];
+      // Type group header
+      const tg=document.createElement('div');tg.className='tg';
+      tg.innerHTML='<div class="tg-lbl">'+type+'</div>'+
+        '<div class="tg-line"></div>'+
+        '<div class="tg-count">'+items.length+'</div>';
+      grid.appendChild(tg);
+      // Cards for this type
+      items.forEach(({d,i})=>{
+        const s=getS(d.tag);const unsent=isUnsent(d.tag);
+        const cls=unsent?'unsynced':sCls(s);
+        const card=document.createElement('div');card.className='card '+cls;
+        const secLine=!useSec&&d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
+        const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
+        const connLine=d.connection?'<div class="cconn">🔌 '+d.connection+'</div>':'';
+        const nfpa=d.nfpa;
+        const badges='<div class="cbadges">'+
+          (nfpa?'<span class="card-star" title="NFPA 85 required">★</span>':'')+
+          ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" title="Commissioning instructions" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
+          '</div>';
+        card.innerHTML=secLine+scsLine+connLine+
+          '<div class="ctag">'+d.tag+'</div>'+
+          '<div class="cdesc">'+d.desc+'</div>'+
+          badges+
+          '<div class="cfoot"><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
+        card.onclick=()=>openM(i);grid.appendChild(card);
+      });
     });
   });
 }
@@ -1374,12 +1452,10 @@ initApp();
 <!-- SYNC CONFIRMATION MODAL -->
 <div class="ov" id="syncConfirmOv" style="align-items:center">
   <div class="name-modal">
-    <h3>⚠️ Unsent Records</h3>
-    <p>You have <b><span id="syncUnsentCount">0</span> unsent record(s)</b> that have not been exported yet.<br><br>
-    Syncing will reset them to the latest status uploaded by the PM — your local changes will be lost.<br><br>
-    <b>Tap Cancel, export your data first, then Sync.</b></p>
+    <h3>⚠️ <span id="syncWarnType">Warning</span></h3>
+    <p id="syncWarnDetail"></p>
     <div class="name-btns">
-      <button class="btn btn-s" style="flex:1" onclick="document.getElementById('syncConfirmOv').classList.remove('open')">Cancel — go back</button>
+      <button class="btn btn-s" style="flex:1" onclick="document.getElementById('syncConfirmOv').classList.remove('open')">Cancel</button>
       <button class="btn" style="flex:1;background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)" onclick="confirmSync()">Sync anyway</button>
     </div>
   </div>
