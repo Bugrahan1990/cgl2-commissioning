@@ -261,7 +261,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 
 /* Panel wrapper */
 .bi-panel{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
-.bi-panel-hdr{display:flex;align-items:baseline;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--bg)}
+.bi-panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--bg)}.bi-panel-hdr-right{display:flex;align-items:center;gap:8px}.bi-export-btn{font-size:10px;font-weight:600;color:var(--blue);background:var(--lblue);border:1px solid #90c0e0;border-radius:6px;padding:4px 9px;cursor:pointer;white-space:nowrap}.bi-export-btn:hover{background:#cfe3f4}.bi-export-btn:active{transform:scale(.96)}
 .bi-panel-title{font-size:12.5px;font-weight:700;color:var(--navy)}
 .bi-panel-meta{font-size:9.5px;color:var(--tx3);font-family:'DM Mono',monospace}
 .bi-panel-body{padding:12px 16px 14px}
@@ -727,6 +727,51 @@ function saveName(){
 }
 function getEngineerName(){
   return (localStorage.getItem('CGL2_eng_name')||'Unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
+}
+
+// ── EXPORT: In Progress — Blocked By, as CSV (opens in Excel) ──────────
+function csvEscape(v){
+  const s=String(v??'');
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+async function exportBlockedByCSV(){
+  const failMap=window._dashFailMap;
+  if(!failMap){showT('No data to export','info');return;}
+  const rows=[['Area','Equipment','Sub-Equipment','Tag','Type','Blocked Reason','Remarks']];
+  Object.values(failMap).forEach(v=>{
+    if(!v.count)return;
+    v.items.forEach(it=>{
+      rows.push([it.area,it.equip,it.sub,it.tag,it.type,v.label,it.remarks]);
+    });
+  });
+  if(rows.length===1){showT('No blocked devices to export','info');return;}
+
+  const csv=rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}); // BOM for Excel UTF-8
+
+  const engName=getEngineerName();
+  const now=new Date();
+  const date=now.toISOString().slice(0,10);
+  const filename='CGL2_BlockedBy_'+engName+'_'+date+'.csv';
+
+  if(navigator.canShare&&navigator.share){
+    try{
+      const file=new File([blob],filename,{type:'text/csv'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'CGL2 Blocked By Export',text:filename});
+        return;
+      }
+      throw new Error('canShare false');
+    }catch(err){
+      if(err.name==='AbortError'){showT('Export cancelled','info');return;}
+      // fall through to download
+    }
+  }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+  showT('Exported '+(rows.length-1)+' blocked device(s) to '+filename,'ok');
 }
 
 // ── PENDING PM IMPORT TRACKING ─────────────────────────────────────────
@@ -1264,14 +1309,15 @@ function renderDash(){
   ACHK.forEach(id=>failMap[id]={count:0,label:GROUPS.flatMap(g=>g.items).find(it=>it.id===id)?.l||id,items:[]});
   NFPA_STEPS.forEach(s=>failMap['NFPA_'+s.id]={count:0,label:'NFPA — '+s.l,items:[]});
   let noFailReason=0;
-  Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
+  Object.entries(H).forEach(([area,equips])=>Object.entries(equips).forEach(([equip,subs])=>Object.entries(subs).forEach(([sub,devs])=>devs.forEach(d=>{
     if(getS(d.tag)!=='In Progress')return;
     const rec=DS[d.tag]||{};
     let foundFail=false;
-    ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].items.push({tag:d.tag,desc:d.desc||'',remarks:rec.Remarks||''});foundFail=true;} });
-    if(d.nfpa){NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].items.push({tag:d.tag,desc:d.desc||'',remarks:rec.Remarks||''});foundFail=true;} });}
+    const ctx={tag:d.tag,desc:d.desc||'',remarks:rec.Remarks||'',area,equip,sub,type:d.type||''};
+    ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].items.push({...ctx});foundFail=true;} });
+    if(d.nfpa){NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].items.push({...ctx});foundFail=true;} });}
     if(!foundFail)noFailReason++;
-  })));
+  }))));
   window._dashFailMap=failMap; // expose for expand-on-click in attention card and blocked-by list
 
   // ════════════════════════════════════════════════════════════════════
@@ -1312,7 +1358,8 @@ function renderDash(){
 
   // ── Blocked-by chart (full text, no truncation) ──────────────────────
   const failEntries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
-  html+=biPanel('In Progress — Blocked By',inProgress+' WIP total',biBlockedList(failEntries,noFailReason));
+  const exportBtn=failEntries.length?'<button class="bi-export-btn" onclick="exportBlockedByCSV()">⬇ Export</button>':'';
+  html+=biPanel('In Progress — Blocked By',inProgress+' WIP total',biBlockedList(failEntries,noFailReason),exportBtn);
 
   html+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()} &middot; ${sentCnt} sent &middot; ${unsent} unsent</div>`;
   html+='</div>';
@@ -1392,9 +1439,9 @@ function toggleAttnExpand(id){
 }
 
 // ── Panel wrapper (Power BI "visual" card) ──────────────────────────────
-function biPanel(title,meta,content){
+function biPanel(title,meta,content,actionBtn){
   return `<div class="bi-panel">
-    <div class="bi-panel-hdr"><span class="bi-panel-title">${title}</span>${meta?`<span class="bi-panel-meta">${meta}</span>`:''}</div>
+    <div class="bi-panel-hdr"><span class="bi-panel-title">${title}</span><span class="bi-panel-hdr-right">${meta?`<span class="bi-panel-meta">${meta}</span>`:''}${actionBtn||''}</span></div>
     <div class="bi-panel-body">${content}</div>
   </div>`;
 }
