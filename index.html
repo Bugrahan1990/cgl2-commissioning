@@ -228,6 +228,69 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .dtype-bar{height:100%;background:var(--G);border-radius:99px}
 .dtype-count{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0}
 .dash-updated{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;text-align:right;margin-top:12px;padding-bottom:8px}
+/* ═══════════ POWER BI STYLE DASHBOARD ═══════════ */
+.dash-bi{padding:14px 16px 40px;display:flex;flex-direction:column;gap:14px}
+
+/* KPI strip */
+.bi-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bi-kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:10px;padding:12px 8px;text-align:center}
+.bi-kpi-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:800;line-height:1.1}
+.bi-kpi-lbl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--tx3);margin-top:3px}
+
+/* Hero row: donut + attention card */
+.bi-hero-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.bi-hero-row{grid-template-columns:1fr}}
+
+.bi-donut-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.bi-donut-legend{display:flex;flex-direction:column;gap:6px;width:100%}
+.bi-leg-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx2)}
+.bi-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bi-leg-item span{flex:1}
+.bi-leg-item b{font-family:'DM Mono',monospace;color:var(--tx);font-size:12px}
+
+.bi-attn-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.bi-attn-hdr{font-size:12px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.bi-attn-icon{font-size:13px}
+.bi-attn-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg)}
+.bi-attn-row:last-child{border-bottom:none}
+.bi-attn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.bi-attn-text{flex:1;font-size:11px;color:var(--tx2);line-height:1.3}
+.bi-attn-num{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--tx);flex-shrink:0}
+.bi-attn-empty{font-size:11px;color:var(--tx3);text-align:center;padding:20px 0}
+
+/* Panel wrapper */
+.bi-panel{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.bi-panel-hdr{display:flex;align-items:baseline;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--bg)}
+.bi-panel-title{font-size:12.5px;font-weight:700;color:var(--navy)}
+.bi-panel-meta{font-size:9.5px;color:var(--tx3);font-family:'DM Mono',monospace}
+.bi-panel-body{padding:12px 16px 14px}
+
+/* Ranked bar chart */
+.bi-bars{display:flex;flex-direction:column;gap:10px}
+.bi-bar-row{display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:10px}
+.bi-bar-name{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bi-bar-track{position:relative;height:9px;background:var(--bg);border-radius:99px;overflow:hidden}
+.bi-bar-fill-g{position:absolute;left:0;top:0;height:100%;background:var(--G);border-radius:99px 0 0 99px}
+.bi-bar-fill-a{position:absolute;top:0;height:100%;background:var(--A)}
+.bi-bar-val{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;min-width:36px;text-align:right}
+
+/* Small multiples type grid */
+.bi-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.bi-type-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px}
+.bi-type-name{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--tx2)}
+.bi-type-count{font-size:8.5px;color:var(--tx3)}
+
+/* Blocked-by list — full text, no truncation */
+.bi-blocked-list{display:flex;flex-direction:column;gap:10px}
+.bi-blocked-row{display:flex;flex-direction:column;gap:4px}
+.bi-blocked-text{font-size:11.5px;color:var(--tx);line-height:1.4;font-weight:500}
+.bi-blocked-bar-row{display:flex;align-items:center;gap:8px}
+.bi-blocked-track{flex:1;height:7px;background:var(--bg);border-radius:99px;overflow:hidden}
+.bi-blocked-fill{height:100%;background:var(--R);border-radius:99px}
+.bi-blocked-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--R);min-width:24px;text-align:right}
+
+.bi-empty{text-align:center;padding:20px;color:var(--tx3);font-size:11px}
+
 .dash-section{margin-bottom:8px}
 .dash-section-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);user-select:none}
 .dash-section-hdr:hover{background:var(--sur2)}
@@ -1155,153 +1218,227 @@ function renderDash(){
   const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
   const notStarted=total-commissioned-inProgress;
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
+  const sentCnt=Object.values(DS).filter(d=>d.exported==='sent').length;
   const pct=total?Math.round(commissioned/total*100):0;
-  const wipPct=total?Math.round(inProgress/total*100):0;
 
   const dp=document.getElementById('dashPanel');
 
-  // ── Gauges in fixed top section ──────────────────────────────────────
-  let gaugeHtml='<div class="gauge-row">';
-  gaugeHtml+=gaugeCard(pct,'Commissioned',commissioned+' of '+total,'#1a7a3c');
-  gaugeHtml+=gaugeCard(wipPct,'In Progress',inProgress+' devices','#8a5c00');
-  gaugeHtml+=gaugeCard(total?Math.round(notStarted/total*100):0,'Not Started',notStarted+' devices','#9aa0b4');
-  gaugeHtml+=gaugeCard(unsent>0&&total?Math.min(100,Math.round(unsent/total*100)):0,'Unsent',unsent+' pending','#7a5c00');
-  gaugeHtml+='</div>';
-
-  // ── Scrollable sections ───────────────────────────────────────────────
-  let sectHtml='';
-
   if(!total){
-    sectHtml='<div style="text-align:center;padding:30px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
-  } else {
-    const eMap={};
-    Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
-      const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
-      eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
-    }));
-    const tMap={};
-    Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-      if(!tMap[d.type])tMap[d.type]={done:0,tot:0};tMap[d.type].tot++;
-      if(getS(d.tag)==='Commissioned')tMap[d.type].done++;
-    })));
-    const maxT=Math.max(...Object.values(tMap).map(v=>v.tot),1);
-    const eTotal=Object.values(eMap).reduce((a,v)=>a+v.tot,0);
-    const eDone=Object.values(eMap).reduce((a,v)=>a+v.done,0);
-
-    sectHtml+=collapsibleSection('by-area','Progress by Area',pct+'% overall',()=>{
-      let s='<div class="prog-list" style="padding:8px 0">';
-      Object.entries(H).forEach(([area,equips])=>{
-        const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
-        const tot=devs.length,done=devs.filter(d=>getS(d.tag)==='Commissioned').length,wip=devs.filter(d=>getS(d.tag)==='In Progress').length;
-        s+=progBarHTML(area,done,wip,tot);
-      });
-      return s+'</div>';
-    });
-    sectHtml+=collapsibleSection('by-equip','Progress by Equipment',eTotal?Math.round(eDone/eTotal*100)+'%':'',()=>{
-      let s='<div class="prog-list" style="padding:8px 0">';
-      Object.entries(eMap).forEach(([eq,v])=>s+=progBarHTML(eq.replace(/^\d+ - /,''),v.done,v.wip,v.tot));
-      return s+'</div>';
-    });
-    sectHtml+=collapsibleSection('by-type','By Device Type','',()=>{
-      let s='<div class="dtype-list" style="padding:8px 0">';
-      Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot).forEach(([type,v])=>{
-        const p=v.tot?Math.round(v.done/v.tot*100):0;
-        s+=`<div class="dtype-item"><div class="dtype-tag">${type}</div><div class="dtype-bar-wrap"><div class="dtype-bar" style="width:${Math.round(v.done/maxT*100)}%"></div></div><div class="dtype-count">${v.done}/${v.tot} (${p}%)</div></div>`;
-      });
-      return s+'</div>';
-    });
-    // ── In Progress devices — grouped by which checklist item is FAILING ──────
-    // These are the actual blockers: devices stuck in WIP because something
-    // specific was marked FAIL (e.g. Wiring, Compressed Air) rather than just
-    // not yet checked.
-    const failMap={};
-    ACHK.forEach(id=>failMap[id]={count:0,label:GROUPS.flatMap(g=>g.items).find(it=>it.id===id)?.l||id,tags:[]});
-    NFPA_STEPS.forEach(s=>failMap['NFPA_'+s.id]={count:0,label:'NFPA: '+s.l,tags:[]});
-    let noFailReason=0;
-    Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-      if(getS(d.tag)!=='In Progress')return; // only look at WIP devices
-      const rec=DS[d.tag]||{};
-      let foundFail=false;
-      ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].tags.push(d.tag);foundFail=true;} });
-      if(d.nfpa){
-        NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].tags.push(d.tag);foundFail=true;} });
-      }
-      if(!foundFail)noFailReason++; // WIP but nothing explicitly failed — just incomplete
-    })));
-    const maxFail=Math.max(...Object.values(failMap).map(v=>v.count),1);
-    sectHtml+=collapsibleSection('by-fail','In Progress — Blocked By',inProgress+' WIP',()=>{
-      let s='<div class="dtype-list" style="padding:8px 0">';
-      const entries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
-      entries.forEach(([id,v])=>{
-        s+=`<div class="dtype-item"><div class="dtype-tag" style="width:auto;flex:1;color:var(--tx);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.label}</div><div class="dtype-bar-wrap" style="max-width:60px"><div class="dtype-bar" style="width:${Math.round(v.count/maxFail*100)}%;background:var(--R)"></div></div><div class="dtype-count">${v.count} failed</div></div>`;
-      });
-      if(noFailReason>0){
-        s+=`<div class="dtype-item" style="opacity:.7"><div class="dtype-tag" style="width:auto;flex:1;color:var(--tx3);font-family:'Inter',sans-serif;font-size:11px;font-style:italic">In progress, nothing failed yet</div><div class="dtype-count">${noFailReason}</div></div>`;
-      }
-      if(!entries.length&&!noFailReason) s+='<div style="text-align:center;padding:16px;color:var(--tx3);font-size:11px">No devices in progress</div>';
-      return s+'</div>';
-    });
-    sectHtml+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
+    dp.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--tx3)">Connect to WiFi and tap Sync to load data</div>';
+    return;
   }
 
-  // Render into two separate divs
-  dp.innerHTML=`<div class="dash-gauges">${gaugeHtml}</div><div class="dash-scroll">${sectHtml}</div>`;
-
-  // Restore collapsed states
-  document.querySelectorAll('.dash-section').forEach(sec=>{
-    const key='dash-collapsed-'+sec.dataset.id;
-    if(sessionStorage.getItem(key)==='1') sec.classList.add('collapsed');
-    const body=sec.querySelector('.dash-section-body');
-    if(body) body.style.maxHeight=sec.classList.contains('collapsed')?'0':body.scrollHeight+'px';
+  // ── Build aggregate maps ──────────────────────────────────────────────
+  const aMap={}; // by area
+  Object.entries(H).forEach(([area,equips])=>{
+    const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
+    aMap[area]={tot:devs.length,done:devs.filter(d=>getS(d.tag)==='Commissioned').length,wip:devs.filter(d=>getS(d.tag)==='In Progress').length};
   });
+  const eMap={}; // by equipment
+  Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
+    const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
+    eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+  }));
+  const tMap={}; // by device type
+  Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
+    if(!tMap[d.type])tMap[d.type]={done:0,wip:0,tot:0};tMap[d.type].tot++;
+    const st=getS(d.tag);
+    if(st==='Commissioned')tMap[d.type].done++;
+    if(st==='In Progress')tMap[d.type].wip++;
+  })));
+
+  // ── Fail-reason map (In Progress devices, grouped by what FAILED) ──────
+  const failMap={};
+  ACHK.forEach(id=>failMap[id]={count:0,label:GROUPS.flatMap(g=>g.items).find(it=>it.id===id)?.l||id});
+  NFPA_STEPS.forEach(s=>failMap['NFPA_'+s.id]={count:0,label:'NFPA — '+s.l});
+  let noFailReason=0;
+  Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
+    if(getS(d.tag)!=='In Progress')return;
+    const rec=DS[d.tag]||{};
+    let foundFail=false;
+    ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;foundFail=true;} });
+    if(d.nfpa){NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;foundFail=true;} });}
+    if(!foundFail)noFailReason++;
+  })));
+
+  // ════════════════════════════════════════════════════════════════════
+  // BUILD HTML
+  // ════════════════════════════════════════════════════════════════════
+  let html='<div class="dash-bi">';
+
+  // ── KPI strip ────────────────────────────────────────────────────────
+  html+='<div class="bi-kpi-row">';
+  html+=biKpi(total,'Total Devices','var(--navy)');
+  html+=biKpi(commissioned,'Commissioned','var(--G)');
+  html+=biKpi(inProgress,'In Progress','var(--A)');
+  html+=biKpi(notStarted,'Not Started','var(--Gr)');
+  html+='</div>';
+
+  // ── Hero row: donut + needs-attention card ──────────────────────────
+  html+='<div class="bi-hero-row">';
+  html+=biDonut(commissioned,inProgress,notStarted,total,pct);
+  html+=biAttentionCard(failMap,aMap,noFailReason);
+  html+='</div>';
+
+  // ── Ranked bar chart: Progress by Area (worst-first) ─────────────────
+  html+=biPanel('Progress by Area','ranked worst → best',
+    biRankedBars(Object.entries(aMap).map(([k,v])=>({
+      name:k,pct:v.tot?Math.round(v.done/v.tot*100):0,done:v.done,wip:v.wip,tot:v.tot
+    })).sort((a,b)=>a.pct-b.pct))
+  );
+
+  // ── Ranked bar chart: Progress by Equipment ───────────────────────────
+  html+=biPanel('Progress by Equipment','ranked worst → best',
+    biRankedBars(Object.entries(eMap).map(([k,v])=>({
+      name:k.replace(/^\d+ - /,''),pct:v.tot?Math.round(v.done/v.tot*100):0,done:v.done,wip:v.wip,tot:v.tot
+    })).sort((a,b)=>a.pct-b.pct))
+  );
+
+  // ── Small multiples: By Device Type ───────────────────────────────────
+  html+=biPanel('By Device Type','',biTypeGrid(tMap));
+
+  // ── Blocked-by chart (full text, no truncation) ──────────────────────
+  const failEntries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
+  html+=biPanel('In Progress — Blocked By',inProgress+' WIP total',biBlockedList(failEntries,noFailReason));
+
+  html+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()} &middot; ${sentCnt} sent &middot; ${unsent} unsent</div>`;
+  html+='</div>';
+
+  dp.innerHTML=html;
 }
 
+// ── KPI mini card ──────────────────────────────────────────────────────
+function biKpi(val,lbl,color){
+  return `<div class="bi-kpi"><div class="bi-kpi-val" style="color:${color}">${val.toLocaleString()}</div><div class="bi-kpi-lbl">${lbl}</div></div>`;
+}
 
-function collapsibleSection(id,title,meta,contentFn){
-  const content=contentFn();
-  return `<div class="dash-section" data-id="${id}">
-    <div class="dash-section-hdr" onclick="toggleSection('${id}')">
-      <span class="dash-section-title">${title}</span>
-      <span class="dash-section-meta">
-        ${meta?`<span class="dash-section-pct">${meta}</span>`:''}
-        <span class="dash-section-arr">&#9660;</span>
-      </span>
-    </div>
-    <div class="dash-section-body" style="max-height:2000px">${content}</div>
+// ── Donut chart with center label (Power BI style) ───────────────────
+function biDonut(done,wip,notStarted,total,pct){
+  const r=70,cx=90,cy=90,stroke=26;
+  const circ=2*Math.PI*r;
+  const dDeg=total?done/total*circ:0;
+  const wDeg=total?wip/total*circ:0;
+  const nDeg=circ-dDeg-wDeg;
+  // stacked dasharray segments: done, wip, notstarted
+  const seg=(off,len,color)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+    stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;
+  let html='<div class="bi-donut-card">';
+  html+='<svg width="180" height="180" viewBox="0 0 180 180">';
+  html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="${stroke}"/>`;
+  if(done>0)html+=seg(0,dDeg,'var(--G)');
+  if(wip>0)html+=seg(dDeg,wDeg,'var(--A)');
+  if(notStarted>0)html+=seg(dDeg+wDeg,nDeg,'var(--Grbdr)');
+  html+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="30" font-weight="800" font-family="'DM Mono',monospace" fill="var(--navy)">${pct}%</text>`;
+  html+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.5" fill="var(--tx3)">COMMISSIONED</text>`;
+  html+='</svg>';
+  html+='<div class="bi-donut-legend">';
+  html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--G)"></div><span>Commissioned</span><b>${done}</b></div>`;
+  html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--A)"></div><span>In Progress</span><b>${wip}</b></div>`;
+  html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--Grbdr)"></div><span>Not Started</span><b>${notStarted}</b></div>`;
+  html+='</div></div>';
+  return html;
+}
+
+// ── Needs Attention card — top blockers surfaced without tapping ───────
+function biAttentionCard(failMap,aMap,noFailReason){
+  const topFails=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count).slice(0,3);
+  const worstArea=Object.entries(aMap).map(([k,v])=>({name:k,pct:v.tot?Math.round(v.done/v.tot*100):0,tot:v.tot}))
+    .sort((a,b)=>a.pct-b.pct)[0];
+  let html='<div class="bi-attn-card">';
+  html+='<div class="bi-attn-hdr"><span class="bi-attn-icon">⚡</span>Needs Attention</div>';
+  if(!topFails.length&&!worstArea){
+    html+='<div class="bi-attn-empty">Nothing urgent right now</div>';
+  } else {
+    topFails.forEach(([id,v])=>{
+      html+=`<div class="bi-attn-row"><div class="bi-attn-dot" style="background:var(--R)"></div><div class="bi-attn-text">${v.label}</div><div class="bi-attn-num">${v.count}</div></div>`;
+    });
+    if(worstArea&&worstArea.tot>0){
+      html+=`<div class="bi-attn-row"><div class="bi-attn-dot" style="background:var(--A)"></div><div class="bi-attn-text">${worstArea.name} — furthest behind</div><div class="bi-attn-num">${worstArea.pct}%</div></div>`;
+    }
+  }
+  html+='</div>';
+  return html;
+}
+
+// ── Panel wrapper (Power BI "visual" card) ──────────────────────────────
+function biPanel(title,meta,content){
+  return `<div class="bi-panel">
+    <div class="bi-panel-hdr"><span class="bi-panel-title">${title}</span>${meta?`<span class="bi-panel-meta">${meta}</span>`:''}</div>
+    <div class="bi-panel-body">${content}</div>
   </div>`;
 }
 
-function toggleSection(id){
-  const sec=document.querySelector('.dash-section[data-id="'+id+'"]');
-  if(!sec)return;
-  const body=sec.querySelector('.dash-section-body');
-  const collapsed=sec.classList.toggle('collapsed');
-  body.style.maxHeight=collapsed?'0':body.scrollHeight+'px';
-  sessionStorage.setItem('dash-collapsed-'+id,collapsed?'1':'0');
+// ── Ranked horizontal bar chart (sorted, with value labels) ────────────
+function biRankedBars(items){
+  if(!items.length)return '<div class="bi-empty">No data</div>';
+  let html='<div class="bi-bars">';
+  items.forEach(it=>{
+    const doneW=it.tot?Math.round(it.done/it.tot*100):0;
+    const wipW=it.tot?Math.round(it.wip/it.tot*100):0;
+    const color=it.pct<25?'var(--R)':it.pct<60?'var(--A)':'var(--G)';
+    html+=`<div class="bi-bar-row">
+      <div class="bi-bar-name">${it.name}</div>
+      <div class="bi-bar-track">
+        <div class="bi-bar-fill-g" style="width:${doneW}%"></div>
+        <div class="bi-bar-fill-a" style="width:${wipW}%;left:${doneW}%"></div>
+      </div>
+      <div class="bi-bar-val" style="color:${color}">${it.pct}%</div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
 }
 
-function gaugeCard(pct,lbl,sub,color){
-  const r=44,cx=60,cy=60,stroke=10;
-  const circ=Math.PI*r;
-  const filled=circ*(pct/100);
-  const bg=color+'33';
-  return `<div class="gauge-wrap">
-    <svg class="gauge-svg" width="120" height="70" viewBox="0 0 120 80" role="img" aria-label="${lbl}: ${pct}%">
-      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${bg}" stroke-width="${stroke}" stroke-linecap="round"/>
-      <path d="M ${cx-r},${cy} A ${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
-        stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}" style="transition:stroke-dashoffset .6s ease"/>
-      <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="16" font-weight="700" font-family="DM Mono,monospace" fill="${color}">${pct}%</text>
-    </svg>
-    <div class="gauge-lbl">${lbl}</div>
-    <div class="gauge-sub">${sub}</div>
-  </div>`;
+// ── Small multiples grid for device types ───────────────────────────────
+function biTypeGrid(tMap){
+  const entries=Object.entries(tMap).sort((a,b)=>b[1].tot-a[1].tot);
+  let html='<div class="bi-type-grid">';
+  entries.forEach(([type,v])=>{
+    const pct=v.tot?Math.round(v.done/v.tot*100):0;
+    const r=22,circ=2*Math.PI*r;
+    const fill=circ*(pct/100);
+    const color=pct<25?'var(--R)':pct<60?'var(--A)':'var(--G)';
+    html+=`<div class="bi-type-card">
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="6"/>
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+          stroke-dasharray="${fill} ${circ-fill}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
+        <text x="28" y="32" text-anchor="middle" font-size="11" font-weight="700" font-family="'DM Mono',monospace" fill="${color}">${pct}%</text>
+      </svg>
+      <div class="bi-type-name">${type}</div>
+      <div class="bi-type-count">${v.done}/${v.tot}</div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
 }
 
-
-function kpiCard(cls,val,lbl,sub){return `<div class="kpi ${cls}"><div class="kpi-val">${val}</div><div class="kpi-lbl">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;}
-function progBarHTML(name,done,wip,tot){
-  const pct=tot?Math.round(done/tot*100):0,dW=tot?Math.round(done/tot*100):0,aW=tot?Math.round(wip/tot*100):0;
-  return `<div class="prog-item"><div class="prog-header"><div class="prog-name">${name}</div><div class="prog-pct">${pct}%</div></div><div class="prog-counts">${done} done &middot; ${wip} WIP &middot; ${tot-done-wip} pending &middot; ${tot} total</div><div class="prog-track"><div class="prog-fill-g" style="width:${dW}%"></div><div class="prog-fill-a" style="width:${aW}%"></div><div class="prog-fill-r" style="width:${100-dW-aW}%"></div></div></div>`;
+// ── Blocked-by list — full text wrap, horizontal bar, no truncation ────
+function biBlockedList(entries,noFailReason){
+  if(!entries.length&&!noFailReason)return '<div class="bi-empty">No devices in progress</div>';
+  const maxCount=Math.max(...entries.map(([,v])=>v.count),1);
+  let html='<div class="bi-blocked-list">';
+  entries.forEach(([id,v])=>{
+    const w=Math.round(v.count/maxCount*100);
+    html+=`<div class="bi-blocked-row">
+      <div class="bi-blocked-text">${v.label}</div>
+      <div class="bi-blocked-bar-row">
+        <div class="bi-blocked-track"><div class="bi-blocked-fill" style="width:${w}%"></div></div>
+        <div class="bi-blocked-num">${v.count}</div>
+      </div>
+    </div>`;
+  });
+  if(noFailReason>0){
+    html+=`<div class="bi-blocked-row" style="opacity:.6">
+      <div class="bi-blocked-text" style="font-style:italic">In progress, nothing failed yet</div>
+      <div class="bi-blocked-bar-row">
+        <div class="bi-blocked-track"></div>
+        <div class="bi-blocked-num">${noFailReason}</div>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
 }
 
 function toggleSearch(){
