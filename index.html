@@ -19,6 +19,7 @@
   --R:#a01e1e;--Rbg:#fdeaea;--Rbdr:#f0a0a0;
   --Y:#7a5c00;--Ybg:#fffbe6;--Ybdr:#e6c84a;
   --Gr:#5a6178;--Grbg:#f0f2f8;--Grbdr:#c8ccd8;
+  --WIP:#2E75B6;--WIPbg:#eaf3fb;
   --r:10px;--rl:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -271,8 +272,8 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .bi-bar-name{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bi-bar-track{position:relative;height:9px;background:var(--bg);border-radius:99px;overflow:hidden}
 .bi-bar-fill-g{position:absolute;left:0;top:0;height:100%;background:var(--G);border-radius:99px 0 0 99px}
-.bi-bar-fill-a{position:absolute;top:0;height:100%;background:var(--A)}
-.bi-bar-val{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;min-width:36px;text-align:right}
+.bi-bar-fill-a{position:absolute;top:0;height:100%;background:var(--WIP)}
+.bi-bar-vals{display:flex;flex-direction:column;align-items:flex-end;min-width:50px}.bi-bar-val{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;text-align:right}.bi-bar-wip-val{font-family:'DM Mono',monospace;font-size:9px;color:var(--WIP);font-weight:600}
 
 /* Small multiples type grid */
 .bi-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
@@ -294,10 +295,12 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .bi-expandable{cursor:pointer}
 .bi-expandable:hover{background:var(--bg)}
 .bi-attn-arr{font-size:9px;color:var(--tx3);margin-left:4px;display:inline-block;transition:transform .15s}
-.bi-attn-detail{padding:4px 0 8px 17px;display:flex;flex-direction:column;gap:4px}
-.bi-attn-detail-row{display:flex;align-items:baseline;gap:8px;font-size:10.5px;padding:3px 8px;background:var(--bg);border-radius:6px}
+.bi-attn-detail{padding:4px 0 8px 17px;display:flex;flex-direction:column;gap:5px}
+.bi-attn-detail-row{padding:5px 8px;background:var(--bg);border-radius:6px;display:flex;flex-direction:column;gap:2px}
+.bi-attn-detail-top{display:flex;align-items:baseline;gap:8px;font-size:10.5px}
 .bi-attn-detail-tag{font-family:'DM Mono',monospace;color:var(--blue);font-weight:600;white-space:nowrap}
-.bi-attn-detail-desc{color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bi-attn-detail-desc{color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.bi-attn-detail-remark{font-size:10px;color:var(--A);font-style:italic;padding-left:2px;line-height:1.4}
 
 
 .dash-section{margin-bottom:8px}
@@ -1265,8 +1268,8 @@ function renderDash(){
     if(getS(d.tag)!=='In Progress')return;
     const rec=DS[d.tag]||{};
     let foundFail=false;
-    ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].items.push({tag:d.tag,desc:d.desc||''});foundFail=true;} });
-    if(d.nfpa){NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].items.push({tag:d.tag,desc:d.desc||''});foundFail=true;} });}
+    ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].items.push({tag:d.tag,desc:d.desc||'',remarks:rec.Remarks||''});foundFail=true;} });
+    if(d.nfpa){NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].items.push({tag:d.tag,desc:d.desc||'',remarks:rec.Remarks||''});foundFail=true;} });}
     if(!foundFail)noFailReason++;
   })));
   window._dashFailMap=failMap; // expose for expand-on-click in attention card and blocked-by list
@@ -1336,7 +1339,7 @@ function biDonut(done,wip,notStarted,total,pct){
   html+='<svg width="180" height="180" viewBox="0 0 180 180">';
   html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="${stroke}"/>`;
   if(done>0)html+=seg(0,dDeg,'var(--G)');
-  if(wip>0)html+=seg(dDeg,wDeg,'var(--A)');
+  if(wip>0)html+=seg(dDeg,wDeg,'var(--WIP)');
   if(notStarted>0)html+=seg(dDeg+wDeg,nDeg,'var(--Grbdr)');
   html+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="30" font-weight="800" font-family="'DM Mono',monospace" fill="var(--navy)">${pct}%</text>`;
   html+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.5" fill="var(--tx3)">COMMISSIONED</text>`;
@@ -1344,7 +1347,7 @@ function biDonut(done,wip,notStarted,total,pct){
   const wipPct=total?Math.round(wip/total*100):0;
   html+='<div class="bi-donut-legend">';
   html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--G)"></div><span>Commissioned</span><b>${done}</b><b class="bi-leg-pct" style="color:var(--G)">${pct}%</b></div>`;
-  html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--A)"></div><span>In Progress</span><b>${wip}</b><b class="bi-leg-pct" style="color:var(--A)">${wipPct}%</b></div>`;
+  html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--WIP)"></div><span>In Progress</span><b>${wip}</b><b class="bi-leg-pct" style="color:var(--WIP)">${wipPct}%</b></div>`;
   html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--Grbdr)"></div><span>Not Started</span><b>${notStarted}</b><b class="bi-leg-pct" style="color:var(--Gr)">${total?Math.round(notStarted/total*100):0}%</b></div>`;
   html+='</div></div>';
   return html;
@@ -1369,11 +1372,11 @@ function biAttentionCard(failMap,aMap,noFailReason){
         <span class="bi-attn-arr" id="${expId}-arr">&#9656;</span>
       </div>
       <div class="bi-attn-detail" id="${expId}" style="display:none">
-        ${v.items.map(it=>`<div class="bi-attn-detail-row"><span class="bi-attn-detail-tag">${it.tag}</span><span class="bi-attn-detail-desc">${it.desc}</span></div>`).join('')}
+        ${v.items.map(it=>`<div class="bi-attn-detail-row"><div class="bi-attn-detail-top"><span class="bi-attn-detail-tag">${it.tag}</span><span class="bi-attn-detail-desc">${it.desc}</span></div>${it.remarks?`<div class="bi-attn-detail-remark">💬 ${it.remarks}</div>`:''}</div>`).join('')}
       </div>`;
     });
     if(worstArea&&worstArea.tot>0){
-      html+=`<div class="bi-attn-row"><div class="bi-attn-dot" style="background:var(--A)"></div><div class="bi-attn-text">${worstArea.name} — furthest behind</div><div class="bi-attn-num">${worstArea.pct}%</div></div>`;
+      html+=`<div class="bi-attn-row"><div class="bi-attn-dot" style="background:var(--WIP)"></div><div class="bi-attn-text">${worstArea.name} — furthest behind</div><div class="bi-attn-num">${worstArea.pct}%</div></div>`;
     }
   }
   html+='</div>';
@@ -1402,15 +1405,18 @@ function biRankedBars(items){
   let html='<div class="bi-bars">';
   items.forEach(it=>{
     const doneW=it.tot?Math.round(it.done/it.tot*100):0;
-    const wipW=it.tot?Math.round(it.wip/it.tot*100):0;
+    const wipPct=it.tot?Math.round(it.wip/it.tot*100):0;
     const color=it.pct<25?'var(--R)':it.pct<60?'var(--A)':'var(--G)';
     html+=`<div class="bi-bar-row">
       <div class="bi-bar-name">${it.name}</div>
       <div class="bi-bar-track">
         <div class="bi-bar-fill-g" style="width:${doneW}%"></div>
-        <div class="bi-bar-fill-a" style="width:${wipW}%;left:${doneW}%"></div>
+        <div class="bi-bar-fill-a" style="width:${wipPct}%;left:${doneW}%"></div>
       </div>
-      <div class="bi-bar-val" style="color:${color}">${it.pct}%</div>
+      <div class="bi-bar-vals">
+        <span class="bi-bar-val" style="color:${color}">${it.pct}%</span>
+        ${wipPct>0?`<span class="bi-bar-wip-val">+${wipPct}% WIP</span>`:''}
+      </div>
     </div>`;
   });
   html+='</div>';
@@ -1431,7 +1437,7 @@ function biTypeGrid(tMap){
     html+=`<div class="bi-type-card">
       <svg width="56" height="56" viewBox="0 0 56 56">
         <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="6"/>
-        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--A)" stroke-width="6"
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--WIP)" stroke-width="6"
           stroke-dasharray="${wipLen} ${circ-wipLen}" stroke-dashoffset="${-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
         <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6"
           stroke-dasharray="${doneLen} ${circ-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
@@ -1461,7 +1467,7 @@ function biBlockedList(entries,noFailReason){
       </div>
     </div>
     <div class="bi-attn-detail" id="${expId}" style="display:none">
-      ${v.items.map(it=>`<div class="bi-attn-detail-row"><span class="bi-attn-detail-tag">${it.tag}</span><span class="bi-attn-detail-desc">${it.desc}</span></div>`).join('')}
+      ${v.items.map(it=>`<div class="bi-attn-detail-row"><div class="bi-attn-detail-top"><span class="bi-attn-detail-tag">${it.tag}</span><span class="bi-attn-detail-desc">${it.desc}</span></div>${it.remarks?`<div class="bi-attn-detail-remark">💬 ${it.remarks}</div>`:''}</div>`).join('')}
     </div>`;
   });
   if(noFailReason>0){
