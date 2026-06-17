@@ -72,7 +72,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .aa{font-size:9px;color:var(--tx3);transition:transform .15s;display:inline-block}
 .ai.open .aa{transform:rotate(90deg)}
 .ap{height:3px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-top:4px}
-.apf{height:100%;background:#3fb950;border-radius:99px}
+.apf{position:absolute;left:0;top:0;height:100%;background:#3fb950;border-radius:99px 0 0 99px}.ap{position:relative}.apf-wip{position:absolute;top:0;height:100%;background:var(--WIP)}.ep{position:relative;height:3px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-top:4px}.epf{position:absolute;left:0;top:0;height:100%;background:#3fb950;border-radius:99px 0 0 99px}.epf-wip{position:absolute;top:0;height:100%;background:var(--WIP)}
 
 .ei{padding:4px 8px 4px 14px;margin-bottom:1px;cursor:pointer;border-radius:6px;border:1px solid transparent}
 .ei:hover{background:var(--sur2)}.ei.open{background:#f0f5fb;border-color:#b8d0e8}
@@ -86,8 +86,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .sn{font-size:11px;color:var(--tx);flex:1;line-height:1.3}.si.active .sn{color:var(--navy);font-weight:500}
 .sm{display:flex;align-items:center;gap:3px;flex-shrink:0}
 .sb2{width:16px;height:3px;background:var(--bdr);border-radius:99px;overflow:hidden}
-.sb2f{height:100%;background:#3fb950;border-radius:99px}
-.sc2{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}
+.sb2{position:relative}.sb2f{position:absolute;left:0;top:0;height:100%;background:#3fb950;border-radius:99px 0 0 99px}.sb2f-wip{position:absolute;top:0;height:100%;background:var(--WIP)}
+.sc2{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}.wip-tag{color:var(--WIP);font-size:9px;font-weight:600}
 .pd{width:5px;height:5px;border-radius:50%;background:var(--A);flex-shrink:0}
 
 .panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
@@ -1015,13 +1015,15 @@ function renderNav(){
   Object.entries(H).forEach(([area,equips])=>{
     const allD=Object.values(equips).flatMap(e=>Object.values(e).flat());
     const done=allD.filter(d=>getS(d.tag)==='Commissioned').length;
-    const pct=allD.length?done/allD.length:0;
+    const wip=allD.filter(d=>getS(d.tag)==='In Progress').length;
+    const pct=allD.length?Math.round(done/allD.length*100):0;
+    const wipPct=allD.length?Math.round(wip/allD.length*100):0;
     const aMatch=!q||area.toLowerCase().includes(q)||
       Object.entries(equips).some(([e,subs])=>e.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q)));
     if(q&&!aMatch) return;
     const ai=document.createElement('div');
     ai.className='ai'+(OA[area]?' open':'');
-    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="apct">'+done+'/'+allD.length+' &nbsp;'+Math.round(pct*100)+'%</span><span class="aa">&#9658;</span></span></div><div class="ap"><div class="apf" style="width:'+Math.round(pct*100)+'%"></div></div>';
+    ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="apct">'+done+'/'+allD.length+' &nbsp;'+pct+'%'+(wipPct?' <span class="wip-tag">+'+wipPct+'%</span>':'')+'</span><span class="aa">&#9658;</span></span></div><div class="ap"><div class="apf" style="width:'+pct+'%"></div><div class="apf-wip" style="width:'+wipPct+'%;left:'+pct+'%"></div></div>';
     ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
     el.appendChild(ai);
     if(!OA[area]&&!q) return;
@@ -1029,23 +1031,27 @@ function renderNav(){
       const eKey=area+'|'+equip;
       const eDevs=Object.values(subs).flat();
       const eDone=eDevs.filter(d=>getS(d.tag)==='Commissioned').length;
+      const eWip=eDevs.filter(d=>getS(d.tag)==='In Progress').length;
       const ePct=eDevs.length?Math.round(eDone/eDevs.length*100):0;
+      const eWipPct=eDevs.length?Math.round(eWip/eDevs.length*100):0;
       const eMatch=!q||equip.toLowerCase().includes(q)||Object.keys(subs).some(s=>s.toLowerCase().includes(q));
       if(q&&!eMatch) return;
       const ei=document.createElement('div');
       ei.className='ei'+(OE[eKey]?' open':'');
-      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="epct">'+eDone+'/'+eDevs.length+' &nbsp;'+ePct+'%</span><span class="ea">&#9658;</span></span></div>';
+      ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="epct">'+eDone+'/'+eDevs.length+' &nbsp;'+ePct+'%'+(eWipPct?' <span class="wip-tag">+'+eWipPct+'%</span>':'')+'</span><span class="ea">&#9658;</span></span></div><div class="ep"><div class="epf" style="width:'+ePct+'%"></div><div class="epf-wip" style="width:'+eWipPct+'%;left:'+ePct+'%"></div></div>';
       ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
       el.appendChild(ei);
       if(!OE[eKey]&&!q) return;
       Object.entries(subs).forEach(([sub,devs])=>{
         if(q&&!sub.toLowerCase().includes(q)&&!eMatch) return;
         const done2=devs.filter(d=>getS(d.tag)==='Commissioned').length;
-        const pct2=devs.length?done2/devs.length:0;
+        const wip2=devs.filter(d=>getS(d.tag)==='In Progress').length;
+        const pct2=devs.length?Math.round(done2/devs.length*100):0;
+        const wipPct2=devs.length?Math.round(wip2/devs.length*100):0;
         const hasPend=devs.some(d=>isUnsent(d.tag));
         const si=document.createElement('div');
         si.className='si'+(ST.area===area&&ST.equip===equip&&ST.sub===sub?' active':'');
-        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+Math.round(pct2*100)+'%"></div></div><span class="spct">'+done2+'/'+devs.length+'&nbsp;'+Math.round(pct2*100)+'%</span></div>';
+        si.innerHTML='<span class="sn">'+sub+'</span><div class="sm">'+(hasPend?'<div class="pd"></div>':'')+'<div class="sb2"><div class="sb2f" style="width:'+pct2+'%"></div><div class="sb2f-wip" style="width:'+wipPct2+'%;left:'+pct2+'%"></div></div><span class="spct">'+done2+'/'+devs.length+'&nbsp;'+pct2+'%'+(wipPct2?' <span class="wip-tag">+'+wipPct2+'%</span>':'')+'</span></div>';
         si.onclick=e=>{e.stopPropagation();selectSub(area,equip,sub,devs);};
         el.appendChild(si);
       });
