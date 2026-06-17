@@ -1210,25 +1210,35 @@ function renderDash(){
       });
       return s+'</div>';
     });
-    // ── Pending by checklist item — which specific check is blocking each device ──
-    const chkMap={};
-    ACHK.forEach(id=>chkMap[id]={pending:0,label:GROUPS.flatMap(g=>g.items).find(it=>it.id===id)?.l||id});
-    NFPA_STEPS.forEach(s=>chkMap['NFPA_'+s.id]={pending:0,label:'NFPA: '+s.l});
+    // ── In Progress devices — grouped by which checklist item is FAILING ──────
+    // These are the actual blockers: devices stuck in WIP because something
+    // specific was marked FAIL (e.g. Wiring, Compressed Air) rather than just
+    // not yet checked.
+    const failMap={};
+    ACHK.forEach(id=>failMap[id]={count:0,label:GROUPS.flatMap(g=>g.items).find(it=>it.id===id)?.l||id,tags:[]});
+    NFPA_STEPS.forEach(s=>failMap['NFPA_'+s.id]={count:0,label:'NFPA: '+s.l,tags:[]});
+    let noFailReason=0;
     Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
-      if(getS(d.tag)==='Commissioned')return; // already done, not pending
+      if(getS(d.tag)!=='In Progress')return; // only look at WIP devices
       const rec=DS[d.tag]||{};
-      ACHK.forEach(id=>{ if(rec[id]!=='OK'&&rec[id]!=='N/A') chkMap[id].pending++; });
+      let foundFail=false;
+      ACHK.forEach(id=>{ if(rec[id]==='FAIL'){failMap[id].count++;failMap[id].tags.push(d.tag);foundFail=true;} });
       if(d.nfpa){
-        NFPA_STEPS.forEach(s=>{ const v=rec['NFPA_'+s.id]; if(v!=='pass'&&v!=='fail') chkMap['NFPA_'+s.id].pending++; });
+        NFPA_STEPS.forEach(s=>{ if(rec['NFPA_'+s.id]==='fail'){failMap['NFPA_'+s.id].count++;failMap['NFPA_'+s.id].tags.push(d.tag);foundFail=true;} });
       }
+      if(!foundFail)noFailReason++; // WIP but nothing explicitly failed — just incomplete
     })));
-    const maxChk=Math.max(...Object.values(chkMap).map(v=>v.pending),1);
-    sectHtml+=collapsibleSection('by-check','Pending by Checklist Item','',()=>{
+    const maxFail=Math.max(...Object.values(failMap).map(v=>v.count),1);
+    sectHtml+=collapsibleSection('by-fail','In Progress — Blocked By',inProgress+' WIP',()=>{
       let s='<div class="dtype-list" style="padding:8px 0">';
-      Object.entries(chkMap).filter(([,v])=>v.pending>0).sort((a,b)=>b[1].pending-a[1].pending).forEach(([id,v])=>{
-        s+=`<div class="dtype-item"><div class="dtype-tag" style="width:auto;flex:1;color:var(--tx);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.label}</div><div class="dtype-bar-wrap" style="max-width:60px"><div class="dtype-bar" style="width:${Math.round(v.pending/maxChk*100)}%;background:var(--A)"></div></div><div class="dtype-count">${v.pending} pending</div></div>`;
+      const entries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
+      entries.forEach(([id,v])=>{
+        s+=`<div class="dtype-item"><div class="dtype-tag" style="width:auto;flex:1;color:var(--tx);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.label}</div><div class="dtype-bar-wrap" style="max-width:60px"><div class="dtype-bar" style="width:${Math.round(v.count/maxFail*100)}%;background:var(--R)"></div></div><div class="dtype-count">${v.count} failed</div></div>`;
       });
-      if(!Object.values(chkMap).some(v=>v.pending>0)) s+='<div style="text-align:center;padding:16px;color:var(--tx3);font-size:11px">All checklist items complete ✓</div>';
+      if(noFailReason>0){
+        s+=`<div class="dtype-item" style="opacity:.7"><div class="dtype-tag" style="width:auto;flex:1;color:var(--tx3);font-family:'Inter',sans-serif;font-size:11px;font-style:italic">In progress, nothing failed yet</div><div class="dtype-count">${noFailReason}</div></div>`;
+      }
+      if(!entries.length&&!noFailReason) s+='<div style="text-align:center;padding:16px;color:var(--tx3);font-size:11px">No devices in progress</div>';
       return s+'</div>';
     });
     sectHtml+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()}</div>`;
