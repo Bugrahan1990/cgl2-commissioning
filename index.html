@@ -317,47 +317,44 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
   .main{display:block!important;overflow:visible!important}
   .dash{display:block!important;overflow:visible!important;height:auto!important}
 
-  /* Landscape 2-column layout — makes better use of wide page */
-  .dash-bi{
-    padding:0!important;
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    grid-auto-flow:row dense!important;
-    gap:7px 14px!important;
-    align-items:start!important;
-  }
-  .bi-print-hdr,.bi-kpi-row,.dash-updated{grid-column:1/-1!important}
+  /* Portrait — full width single column, with 2-up grids only where it
+     genuinely saves space (KPIs, hero row, the smaller panels) */
+  .dash-bi{padding:0!important;display:block!important}
 
   /* Show the print-only header */
-  .bi-print-hdr{display:block!important;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1F4E79}
-  .bi-print-title{font-size:17px;font-weight:800;color:#1F4E79;white-space:nowrap}
-  .bi-print-meta{font-size:9px;color:#666;margin-top:2px}
+  .bi-print-hdr{display:block!important;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #1F4E79}
+  .bi-print-title{font-size:18px;font-weight:800;color:#1F4E79;white-space:nowrap}
+  .bi-print-meta{font-size:9.5px;color:#666;margin-top:2px}
 
-  .bi-kpi-row{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important}
-  .bi-kpi{padding:8px 6px!important}
-  .bi-kpi-val{font-size:17px!important}
+  .bi-kpi-row{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:8px!important;margin-bottom:10px!important}
+  .bi-kpi{padding:10px 6px!important}
+  .bi-kpi-val{font-size:19px!important}
 
   /* Force light backgrounds, visible borders for print clarity */
   .bi-kpi,.bi-donut-card,.bi-attn-card,.bi-panel{
     border:1px solid #ccc!important;box-shadow:none!important;
     break-inside:avoid;page-break-inside:avoid;
   }
-  .bi-hero-row{display:contents!important} /* let donut + attention card flow as independent grid items */
-  .bi-donut-card{padding:10px!important}
-  .bi-donut-card svg{width:140px!important;height:140px!important}
-  .bi-attn-card{padding:10px!important}
-  .bi-panel{margin-bottom:0!important}
-  .bi-panel-hdr{padding:8px 12px 7px!important;flex-wrap:wrap!important;row-gap:2px!important}
-  .bi-panel-title{font-size:11.5px!important;white-space:nowrap;flex-shrink:0}
-  .bi-panel-meta{font-size:8px!important;white-space:nowrap}
-  .bi-panel-body{padding:7px 12px 9px!important}
-  .bi-type-grid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr))!important}
 
-  /* Bar chart rows — give name more room, keep on one line */
-  .bi-bar-row{grid-template-columns:88px 1fr auto!important;gap:6px!important}
-  .bi-bar-name{font-size:9.5px!important}
-  .bi-bar-val{font-size:10px!important}
-  .bi-bar-wip-val{font-size:8px!important}
+  /* Hero row: donut + attention side by side, full page width */
+  .bi-hero-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin-bottom:10px!important}
+  .bi-donut-card{padding:14px!important}
+  .bi-donut-card svg{width:170px!important;height:170px!important}
+  .bi-attn-card{padding:12px!important}
+
+  /* Area + Equipment panels side by side — same data shape, pairs naturally */
+  .bi-panel{margin-bottom:10px!important}
+  .bi-panel-hdr{padding:9px 14px 8px!important;flex-wrap:wrap!important;row-gap:2px!important}
+  .bi-panel-title{font-size:13px!important;white-space:nowrap;flex-shrink:0}
+  .bi-panel-meta{font-size:9px!important;white-space:nowrap}
+  .bi-panel-body{padding:9px 14px 11px!important}
+
+  .bi-bar-row{grid-template-columns:120px 1fr auto!important;gap:8px!important}
+  .bi-bar-name{font-size:10.5px!important}
+  .bi-bar-val{font-size:11px!important}
+  .bi-bar-wip-val{font-size:9px!important}
+
+  .bi-type-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}
 
   /* Status dots — print-color-adjust above ensures these survive */
   .bi-attn-dot,.bi-leg-dot{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -367,10 +364,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
   .bi-export-btn{display:none!important}
   .bi-attn-arr{display:none!important}
 
-  .dash-updated{text-align:left!important;border-top:1px solid #ccc;padding-top:5px;margin-top:2px;font-size:8.5px}
+  /* Encourage a clean break: keep Area+Equipment together, start
+     Type+Blocked-By on whatever page has room (no forced break,
+     browser will paginate naturally across ~2 pages) */
+  .dash-updated{text-align:left!important;border-top:1px solid #ccc;padding-top:6px;margin-top:4px;font-size:9px}
 
   /* Page setup */
-  @page{margin:10mm;size:A4 landscape}
+  @page{margin:12mm;size:A4 portrait}
+}
 }
 
 
