@@ -1041,6 +1041,8 @@ async function doExport(forceAll){
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function getS(tag){return(DS[tag]||{}).Comm_Status||'Not Started';}
+function isDoneStatus(s){return s==='Commissioned'||s==='N/A';}
+function isDone(tag){return isDoneStatus(getS(tag));}
 function isUnsent(tag){return DS[tag]&&DS[tag].exported===false;}
 function isSent(tag){return DS[tag]&&DS[tag].exported==='sent';}
 function getCardState(tag){
@@ -1066,7 +1068,7 @@ function sCls(s){return{'Commissioned':'commissioned','In Progress':'in-progress
 
 function updProg(){
   const total=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat())).length||0;
-  const done=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
+  const done=Object.values(DS).filter(d=>isDoneStatus(d.Comm_Status)).length;
   document.getElementById('gF').style.width=total?(done/total*100).toFixed(1)+'%':'0%';
   document.getElementById('gL').textContent=done+'/'+(total||'...');
 }
@@ -1093,7 +1095,7 @@ function renderNav(){
   const q=document.getElementById('ns').value.toLowerCase();
   Object.entries(H).forEach(([area,equips])=>{
     const allD=Object.values(equips).flatMap(e=>Object.values(e).flat());
-    const done=allD.filter(d=>getS(d.tag)==='Commissioned').length;
+    const done=allD.filter(d=>isDone(d.tag)).length;
     const wip=allD.filter(d=>getS(d.tag)==='In Progress').length;
     const pct=allD.length?Math.round(done/allD.length*100):0;
     const wipPct=allD.length?Math.round(wip/allD.length*100):0;
@@ -1109,7 +1111,7 @@ function renderNav(){
     Object.entries(equips).forEach(([equip,subs])=>{
       const eKey=area+'|'+equip;
       const eDevs=Object.values(subs).flat();
-      const eDone=eDevs.filter(d=>getS(d.tag)==='Commissioned').length;
+      const eDone=eDevs.filter(d=>isDone(d.tag)).length;
       const eWip=eDevs.filter(d=>getS(d.tag)==='In Progress').length;
       const ePct=eDevs.length?Math.round(eDone/eDevs.length*100):0;
       const eWipPct=eDevs.length?Math.round(eWip/eDevs.length*100):0;
@@ -1123,7 +1125,7 @@ function renderNav(){
       if(!OE[eKey]&&!q) return;
       Object.entries(subs).forEach(([sub,devs])=>{
         if(q&&!sub.toLowerCase().includes(q)&&!eMatch) return;
-        const done2=devs.filter(d=>getS(d.tag)==='Commissioned').length;
+        const done2=devs.filter(d=>isDone(d.tag)).length;
         const wip2=devs.filter(d=>getS(d.tag)==='In Progress').length;
         const pct2=devs.length?Math.round(done2/devs.length*100):0;
         const wipPct2=devs.length?Math.round(wip2/devs.length*100):0;
@@ -1356,7 +1358,7 @@ function switchTab(tab){
 function renderDash(){
   const allDevs=Object.values(H).flatMap(e=>Object.values(e).flatMap(s=>Object.values(s).flat()));
   const total=allDevs.length;
-  const commissioned=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
+  const commissioned=Object.values(DS).filter(d=>isDoneStatus(d.Comm_Status)).length;
   const inProgress=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
   const notStarted=total-commissioned-inProgress;
   const unsent=Object.values(DS).filter(d=>d.exported===false).length;
@@ -1374,18 +1376,18 @@ function renderDash(){
   const aMap={}; // by area
   Object.entries(H).forEach(([area,equips])=>{
     const devs=Object.values(equips).flatMap(e=>Object.values(e).flat());
-    aMap[area]={tot:devs.length,done:devs.filter(d=>getS(d.tag)==='Commissioned').length,wip:devs.filter(d=>getS(d.tag)==='In Progress').length};
+    aMap[area]={tot:devs.length,done:devs.filter(d=>isDone(d.tag)).length,wip:devs.filter(d=>getS(d.tag)==='In Progress').length};
   });
   const eMap={}; // by equipment
   Object.values(H).forEach(equips=>Object.entries(equips).forEach(([eq,subs])=>{
     const devs=Object.values(subs).flat();if(!eMap[eq])eMap[eq]={done:0,wip:0,tot:0};
-    eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>getS(d.tag)==='Commissioned').length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
+    eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>isDone(d.tag)).length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
   }));
   const tMap={}; // by device type
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
     if(!tMap[d.type])tMap[d.type]={done:0,wip:0,tot:0};tMap[d.type].tot++;
     const st=getS(d.tag);
-    if(st==='Commissioned')tMap[d.type].done++;
+    if(isDone(d.tag))tMap[d.type].done++;
     if(st==='In Progress')tMap[d.type].wip++;
   })));
 
@@ -1482,8 +1484,13 @@ function biDonut(done,wip,notStarted,total,pct){
   if(done>0)html+=seg(0,dDeg,'var(--G)');
   if(wip>0)html+=seg(dDeg,wDeg,'var(--WIP)');
   if(notStarted>0)html+=seg(dDeg+wDeg,nDeg,'var(--Grbdr)');
-  html+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="30" font-weight="800" font-family="'DM Mono',monospace" fill="var(--navy)">${pct}%</text>`;
-  html+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.5" fill="var(--tx3)">COMMISSIONED</text>`;
+  const wipPctForCenter=total?Math.round(wip/total*100):0;
+  const combinedPct=pct+wipPctForCenter;
+  html+=`<text x="${cx}" y="${cy-10}" text-anchor="middle" font-size="26" font-weight="800" font-family="'DM Mono',monospace" fill="var(--navy)">${pct}%</text>`;
+  html+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="0.5" fill="var(--tx3)">COMMISSIONED</text>`;
+  if(wipPctForCenter>0){
+    html+=`<text x="${cx}" y="${cy+22}" text-anchor="middle" font-size="12" font-weight="700" font-family="'DM Mono',monospace" fill="var(--WIP)">+${wipPctForCenter}% WIP</text>`;
+  }
   html+='</svg>';
   const wipPct=total?Math.round(wip/total*100):0;
   html+='<div class="bi-donut-legend">';
