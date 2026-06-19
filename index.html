@@ -704,23 +704,23 @@ const NFPA_STEPS=[
 ];
 
 const GROUPS=[
-  {n:1,t:'Installation',s:'Verify physical installation',c:'#0C447C',bg:'#EAF3FB',items:[
-    {id:'CHK_Direction',l:'Direction / orientation correct',h:'Installed in correct flow direction per P&ID'},
-    {id:'CHK_Mechanical',l:'Mechanical fixing and supports secure',h:'Bolts torqued, supports in place, no movement'},
-    {id:'CHK_TagLabel',l:'Tag label fitted and legible',h:'Tag matches drawing number, clearly readable'},
-    {id:'CHK_CompressedAir',l:'Compressed air connected',h:'Air supply connected, correct pressure confirmed, no leaks'},
+  {n:1,t:'Mechanical',s:'Verify physical installation',c:'#0C447C',bg:'#EAF3FB',items:[
+    {id:'CHK_Direction',l:'Device installed correctly',h:'Installed in correct location and flow direction'},
+    {id:'CHK_Mechanical',l:'Mounting secure',h:'All bolts tightened, supports secure'},
+    {id:'CHK_TagLabel',l:'Tag installed',h:'Tag fitted and matches drawings'},
+    {id:'CHK_CompressedAir',l:'Air supply connected (if required)',h:'Air connected, correct pressure, no leaks'},
   ]},
   {n:2,t:'Electrical',s:'Wiring, power and I/O verification',c:'#633806',bg:'#FFF3DC',items:[
-    {id:'CHK_Wiring',l:'Wiring terminated correctly',h:'Terminations match loop drawing, correct terminals'},
-    {id:'CHK_IO',l:'I/O check — signal verified in DCS / SCADA',h:'Correct signal confirmed at control system'},
-    {id:'CHK_PowerSupply',l:'Power supply correct at device',h:'Voltage confirmed at terminals, correct polarity'},
-    {id:'CHK_Enclosure',l:'Enclosure closed and sealed',h:'JB / conduit sealed, IP rating maintained'},
+    {id:'CHK_Wiring',l:'Wiring complete',h:'All wiring connected correctly'},
+    {id:'CHK_PowerSupply',l:'Power verified',h:'Correct voltage and polarity'},
+    {id:'CHK_IO',l:'I/O verified',h:'Signals confirmed in DCS/PLC/SCADA'},
+    {id:'CHK_Enclosure',l:'Grounding verified',h:'Earth connection secure'},
   ]},
   {n:3,t:'Functional',s:'Operational testing and settings',c:'#085041',bg:'#E6F7EE',items:[
-    {id:'CHK_OpenClose',l:'Open / close operation confirmed',h:'Full stroke tested, correct travel and end positions'},
-    {id:'CHK_Calibration',l:'Calibration / range set correctly',h:'Zero and span confirmed, output matches process'},
-    {id:'CHK_Interlock',l:'Interlock and fail-safe tested',h:'Device responds correctly to control system commands'},
-    {id:'CHK_Settings',l:'Settings confirmed (speed, pressure, setpoint)',h:'All parameters set per datasheet / spec'},
+    {id:'CHK_OpenClose',l:'Operation tested',h:'Device operates through full travel'},
+    {id:'CHK_Calibration',l:'Calibration complete',h:'Range and output verified'},
+    {id:'CHK_Interlock',l:'Interlocks and End Switches tested',h:'Device responds correctly to commands and fail-safe conditions'},
+    {id:'CHK_Settings',l:'Settings verified',h:'Parameters set as specified'},
   ]},
 ];
 const ACHK=GROUPS.flatMap(g=>g.items.map(i=>i.id));
