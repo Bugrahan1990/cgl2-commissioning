@@ -725,6 +725,34 @@ const GROUPS=[
 ];
 const ACHK=GROUPS.flatMap(g=>g.items.map(i=>i.id));
 
+// ── Weighted "real task" completion — each checklist item contributes its
+// own % toward 100%, regardless of overall Comm_Status. OK or N/A on an
+// item = that item's full weight earned; FAIL or blank = 0 for that item.
+const CHK_WEIGHTS={
+  CHK_Direction:5,      // Device installed correctly
+  CHK_Mechanical:5,     // Mounting secure
+  CHK_TagLabel:2.5,     // Tag installed
+  CHK_CompressedAir:5,  // Air supply connected
+  CHK_Wiring:5,         // Wiring complete
+  CHK_PowerSupply:5,    // Power verified
+  CHK_IO:10,            // I/O verified
+  CHK_Enclosure:2.5,    // Grounding verified
+  CHK_OpenClose:15,     // Operation tested
+  CHK_Calibration:15,   // Calibration complete
+  CHK_Interlock:15,     // Interlocks and End Switches tested
+  CHK_Settings:15,      // Settings verified
+};
+function taskPct(tag){
+  const rec=DS[tag];
+  if(!rec)return 0;
+  let earned=0;
+  for(const id of ACHK){
+    const v=rec[id];
+    if(v==='OK'||v==='N/A')earned+=CHK_WEIGHTS[id]||0;
+  }
+  return earned; // 0-100
+}
+
 // ── INDEXEDDB ─────────────────────────────────────────────────────────────
 let DB=null;
 const DB_NAME='CGL2v3',DB_VER=1,STORE='records';
@@ -1367,6 +1395,11 @@ function renderDash(){
   const sentCnt=Object.values(DS).filter(d=>d.exported==='sent').length;
   const pct=total?Math.round(commissioned/total*100):0;
 
+  // ── Weighted real-task completion average across all devices ──────────
+  const avgTaskPct=allDevs.length
+    ? Math.round(allDevs.reduce((sum,d)=>sum+taskPct(d.tag),0)/allDevs.length)
+    : 0;
+
   const dp=document.getElementById('dashPanel');
 
   if(!total){
@@ -1431,11 +1464,14 @@ function renderDash(){
   html+=biKpi(notStarted,'Not Started','var(--Gr)');
   html+='</div>';
 
-  // ── Hero row: donut + needs-attention card ──────────────────────────
+  // ── Hero row: status donut + weighted task-completion donut ──────────
   html+='<div class="bi-hero-row">';
   html+=biDonut(commissioned,inProgress,notStarted,total,pct);
-  html+=biAttentionCard(failMap,aMap,noFailReason);
+  html+=biTaskDonut(avgTaskPct);
   html+='</div>';
+
+  // ── Needs Attention — full width, own row ─────────────────────────────
+  html+=biAttentionCard(failMap,aMap,noFailReason);
 
   // ── Ranked bar chart: Progress by Area (worst-first) ─────────────────
   html+=biPanel('Progress by Area','ranked worst → best',
@@ -1499,6 +1535,29 @@ function biDonut(done,wip,notStarted,total,pct){
   html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--G)"></div><span>Commissioned</span><b>${done}</b><b class="bi-leg-pct" style="color:var(--G)">${pct}%</b></div>`;
   html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--WIP)"></div><span>In Progress</span><b>${wip}</b><b class="bi-leg-pct" style="color:var(--WIP)">${wipPct}%</b></div>`;
   html+=`<div class="bi-leg-item"><div class="bi-leg-dot" style="background:var(--Grbdr)"></div><span>Not Started</span><b>${notStarted}</b><b class="bi-leg-pct" style="color:var(--Gr)">${total?Math.round(notStarted/total*100):0}%</b></div>`;
+  html+='</div></div>';
+  return html;
+}
+
+// ── Weighted real-task completion donut — single ring, no status colors ──
+// Shows the TRUE checklist-weighted completion regardless of Comm_Status.
+// A device marked 'In Progress' with 8/12 items at OK/N/A still shows its
+// real earned percentage here, distinct from the status-based donut.
+function biTaskDonut(avgTaskPct){
+  const r=70,cx=90,cy=90,stroke=26;
+  const circ=2*Math.PI*r;
+  const len=circ*(avgTaskPct/100);
+  const color=avgTaskPct<25?'var(--R)':avgTaskPct<60?'var(--A)':'var(--G)';
+  let html='<div class="bi-donut-card">';
+  html+='<svg width="180" height="180" viewBox="0 0 180 180">';
+  html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="${stroke}"/>`;
+  html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+    stroke-dasharray="${len} ${circ-len}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>`;
+  html+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="26" font-weight="800" font-family="'DM Mono',monospace" fill="${color}">${avgTaskPct}%</text>`;
+  html+=`<text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="0.5" fill="var(--tx3)">TASK COMPLETE</text>`;
+  html+='</svg>';
+  html+='<div class="bi-donut-legend">';
+  html+=`<div class="bi-leg-item" style="display:block"><span style="color:var(--tx3);font-size:10px;line-height:1.5">Weighted average of all 12 checklist items across every device. OK or N/A on an item counts as that item\'s full weight earned.</span></div>`;
   html+='</div></div>';
   return html;
 }
