@@ -897,11 +897,13 @@ async function smartSync(){
   const unsent=Object.values(DS).filter(d=>d.exported===false);
   if(unsent.length>0){
     document.getElementById('syncUnsentCount').textContent=unsent.length;
-    document.getElementById('syncWarnType').textContent='unsent';
+    document.getElementById('syncWarnType').textContent='Unsent Changes';
     document.getElementById('syncWarnDetail').innerHTML=
-      'You have <b>'+unsent.length+' unsent record(s)</b> that have not been exported yet.'+
-      '<br><br>Syncing will overwrite them with the server state — your work will be lost.'+
-      '<br><br><b>Cancel and export first.</b>';
+      'You have <b>'+unsent.length+' unsent record(s)</b> not yet exported.'+
+      '<br><br>If you want to keep this work, tap <b>Cancel</b> and export first.'+
+      '<br><br>If you want to discard it and reset back to the last server state '+
+      '(e.g. starting over), tap <b>Reset to server &amp; Sync</b> — this is safe to do '+
+      'on purpose if that\'s what you need.';
     document.getElementById('syncConfirmOv').classList.add('open');
     return;
   }
@@ -1858,11 +1860,11 @@ initApp();
 <!-- SYNC CONFIRMATION MODAL -->
 <div class="ov" id="syncConfirmOv" style="align-items:center">
   <div class="name-modal">
-    <h3>⚠️ <span id="syncWarnType">Warning</span></h3>
+    <h3>↓ <span id="syncWarnType">Sync Now?</span></h3>
     <p id="syncWarnDetail"></p>
     <div class="name-btns">
-      <button class="btn btn-s" style="flex:1" onclick="document.getElementById('syncConfirmOv').classList.remove('open')">Cancel</button>
-      <button class="btn" style="flex:1;background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)" onclick="confirmSync()">Sync anyway</button>
+      <button class="btn btn-s" style="flex:1" onclick="document.getElementById('syncConfirmOv').classList.remove('open')">Cancel — keep my changes</button>
+      <button class="btn" style="flex:1;background:var(--Rbg);border-color:var(--Rbdr);color:var(--R)" onclick="confirmSync()">Reset to server &amp; Sync</button>
     </div>
   </div>
 </div>
