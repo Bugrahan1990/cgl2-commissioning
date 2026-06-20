@@ -1652,18 +1652,13 @@ function filterGrid(){
     return;
   }
 
-  // Collect search scope:
-  // If a sub-equipment is already selected → search only within it
-  // Otherwise → search all devices
+  // Search ALWAYS covers every device in the project, regardless of
+  // whatever Area/Equipment/Sub-Equipment is currently selected in the tree.
   const scope=[];
-  if(ST.sub){
-    ST.devs.forEach(d=>scope.push({d,area:ST.area,equip:ST.equip,sub:ST.sub}));
-  } else {
-    Object.entries(H).forEach(([area,equips])=>
-      Object.entries(equips).forEach(([equip,subs])=>
-        Object.entries(subs).forEach(([sub,devs])=>
-          devs.forEach(d=>scope.push({d,area,equip,sub})))));
-  }
+  Object.entries(H).forEach(([area,equips])=>
+    Object.entries(equips).forEach(([equip,subs])=>
+      Object.entries(subs).forEach(([sub,devs])=>
+        devs.forEach(d=>scope.push({d,area,equip,sub})))));
 
   // Match: tag number, description, device type, section, SCS ref
   // Also support tag prefix: "265" matches all 265xx tags, "26501" matches equipment 501
@@ -1681,7 +1676,7 @@ function filterGrid(){
   const grid=document.createElement('div');grid.className='grid';
   const hdr=document.createElement('div');
   hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:2px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
-  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found'+(ST.sub?' in '+ST.sub:'');
+  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found across the project';
   grid.appendChild(hdr);
 
   results.forEach(({d,area,equip,sub})=>{
