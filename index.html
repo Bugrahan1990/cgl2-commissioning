@@ -741,6 +741,9 @@ const GROUPS=[
   ]},
 ];
 const ACHK=GROUPS.flatMap(g=>g.items.map(i=>i.id));
+let lastSavedTag=null;    // last successfully saved device tag (for copy feature)
+let selectMode=false;     // true when multi-select is active
+const selectedTags=new Set(); // tags currently selected
 
 // ── Weighted "real task" completion — each checklist item contributes its
 // own % toward 100%, regardless of overall Comm_Status. OK or N/A on an
@@ -811,6 +814,8 @@ async function initApp(){
   await openDB();
   const all=await dbGetAll();
   all.forEach(r=>{DS[r.Tag_Number]=r;});
+  // Restore last saved tag for copy feature
+  try{const ls=sessionStorage.getItem('CGL2_lastSaved');if(ls)lastSavedTag=ls;}catch(e){}
   updProg();updPendLbl();
   initEngineerName();
   checkOnline();
@@ -1324,10 +1329,10 @@ function renderM(){
     const lastTag=sessionStorage.getItem('CGL2_lastSaved')||'';
     const copyBtn=document.getElementById('btnCopyFrom');
     if(copyBtn){
-      if(lastTag&&lastTag!==dev.tag&&DS[lastTag]){
+      if(lastSavedTag&&lastSavedTag!==dev.tag&&DS[lastSavedTag]){
         copyBtn.style.display='';
-        copyBtn.textContent='↳ Copy from '+lastTag;
-        copyBtn.title='Copy checklist items from '+lastTag+' (excludes Remarks)';
+        copyBtn.textContent='↳ Copy from '+lastSavedTag;
+        copyBtn.title='Copy checklist items from '+lastSavedTag+' (excludes Remarks)';
       }else{
         copyBtn.style.display='none';
       }
@@ -1398,6 +1403,7 @@ async function saveClose(){
   }
   await dbPut(DS[dev.tag]);
   try{sessionStorage.setItem('CGL2_lastSaved',dev.tag);}catch(e){}
+  lastSavedTag=dev.tag;
   showT('Saved','info');
   closeM();
   updProg();updPendLbl();renderNav();renderHead();renderGrid();
@@ -2014,6 +2020,7 @@ function updSelCount(){
 
 function applyToSelected(){
   if(!selectedTags.size){showT('Select at least one device first','err');return;}
+  if(!lastSavedTag){try{lastSavedTag=sessionStorage.getItem('CGL2_lastSaved')||'';}catch(e){}}
   if(!lastSavedTag||!DS[lastSavedTag]){showT('Save a device first to use as template','err');return;}
   const src=DS[lastSavedTag];
   let count=0;
