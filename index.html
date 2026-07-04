@@ -145,7 +145,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .mtag{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--blue);margin-bottom:3px}
 .mdesc{font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .mbadge{font-size:9px;padding:2px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bdr);color:var(--tx3);font-family:'DM Mono',monospace}
-.mbody-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}.mbody{}
+.mbody-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}.mbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 .grp{padding:12px 20px}.grp+.grp{border-top:1px solid var(--bdr)}
 .gh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -556,7 +556,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <button class="btn" onclick="nav(-1)">&#8592; Prev</button>
       <button class="btn" onclick="nav(1)">Next &#8594;</button>
       <div class="mp" id="mP"></div>
-      <button class="btn" id="btnCopyFrom" onclick="copyFromLast()" style="display:none;background:var(--Abg);border-color:var(--Abdr);color:var(--A);font-size:10px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis"></button>
       <button class="btn btn-s" onclick="saveClose()">Save</button>
       <button class="btn btn-x" onclick="saveForm(ST.devs[ST.idx]?.tag);closeM()">&#10005;</button>
     </div>
@@ -1324,51 +1323,11 @@ function renderM(){
   body.appendChild(so);
   setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
   updMP(dev.tag);
-  // Update Copy From button
-  try{
-    const lastTag=sessionStorage.getItem('CGL2_lastSaved')||'';
-    const copyBtn=document.getElementById('btnCopyFrom');
-    if(copyBtn){
-      if(lastSavedTag&&lastSavedTag!==dev.tag&&DS[lastSavedTag]){
-        copyBtn.style.display='';
-        copyBtn.textContent='↳ Copy from '+lastSavedTag;
-        copyBtn.title='Copy checklist items from '+lastSavedTag+' (excludes Remarks)';
-      }else{
-        copyBtn.style.display='none';
-      }
-    }
-  }catch(e){}
   // Show/hide NFPA section
   nfpaActiveTag=dev.tag;
   const sec=document.getElementById('nfpaSection');
-  if(dev.nfpa){sec.style.display='block';renderNFPASection(dev.tag);startNFPATimer();}else{sec.style.display='none';stopNFPATimer();}
-}
-
-function uSel(sel){
-  sel.className='fc';
-  const m={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
-  if(m[sel.value])sel.classList.add(m[sel.value]);
-}
-
-function setChk(tag,id,val,btn){
-  ensDS(tag);DS[tag][id]=DS[tag][id]===val?'':val;
-  const bs=btn.closest('.cbtns').querySelectorAll('.cbtn');
-  bs.forEach(b=>b.className='cbtn');
-  if(DS[tag][id]){const c={OK:'ok','N/A':'na',FAIL:'fail'}[DS[tag][id]];Array.from(bs).find(b=>b.textContent===DS[tag][id])?.classList.add(c);}
-  updMP(tag);
-}
-
-function updMP(tag){
-  const ds=DS[tag]||{};const done=ACHK.filter(id=>ds[id]&&ds[id]!=='').length;
-  const el=document.getElementById('mP');
-  if(el){el.textContent=done+'/'+ACHK.length+' checks';el.className='mp'+(done===ACHK.length?' done':'');}
-}
-
-function saveForm(tag){
-  if(!tag) return;
-  ensDS(tag);
-  const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
-  Object.assign(DS[tag],{Comm_Status:g('f_st'),Comm_By:g('f_cb'),Comm_Date:g('f_cd'),Approved_By:g('f_ab'),Remarks:g('f_rm')});
+  if(dev.nfpa){sec.style.display='block';renderNFPASection(dev.tag);startNFPATimer();}
+  else{sec.style.display='none';stopNFPATimer();}
 }
 
 async function saveClose(){
@@ -1950,21 +1909,24 @@ function closeInst(){document.getElementById('instOv').classList.remove('open');
 function copyFromLast(){
   const dev=ST.devs[ST.idx];
   if(!dev)return;
-  let lastTag='';
-  try{lastTag=sessionStorage.getItem('CGL2_lastSaved')||'';}catch(e){}
-  if(!lastTag||lastTag===dev.tag)return;
-  const src=DS[lastTag];
-  if(!src){showT('No saved data found for '+lastTag,'err');return;}
+  if(!lastSavedTag){try{lastSavedTag=sessionStorage.getItem('CGL2_lastSaved')||'';}catch(e){}}
+  if(!lastSavedTag||lastSavedTag===dev.tag)return;
+  const src=DS[lastSavedTag];
+  if(!src){showT('No saved data found for '+lastSavedTag,'err');return;}
   ensDS(dev.tag);
-  // Copy only CHK_ checklist fields — exclude Remarks, status, dates, sign-off
-  ACHK.forEach(id=>{
-    if(src[id]!==undefined&&src[id]!==''){
-      DS[dev.tag][id]=src[id];
+  // Copy ALL fields except Remarks
+  const SKIP=['Remarks','Tag_Number','exported','savedAt','_syncHash'];
+  let copied=0;
+  Object.entries(src).forEach(([k,v])=>{
+    if(!SKIP.includes(k)&&v!==undefined&&v!==null&&v!==''){
+      DS[dev.tag][k]=v;
+      copied++;
     }
   });
   renderM();
-  showT('↳ Checklist copied from '+lastTag+' — review and adjust before saving','info');
+  showT('↳ Copied from '+lastSavedTag+' — review and adjust before saving','info');
 }
+
 
 
 // ── SELECT MODE ────────────────────────────────────────────────────────────
@@ -1973,12 +1935,16 @@ function toggleSelectMode(){
   selectedTags.clear();
   const btn=document.getElementById('btnSelect');
   const bar=document.getElementById('selBar');
+  const cnt=document.getElementById('selCount');
   if(selectMode){
     btn.style.background='var(--navy)';btn.style.color='#fff';btn.textContent='Cancel';
     bar.style.display='flex';
+    if(cnt)cnt.textContent='0 selected';
+    updSelCount();
   }else{
     btn.style.background='var(--sur2)';btn.style.color='var(--tx2)';btn.textContent='Select';
     bar.style.display='none';
+    if(cnt)cnt.textContent='0 selected';
   }
   if(ST.sub)renderGrid();
 }
@@ -2043,37 +2009,52 @@ function applyToSelected(){
 // ── BULK EDIT ──────────────────────────────────────────────────────────────
 function openBulkEdit(){
   if(!selectedTags.size){showT('Select at least one device first','err');return;}
-  document.getElementById('bulkTitle').textContent=selectedTags.size+' Devices Selected';
-  document.getElementById('bulkDesc').textContent=Array.from(selectedTags).join(', ');
-  document.getElementById('bulkInfo').textContent='Only ticked items will be applied. Blank = leave unchanged.';
 
-  // Render checklist with tri-state per field:
-  // If all selected devices have same value -> show that value
-  // Otherwise show blank (mixed)
-  const body=document.getElementById('bulkBody');
-  body.innerHTML='';
+  const tagList=Array.from(selectedTags);
+  document.getElementById('bulkTitle').textContent=tagList.length+' devices selected';
+  document.getElementById('bulkDesc').innerHTML=
+    '<span style="font-size:9px;font-family:DM Mono,monospace;color:var(--tx3)">'+
+    tagList.join(' · ')+'</span>';
 
+  const body=document.getElementById('bulkBody');body.innerHTML='';
+
+  // ── Copy From button at top ─────────────────────────────────
+  const hasSrc=lastSavedTag&&DS[lastSavedTag];
+  const copyBar=document.createElement('div');
+  copyBar.style.cssText='padding:10px 20px;background:var(--Gbg);border-bottom:1px solid var(--Gbdr);display:flex;align-items:center;gap:10px;flex-shrink:0';
+  if(hasSrc){
+    copyBar.innerHTML=
+      '<div style="flex:1;font-size:11px;color:var(--G)">Copy all values from <b>'+lastSavedTag+'</b> (except Remarks)</div>'+
+      '<button onclick="bulkCopyFromLast()" style="padding:6px 14px;border-radius:7px;background:var(--G);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">↳ Copy from '+lastSavedTag+'</button>';
+  }else{
+    copyBar.innerHTML='<div style="flex:1;font-size:11px;color:var(--tx3);font-style:italic">Save a device first to enable copy-from</div>';
+  }
+  body.appendChild(copyBar);
+
+  // ── Checklist groups ────────────────────────────────────────
   GROUPS.forEach(g=>{
     const sec=document.createElement('div');sec.className='grp';
-    sec.innerHTML='<div class="gh"><div class="gnum" style="background:'+g.bg+';color:'+g.c+'">'+g.n+'</div>'+
-      '<div><div class="gt" style="color:'+g.c+'">'+g.t+'</div><div class="gsub">'+g.s+'</div></div></div>';
+    sec.innerHTML='<div class="gh">'+
+      '<div class="gnum" style="background:'+g.bg+';color:'+g.c+'">'+g.n+'</div>'+
+      '<div><div class="gt" style="color:'+g.c+'">'+g.t+'</div>'+
+      '<div class="gsub">'+g.s+'</div></div></div>';
     g.items.forEach(item=>{
-      // Find consensus value across selected devices
-      const vals=Array.from(selectedTags).map(t=>(DS[t]||{})[item.id]||'');
+      const vals=tagList.map(t=>(DS[t]||{})[item.id]||'');
       const allSame=vals.every(v=>v===vals[0]);
-      const consensusVal=allSame?vals[0]:'';
+      const cv=allSame?vals[0]:'';
       const row=document.createElement('div');row.className='cr';
-      row.innerHTML='<div class="clbl">'+item.l+'<div class="chint">'+item.h+'</div></div>'+
+      row.innerHTML=
+        '<div class="clbl">'+item.l+'<div class="chint">'+item.h+'</div></div>'+
         '<div class="cbtns">'+
-        '<button class="cbtn '+(consensusVal==='OK'?'ok':'')+'" data-fid="'+item.id+'" data-val="OK" onclick="setBulkChk(this)">OK</button>'+
-        '<button class="cbtn '+(consensusVal==='N/A'?'na':'')+'" data-fid="'+item.id+'" data-val="N/A" onclick="setBulkChk(this)">N/A</button>'+
-        '<button class="cbtn '+(consensusVal==='FAIL'?'fail':'')+'" data-fid="'+item.id+'" data-val="FAIL" onclick="setBulkChk(this)">FAIL</button>'+
-        '<button class="cbtn" data-fid="'+item.id+'" data-val="" onclick="setBulkChk(this)" title="Leave unchanged" style="font-size:9px">—</button>'+
+        '<button class="cbtn '+(cv==='OK'?'ok':'')+'" data-fid="'+item.id+'" data-val="OK" onclick="setBulkChk(this)">OK</button>'+
+        '<button class="cbtn '+(cv==='N/A'?'na':'')+'" data-fid="'+item.id+'" data-val="N/A" onclick="setBulkChk(this)">N/A</button>'+
+        '<button class="cbtn '+(cv==='FAIL'?'fail':'')+'" data-fid="'+item.id+'" data-val="FAIL" onclick="setBulkChk(this)">FAIL</button>'+
+        '<button class="cbtn '+(cv===''&&!allSame?'':'')+'" data-fid="'+item.id+'" data-val="" onclick="setBulkChk(this)" title="Leave unchanged" style="font-size:9px;color:var(--tx3)">—</button>'+
         '</div>';
-      if(!allSame&&consensusVal===''){
+      if(!allSame){
         const hint=document.createElement('div');
         hint.style.cssText='font-size:9px;color:var(--tx3);padding:1px 0 4px;font-style:italic';
-        hint.textContent='Mixed values across selected devices';
+        hint.textContent='Mixed values';
         row.appendChild(hint);
       }
       sec.appendChild(row);
@@ -2081,18 +2062,71 @@ function openBulkEdit(){
     body.appendChild(sec);
   });
 
-  // Status section
-  const statusSec=document.createElement('div');statusSec.className='grp';
-  statusSec.innerHTML='<div class="gh"><div class="gnum" style="background:#f0f2f8;color:#444">&#9998;</div>'+
-    '<div><div class="gt" style="color:#333">Status (optional)</div><div class="gsub">Set same status on all selected devices</div></div></div>'+
-    '<div class="so"><div class="fg full"><div class="fl">Commissioning Status</div>'+
-    '<select class="fc" id="bulkStatus"><option value="">— Leave unchanged —</option>'+
-    ['Not Started','In Progress','Commissioned','N/A'].map(v=>'<option>'+v+'</option>').join('')+
-    '</select></div></div>';
-  body.appendChild(statusSec);
+  // ── Sign-off section ────────────────────────────────────────
+  const so=document.createElement('div');so.className='grp';
+  const statusVals=tagList.map(t=>(DS[t]||{}).Comm_Status||'');
+  const allSameStatus=statusVals.every(v=>v===statusVals[0]);
+  const cvStatus=allSameStatus?statusVals[0]:'';
+  const byVals=tagList.map(t=>(DS[t]||{}).Comm_By||'');
+  const allSameBy=byVals.every(v=>v===byVals[0]);
+  const dateVals=tagList.map(t=>(DS[t]||{}).Comm_Date||'');
+  const allSameDate=dateVals.every(v=>v===dateVals[0]);
+  const abVals=tagList.map(t=>(DS[t]||{}).Approved_By||'');
+  const allSameAb=abVals.every(v=>v===abVals[0]);
 
+  so.innerHTML='<div class="gh"><div class="gnum" style="background:#f0f2f8;color:#444">4</div>'+
+    '<div><div class="gt" style="color:#333">Sign-off</div>'+
+    '<div class="gsub">Leave blank to keep each device existing value</div></div></div>'+
+    '<div class="so">'+
+    '<div class="fg full"><div class="fl">Status</div>'+
+    '<select class="fc '+(cvStatus==='Commissioned'?'sc':cvStatus==='In Progress'?'sp':'sn')+'" id="bulkStatus" onchange="uSel(this)">'+
+    '<option value="">— Leave unchanged —</option>'+
+    ['Not Started','In Progress','Commissioned','N/A'].map(v=>'<option '+(v===cvStatus?'selected':'')+'>'+v+'</option>').join('')+
+    '</select></div>'+
+    '<div class="fg"><div class="fl">Commissioned By</div>'+
+    '<input class="fc" id="bulkBy" placeholder="'+(allSameBy?'':'Mixed')+'" value="'+(allSameBy?byVals[0]||'':'')+'"></div>'+
+    '<div class="fg"><div class="fl">Date</div>'+
+    '<input class="fc" type="date" id="bulkDate" value="'+(allSameDate?dateVals[0]||'':'')+'"></div>'+
+    '<div class="fg full"><div class="fl">Approved By</div>'+
+    '<input class="fc" id="bulkAb" placeholder="'+(allSameAb?'':'Mixed')+'" value="'+(allSameAb?abVals[0]||'':'')+'"></div>'+
+    '</div>';
+  body.appendChild(so);
+
+  document.getElementById('bulkInfo').textContent='Blank fields = leave each device unchanged. — = clear that check.';
   document.getElementById('bulkOv').classList.add('open');
 }
+
+function bulkCopyFromLast(){
+  if(!lastSavedTag||!DS[lastSavedTag])return;
+  const src=DS[lastSavedTag];
+  // Fill all CHK fields
+  GROUPS.forEach(g=>g.items.forEach(item=>{
+    if(src[item.id]){
+      // Set active on correct button
+      const btns=document.querySelectorAll('[data-fid="'+item.id+'"]');
+      btns.forEach(b=>{
+        delete b.dataset.active;
+        b.className='cbtn';
+        if(b.dataset.val===src[item.id]){
+          b.dataset.active='1';
+          const cls={OK:'ok','N/A':'na',FAIL:'fail'}[b.dataset.val];
+          if(cls)b.classList.add(cls);
+        }
+      });
+    }
+  }));
+  // Fill sign-off fields
+  const st=document.getElementById('bulkStatus');
+  if(st&&src.Comm_Status){st.value=src.Comm_Status;uSel(st);}
+  const by=document.getElementById('bulkBy');
+  if(by&&src.Comm_By)by.value=src.Comm_By;
+  const dt=document.getElementById('bulkDate');
+  if(dt&&src.Comm_Date)dt.value=src.Comm_Date;
+  const ab=document.getElementById('bulkAb');
+  if(ab&&src.Approved_By)ab.value=src.Approved_By;
+  showT('Values copied from '+lastSavedTag+' — review then Apply','info');
+}
+
 
 function setBulkChk(btn){
   const fid=btn.dataset.fid;
@@ -2106,27 +2140,38 @@ function setBulkChk(btn){
 }
 
 async function saveBulkEdit(){
+  // Collect checklist field choices
   const changes={};
-  // Collect all field choices
-  document.querySelectorAll('#bulkBody .cbtns .cbtn[data-active="1"]').forEach(btn=>{
-    changes[btn.dataset.fid]=btn.dataset.val;
+  document.querySelectorAll('#bulkBody .cbtn[data-active="1"]').forEach(btn=>{
+    if(btn.dataset.fid)changes[btn.dataset.fid]=btn.dataset.val;
   });
+  // Sign-off fields — only apply if not blank
   const bulkStatus=document.getElementById('bulkStatus')?.value||'';
+  const bulkBy=document.getElementById('bulkBy')?.value||'';
+  const bulkDate=document.getElementById('bulkDate')?.value||'';
+  const bulkAb=document.getElementById('bulkAb')?.value||'';
+
+  const hasChanges=Object.keys(changes).length||bulkStatus||bulkBy||bulkDate||bulkAb;
+  if(!hasChanges){showT('Nothing to apply — select at least one value','err');return;}
 
   let count=0;
   selectedTags.forEach(tag=>{
     ensDS(tag);
-    Object.entries(changes).forEach(([field,val])=>{
-      if(val!=='')DS[tag][field]=val;
-    });
+    // Apply checklist items
+    Object.entries(changes).forEach(([field,val])=>{DS[tag][field]=val;});
+    // Apply sign-off only if filled in
     if(bulkStatus)DS[tag].Comm_Status=bulkStatus;
+    if(bulkBy)DS[tag].Comm_By=bulkBy;
+    if(bulkDate)DS[tag].Comm_Date=bulkDate;
+    if(bulkAb)DS[tag].Approved_By=bulkAb;
+    // Mark as unsent
     DS[tag].exported=false;
     DS[tag].savedAt=new Date().toISOString();
     count++;
   });
 
   await Promise.all(Array.from(selectedTags).map(t=>dbPut(DS[t])));
-  showT('Updated '+count+' devices','ok');
+  showT('Updated '+count+' device'+(count!==1?'s':''),'ok');
   closeBulkEdit();
   toggleSelectMode();
   updProg();updPendLbl();renderNav();renderHead();renderGrid();
@@ -2199,4 +2244,39 @@ initApp();
 </div>
 
 </body>
-</html>
+</htmlasync function saveClose(){
+  const dev=ST.devs[ST.idx];
+  saveForm(dev.tag);
+  if(DS[dev.tag].Comm_Status==='Commissioned'&&dev.nfpa&&!nfpaAllDone(dev.tag)){
+    showT('★ Complete all 10 NFPA 85 steps before marking Commissioned','err');
+    document.getElementById('nfpaSection').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  stopNFPATimer();
+  Object.assign(DS[dev.tag],{
+    Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
+    Area:ST.area,Equipment:ST.equip,Sub_Equipment:ST.sub,
+    Section:dev.section,SCS_Ref:dev.scs,Qty:dev.qty,
+    Scope_S:dev.scopeS,Scope_D:dev.scopeD,
+    Connection_Cabinet:dev.connection||'',Manufacturer:dev.manufacturer||'',
+    savedAt:new Date().toISOString(),
+  });
+  // Smart dirty check — three-state lifecycle
+  if(isDirty(dev.tag)){
+    // If already sent to PM, keep as 'sent' — don't downgrade to unsent
+    // unless the engineer made NEW changes after sending
+    const prev=DS[dev.tag].exported;
+    if(prev==='sent'&&hashRecord(DS[dev.tag])===DS[dev.tag]._sentHash){
+      DS[dev.tag].exported='sent'; // same as what was sent — keep sent
+    } else {
+      DS[dev.tag].exported=false;  // new changes after sending → back to unsent
+    }
+  } else {
+    DS[dev.tag].exported=true; // matches server → fully confirmed
+  }
+  await dbPut(DS[dev.tag]);
+  lastSavedTag=dev.tag;
+  showT('Saved','info');
+  closeM();
+  updProg();updPendLbl();renderNav();renderHead();renderGrid();
+}>
