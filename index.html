@@ -450,6 +450,13 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .cinst{font-size:13px;cursor:pointer;padding:0 2px;line-height:1;border:none;background:transparent}
 .cinst:hover{opacity:.7}
 
+
+/* SELECTION MODE */
+.card.sel-mode{cursor:pointer}
+.card.sel-mode::after{content:'';position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;border:2px solid var(--bdr2);background:var(--bg);transition:all .15s}
+.card.selected::after{background:var(--blue);border-color:var(--blue);content:'✓';display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700}
+.card.selected{border-color:var(--blue);box-shadow:0 0 0 2px rgba(46,117,182,.2)}
+
 </style>
 </head>
 <body>
@@ -475,6 +482,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
       <button class="xbtn" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)" id="btnSearch" onclick="toggleSearch()" title="Search devices">&#9906;</button>
+      <button class="xbtn" id="btnSelect" onclick="toggleSelectMode()" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)">Select</button>
     </div>
   </div>
 
@@ -498,6 +506,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       </div>
       <div id="phSearch" style="display:none;padding:6px 14px;background:var(--sur);border-bottom:1px solid var(--bdr);flex-shrink:0">
         <input id="devSearch" placeholder="Search tag, description, device type..." oninput="filterGrid()" style="width:100%;background:var(--bg);border:1px solid var(--bdr2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--tx);outline:none;font-family:Inter,sans-serif" autocomplete="off">
+      </div>
+      <div id="selBar" style="display:none;padding:8px 14px;background:var(--navy);color:#fff;display:none;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap">
+        <span id="selCount" style="font-size:12px;font-weight:600;flex:1">0 selected</span>
+        <button onclick="selAll()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">All</button>
+        <button onclick="selNone()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">None</button>
+        <button onclick="applyToSelected()" style="padding:5px 12px;border-radius:6px;border:none;background:#3fb950;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" id="btnApplySel">Apply Checklist</button>
+        <button onclick="openBulkEdit()" style="padding:5px 12px;border-radius:6px;border:none;background:#2E75B6;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Edit All</button>
+        <button onclick="toggleSelectMode()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">&#10005; Done</button>
       </div>
       <div class="gw" id="gw">
         <div class="empty">
@@ -1241,7 +1257,15 @@ function renderGrid(){
         '<div class="cdesc">'+d.desc+'</div>'+
         badges+
         '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
-      card.onclick=()=>openM(i);grid.appendChild(card);
+      card.dataset.tag=d.tag;
+      if(selectMode){
+        card.classList.add('sel-mode');
+        if(selectedTags.has(d.tag))card.classList.add('selected');
+        card.onclick=(e)=>{e.stopPropagation();toggleCard(d.tag);};
+      }else{
+        card.onclick=()=>openM(i);
+      }
+      grid.appendChild(card);
     });
   });
 }
@@ -1937,6 +1961,173 @@ function copyFromLast(){
 }
 
 
+// ── SELECT MODE ────────────────────────────────────────────────────────────
+function toggleSelectMode(){
+  selectMode=!selectMode;
+  selectedTags.clear();
+  const btn=document.getElementById('btnSelect');
+  const bar=document.getElementById('selBar');
+  if(selectMode){
+    btn.style.background='var(--navy)';btn.style.color='#fff';btn.textContent='Cancel';
+    bar.style.display='flex';
+  }else{
+    btn.style.background='var(--sur2)';btn.style.color='var(--tx2)';btn.textContent='Select';
+    bar.style.display='none';
+  }
+  if(ST.sub)renderGrid();
+}
+
+function toggleCard(tag){
+  if(!selectMode)return;
+  if(selectedTags.has(tag))selectedTags.delete(tag);
+  else selectedTags.add(tag);
+  updSelCount();
+  // Update just this card's selected class
+  const cards=document.querySelectorAll('#gw .card[data-tag]');
+  cards.forEach(c=>{
+    if(c.dataset.tag===tag){
+      c.classList.toggle('selected',selectedTags.has(tag));
+    }
+  });
+}
+
+function selAll(){
+  ST.devs.forEach(d=>selectedTags.add(d.tag));
+  updSelCount();
+  document.querySelectorAll('#gw .card[data-tag]').forEach(c=>c.classList.add('selected'));
+}
+function selNone(){
+  selectedTags.clear();
+  updSelCount();
+  document.querySelectorAll('#gw .card[data-tag]').forEach(c=>c.classList.remove('selected'));
+}
+function updSelCount(){
+  const el=document.getElementById('selCount');
+  if(el)el.textContent=selectedTags.size+' selected';
+  const applyBtn=document.getElementById('btnApplySel');
+  if(applyBtn){
+    const hasLast=lastSavedTag&&DS[lastSavedTag];
+    applyBtn.textContent=hasLast?'Copy from '+lastSavedTag:'Apply Checklist';
+    applyBtn.style.opacity=selectedTags.size>0?'1':'0.4';
+  }
+}
+
+function applyToSelected(){
+  if(!selectedTags.size){showT('Select at least one device first','err');return;}
+  if(!lastSavedTag||!DS[lastSavedTag]){showT('Save a device first to use as template','err');return;}
+  const src=DS[lastSavedTag];
+  let count=0;
+  selectedTags.forEach(tag=>{
+    if(tag===lastSavedTag)return;
+    ensDS(tag);
+    ACHK.forEach(field=>{if(src[field]&&src[field]!==''){DS[tag][field]=src[field];}});
+    DS[tag].exported=false;
+    DS[tag].savedAt=new Date().toISOString();
+    count++;
+  });
+  // Save all to DB
+  Promise.all(Array.from(selectedTags).filter(t=>t!==lastSavedTag).map(t=>dbPut(DS[t]))).then(()=>{
+    showT('Checklist applied to '+count+' devices','ok');
+    toggleSelectMode();
+    updProg();updPendLbl();renderNav();renderHead();renderGrid();
+  });
+}
+
+// ── BULK EDIT ──────────────────────────────────────────────────────────────
+function openBulkEdit(){
+  if(!selectedTags.size){showT('Select at least one device first','err');return;}
+  document.getElementById('bulkTitle').textContent=selectedTags.size+' Devices Selected';
+  document.getElementById('bulkDesc').textContent=Array.from(selectedTags).join(', ');
+  document.getElementById('bulkInfo').textContent='Only ticked items will be applied. Blank = leave unchanged.';
+
+  // Render checklist with tri-state per field:
+  // If all selected devices have same value -> show that value
+  // Otherwise show blank (mixed)
+  const body=document.getElementById('bulkBody');
+  body.innerHTML='';
+
+  GROUPS.forEach(g=>{
+    const sec=document.createElement('div');sec.className='grp';
+    sec.innerHTML='<div class="gh"><div class="gnum" style="background:'+g.bg+';color:'+g.c+'">'+g.n+'</div>'+
+      '<div><div class="gt" style="color:'+g.c+'">'+g.t+'</div><div class="gsub">'+g.s+'</div></div></div>';
+    g.items.forEach(item=>{
+      // Find consensus value across selected devices
+      const vals=Array.from(selectedTags).map(t=>(DS[t]||{})[item.id]||'');
+      const allSame=vals.every(v=>v===vals[0]);
+      const consensusVal=allSame?vals[0]:'';
+      const row=document.createElement('div');row.className='cr';
+      row.innerHTML='<div class="clbl">'+item.l+'<div class="chint">'+item.h+'</div></div>'+
+        '<div class="cbtns">'+
+        '<button class="cbtn '+(consensusVal==='OK'?'ok':'')+'" data-fid="'+item.id+'" data-val="OK" onclick="setBulkChk(this)">OK</button>'+
+        '<button class="cbtn '+(consensusVal==='N/A'?'na':'')+'" data-fid="'+item.id+'" data-val="N/A" onclick="setBulkChk(this)">N/A</button>'+
+        '<button class="cbtn '+(consensusVal==='FAIL'?'fail':'')+'" data-fid="'+item.id+'" data-val="FAIL" onclick="setBulkChk(this)">FAIL</button>'+
+        '<button class="cbtn" data-fid="'+item.id+'" data-val="" onclick="setBulkChk(this)" title="Leave unchanged" style="font-size:9px">—</button>'+
+        '</div>';
+      if(!allSame&&consensusVal===''){
+        const hint=document.createElement('div');
+        hint.style.cssText='font-size:9px;color:var(--tx3);padding:1px 0 4px;font-style:italic';
+        hint.textContent='Mixed values across selected devices';
+        row.appendChild(hint);
+      }
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  });
+
+  // Status section
+  const statusSec=document.createElement('div');statusSec.className='grp';
+  statusSec.innerHTML='<div class="gh"><div class="gnum" style="background:#f0f2f8;color:#444">&#9998;</div>'+
+    '<div><div class="gt" style="color:#333">Status (optional)</div><div class="gsub">Set same status on all selected devices</div></div></div>'+
+    '<div class="so"><div class="fg full"><div class="fl">Commissioning Status</div>'+
+    '<select class="fc" id="bulkStatus"><option value="">— Leave unchanged —</option>'+
+    ['Not Started','In Progress','Commissioned','N/A'].map(v=>'<option>'+v+'</option>').join('')+
+    '</select></div></div>';
+  body.appendChild(statusSec);
+
+  document.getElementById('bulkOv').classList.add('open');
+}
+
+function setBulkChk(btn){
+  const fid=btn.dataset.fid;
+  const val=btn.dataset.val;
+  const btns=btn.closest('.cbtns').querySelectorAll('.cbtn');
+  btns.forEach(b=>b.className='cbtn');
+  if(val){const cls={OK:'ok','N/A':'na',FAIL:'fail'}[val];if(cls)btn.classList.add(cls);}
+  btn.dataset.active='1';
+  // Mark others as inactive
+  btns.forEach(b=>{if(b!==btn)delete b.dataset.active;});
+}
+
+async function saveBulkEdit(){
+  const changes={};
+  // Collect all field choices
+  document.querySelectorAll('#bulkBody .cbtns .cbtn[data-active="1"]').forEach(btn=>{
+    changes[btn.dataset.fid]=btn.dataset.val;
+  });
+  const bulkStatus=document.getElementById('bulkStatus')?.value||'';
+
+  let count=0;
+  selectedTags.forEach(tag=>{
+    ensDS(tag);
+    Object.entries(changes).forEach(([field,val])=>{
+      if(val!=='')DS[tag][field]=val;
+    });
+    if(bulkStatus)DS[tag].Comm_Status=bulkStatus;
+    DS[tag].exported=false;
+    DS[tag].savedAt=new Date().toISOString();
+    count++;
+  });
+
+  await Promise.all(Array.from(selectedTags).map(t=>dbPut(DS[t])));
+  showT('Updated '+count+' devices','ok');
+  closeBulkEdit();
+  toggleSelectMode();
+  updProg();updPendLbl();renderNav();renderHead();renderGrid();
+}
+
+function closeBulkEdit(){document.getElementById('bulkOv').classList.remove('open');}
+
+
 initApp();
 </script>
 
@@ -1981,5 +2172,24 @@ initApp();
     </div>
   </div>
 </div>
+
+<!-- BULK EDIT MODAL -->
+<div class="ov" id="bulkOv" onclick="if(event.target===this)closeBulkEdit()">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mhdr">
+      <div class="mbc">Bulk Edit</div>
+      <div class="mtag" id="bulkTitle">Multiple Devices</div>
+      <div class="mdesc" id="bulkDesc" style="font-size:11px;color:var(--tx2)"></div>
+    </div>
+    <div class="mbody" id="bulkBody"></div>
+    <div class="mftr">
+      <div style="font-size:10px;color:var(--tx3);font-family:DM Mono,monospace;flex:1" id="bulkInfo"></div>
+      <button class="btn" onclick="closeBulkEdit()">Cancel</button>
+      <button class="btn btn-s" onclick="saveBulkEdit()">Apply to All</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
