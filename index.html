@@ -1267,7 +1267,11 @@ function renderGrid(){
         if(selectedTags.has(d.tag))card.classList.add('selected');
         card.onclick=(e)=>{e.stopPropagation();toggleCard(d.tag);};
       }else{
-        card.onclick=()=>openM(i);
+        card.onclick=()=>{
+          const realIdx=ST.devs.findIndex(x=>x.tag===d.tag);
+          if(realIdx>=0)openM(realIdx);
+          else showT('Device not found in list','err');
+        };
       }
       grid.appendChild(card);
     });
@@ -1279,7 +1283,16 @@ function ensDS(tag){
   if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',Connection_Cabinet:'',Manufacturer:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,''])),...Object.fromEntries(NFPA_STEPS.map(s=>['NFPA_'+s.id,'']))};
 }
 
-function openM(idx){ST.idx=idx;renderM();document.getElementById('ov').classList.add('open');}
+function openM(idx){
+  try{
+    ST.idx=idx;
+    renderM();
+    document.getElementById('ov').classList.add('open');
+  }catch(err){
+    showT('Error opening device: '+err.message,'err');
+    console.error('openM error:',err);
+  }
+}
 
 function renderM(){
   const dev=ST.devs[ST.idx];ensDS(dev.tag);const ds=DS[dev.tag];
