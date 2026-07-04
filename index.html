@@ -540,6 +540,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <button class="btn" onclick="nav(-1)">&#8592; Prev</button>
       <button class="btn" onclick="nav(1)">Next &#8594;</button>
       <div class="mp" id="mP"></div>
+      <button class="btn" id="btnCopyFrom" onclick="copyFromLast()" style="display:none;background:var(--Abg);border-color:var(--Abdr);color:var(--A);font-size:10px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis"></button>
       <button class="btn btn-s" onclick="saveClose()">Save</button>
       <button class="btn btn-x" onclick="saveForm(ST.devs[ST.idx]?.tag);closeM()">&#10005;</button>
     </div>
@@ -1294,6 +1295,20 @@ function renderM(){
   body.appendChild(so);
   setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
   updMP(dev.tag);
+  // Update Copy From button
+  try{
+    const lastTag=sessionStorage.getItem('CGL2_lastSaved')||'';
+    const copyBtn=document.getElementById('btnCopyFrom');
+    if(copyBtn){
+      if(lastTag&&lastTag!==dev.tag&&DS[lastTag]){
+        copyBtn.style.display='';
+        copyBtn.textContent='↳ Copy from '+lastTag;
+        copyBtn.title='Copy checklist items from '+lastTag+' (excludes Remarks)';
+      }else{
+        copyBtn.style.display='none';
+      }
+    }
+  }catch(e){}
   // Show/hide NFPA section
   nfpaActiveTag=dev.tag;
   const sec=document.getElementById('nfpaSection');
@@ -1358,6 +1373,7 @@ async function saveClose(){
     DS[dev.tag].exported=true; // matches server → fully confirmed
   }
   await dbPut(DS[dev.tag]);
+  try{sessionStorage.setItem('CGL2_lastSaved',dev.tag);}catch(e){}
   showT('Saved','info');
   closeM();
   updProg();updPendLbl();renderNav();renderHead();renderGrid();
@@ -1899,6 +1915,26 @@ function openInst(tag,type,e){
 function closeInst(){document.getElementById('instOv').classList.remove('open');}
 
 
+
+
+function copyFromLast(){
+  const dev=ST.devs[ST.idx];
+  if(!dev)return;
+  let lastTag='';
+  try{lastTag=sessionStorage.getItem('CGL2_lastSaved')||'';}catch(e){}
+  if(!lastTag||lastTag===dev.tag)return;
+  const src=DS[lastTag];
+  if(!src){showT('No saved data found for '+lastTag,'err');return;}
+  ensDS(dev.tag);
+  // Copy only CHK_ checklist fields — exclude Remarks, status, dates, sign-off
+  ACHK.forEach(id=>{
+    if(src[id]!==undefined&&src[id]!==''){
+      DS[dev.tag][id]=src[id];
+    }
+  });
+  renderM();
+  showT('↳ Checklist copied from '+lastTag+' — review and adjust before saving','info');
+}
 
 
 initApp();
