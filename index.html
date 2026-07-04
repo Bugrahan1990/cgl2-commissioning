@@ -453,8 +453,8 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 
 /* SELECTION MODE */
 .card.sel-mode{cursor:pointer}
-.card.sel-mode::after{content:'';position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;border:2px solid var(--bdr2);background:var(--bg);transition:all .15s}
-.card.selected::after{background:var(--blue);border-color:var(--blue);content:'✓';display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700}
+.card.sel-mode::after{content:'';position:absolute;top:5px;right:5px;left:auto;width:16px;height:16px;border-radius:50%;border:2px solid var(--bdr2);background:var(--sur);transition:all .15s;pointer-events:none}
+.card.selected::after{background:var(--blue);border-color:var(--blue);content:'✓';display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;pointer-events:none}
 .card.selected{border-color:var(--blue);box-shadow:0 0 0 2px rgba(46,117,182,.2)}
 
 </style>
@@ -511,7 +511,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <span id="selCount" style="font-size:12px;font-weight:600;flex:1">0 selected</span>
         <button onclick="selAll()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">All</button>
         <button onclick="selNone()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">None</button>
-        <button onclick="applyToSelected()" style="padding:5px 12px;border-radius:6px;border:none;background:#3fb950;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" id="btnApplySel">Apply Checklist</button>
         <button onclick="openBulkEdit()" style="padding:5px 12px;border-radius:6px;border:none;background:#2E75B6;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Edit All</button>
         <button onclick="toggleSelectMode()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">&#10005; Done</button>
       </div>
@@ -556,6 +555,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <button class="btn" onclick="nav(-1)">&#8592; Prev</button>
       <button class="btn" onclick="nav(1)">Next &#8594;</button>
       <div class="mp" id="mP"></div>
+      <button class="btn" id="btnCopyInModal" onclick="copyFromLast()" style="display:none;background:var(--Gbg);border:1px solid var(--Gbdr);color:var(--G);font-size:10px;padding:5px 8px;white-space:nowrap"></button>
       <button class="btn btn-s" onclick="saveClose()">Save</button>
       <button class="btn btn-x" onclick="saveForm(ST.devs[ST.idx]?.tag);closeM()">&#10005;</button>
     </div>
@@ -1323,6 +1323,16 @@ function renderM(){
   body.appendChild(so);
   setTimeout(()=>{const s=document.getElementById('f_st');if(s)uSel(s);},0);
   updMP(dev.tag);
+  // Show/hide copy-from button
+  const copyInModal=document.getElementById('btnCopyInModal');
+  if(copyInModal){
+    if(lastSavedTag&&lastSavedTag!==dev.tag&&DS[lastSavedTag]){
+      copyInModal.style.display='';
+      copyInModal.textContent='↳ Copy from '+lastSavedTag;
+    }else{
+      copyInModal.style.display='none';
+    }
+  }
   // Show/hide NFPA section
   nfpaActiveTag=dev.tag;
   const sec=document.getElementById('nfpaSection');
