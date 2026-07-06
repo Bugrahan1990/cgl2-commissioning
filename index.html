@@ -1279,6 +1279,34 @@ function renderGrid(){
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────────────
+function uSel(sel){
+  sel.className='fc';
+  const m={'Commissioned':'sc','In Progress':'sp','Not Started':'sn','N/A':'sn'};
+  if(m[sel.value])sel.classList.add(m[sel.value]);
+}
+
+function setChk(tag,id,val,btn){
+  ensDS(tag);DS[tag][id]=DS[tag][id]===val?'':val;
+  const bs=btn.closest('.cbtns').querySelectorAll('.cbtn');
+  bs.forEach(b=>b.className='cbtn');
+  if(DS[tag][id]){const c={OK:'ok','N/A':'na',FAIL:'fail'}[DS[tag][id]];Array.from(bs).find(b=>b.textContent===DS[tag][id])?.classList.add(c);}
+  updMP(tag);
+}
+
+function updMP(tag){
+  const ds=DS[tag]||{};const done=ACHK.filter(id=>ds[id]&&ds[id]!=='').length;
+  const el=document.getElementById('mP');
+  if(el){el.textContent=done+'/'+ACHK.length+' checks';el.className='mp'+(done===ACHK.length?' done':'');}
+}
+
+function saveForm(tag){
+  if(!tag) return;
+  ensDS(tag);
+  const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  Object.assign(DS[tag],{Comm_Status:g('f_st'),Comm_By:g('f_cb'),Comm_Date:g('f_cd'),Approved_By:g('f_ab'),Remarks:g('f_rm')});
+}
+
+
 function ensDS(tag){
   if(!DS[tag])DS[tag]={Tag_Number:tag,Comm_Status:'Not Started',Comm_By:'',Comm_Date:'',Approved_By:'',Remarks:'',Connection_Cabinet:'',Manufacturer:'',exported:null,...Object.fromEntries(ACHK.map(k=>[k,''])),...Object.fromEntries(NFPA_STEPS.map(s=>['NFPA_'+s.id,'']))};
 }
