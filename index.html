@@ -2050,7 +2050,8 @@ function toggleSelectMode(){
     bar.style.display='none';
     if(cnt)cnt.textContent='0 selected';
   }
-  if(ST.sub)renderGrid();
+  if(window._filterResults)renderFilteredGrid();
+  else if(ST.sub)renderGrid();
 }
 
 function toggleCard(tag){
@@ -2078,6 +2079,11 @@ function selNone(){
   document.querySelectorAll('#gw .card[data-tag]').forEach(c=>c.classList.remove('selected'));
 }
 function updSelCount(){
+  if(window._filterResults&&selectMode){
+    document.querySelectorAll('#gw .card[data-tag]').forEach(function(c){
+      c.classList.toggle('selected',selectedTags.has(c.dataset.tag));
+    });
+  }
   const el=document.getElementById('selCount');
   if(el)el.textContent=selectedTags.size+' selected';
   const applyBtn=document.getElementById('btnApplySel');
@@ -2319,72 +2325,70 @@ function filterByModel(model){
 }
 
 function showFilteredResults(results,label){
-  // Navigate to the first result's area/equip/sub so nav is valid
   if(!results.length){showT('No devices found','err');return;}
-
-  // Use the first result to seed ST so renderHead/Nav work
-  const first=results[0];
+  window._filterResults=results;
+  window._filterLabel=label;
+  ST.devs=results.map(function(r){return r.d;});
+  var first=results[0];
   ST.area=first.area;ST.equip=first.equip;ST.sub=first.sub;
-  ST.devs=results.map(r=>r.d);
-
-  const gw=document.getElementById('gw');
-  if(!gw)return;
-  gw.innerHTML='';
-
-  // Show a header bar
-  const hdr=document.createElement('div');
-  hdr.style.cssText='padding:8px 14px;background:var(--lblue);border-bottom:1px solid var(--bdr);font-size:11px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px;flex-shrink:0';
-  hdr.innerHTML='<span style="flex:1">'+label+' — '+results.length+' devices</span>'+
-    '<button onclick="clearDashFilter()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">✕ Clear</button>';
-
-  // Insert before gw
-  gw.parentNode.insertBefore(hdr,gw);
-  gw.parentNode._filterHdr=hdr;
-
-  // Render cards
-  results.forEach((r,i)=>{
-    const d=r.d;
-    const s=getS(d.tag);const cs=getCardState(d.tag);
-    const cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
-    const card=document.createElement('div');
-    card.className='card '+cls;card.dataset.tag=d.tag;
-    const statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
-    const nfpa=d.nfpa;
-    const badges='<div class="cbadges">'+
-      (nfpa?'<span class="card-star" title="NFPA 85">★</span>':'')+
-      ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
-      '</div>';
-    // Small area label
-    const areaLbl='<div style="font-size:8px;color:var(--tx3);margin-bottom:2px">'+r.area.replace(/^PG\.\d+ - /,'')+'</div>';
-    card.innerHTML=areaLbl+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+
-      '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
-    card.onclick=()=>{
-      ST.area=r.area;ST.equip=r.equip;ST.sub=r.sub;
-      ST.devs=Object.values(H[r.area][r.equip][r.sub]);
-      ST.idx=ST.devs.findIndex(x=>x.tag===d.tag);
-      if(ST.idx<0)ST.idx=0;
-      openM(ST.idx);
-    };
-    gw.appendChild(card);
-  });
-
-  // Show a count in renderHead area
-  const ph=document.getElementById('ph');
-  if(ph){
-    ph.querySelector('.phs').textContent=label+' — '+results.length+' devices';
-  }
+  renderFilteredGrid();
+  var ph=document.getElementById('ph');
+  if(ph)ph.querySelector('.phs').textContent=label+' — '+results.length+' devices';
 }
 
+function renderFilteredGrid(){
+  var results=window._filterResults||[];
+  var label=window._filterLabel||'';
+  var gw=document.getElementById('gw');
+  if(!gw)return;
+  gw.innerHTML='';
+  var oldHdr=document.getElementById('filterHdr');
+  if(oldHdr)oldHdr.remove();
+  var hdr=document.createElement('div');
+  hdr.id='filterHdr';
+  hdr.style.cssText='padding:8px 14px;background:var(--lblue);border-bottom:1px solid var(--bdr);font-size:11px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:8px;flex-shrink:0';
+  hdr.innerHTML='<span style="flex:1">'+label+' — '+results.length+' devices</span>'+
+    '<button onclick="clearDashFilter()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">✕ Clear</button>';
+  gw.parentNode.insertBefore(hdr,gw);
+  results.forEach(function(r){
+    var d=r.d;
+    var s=getS(d.tag);var cs=getCardState(d.tag);
+    var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
+    var card=document.createElement('div');
+    card.className='card '+cls+(selectMode?' sel-mode':'');
+    if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
+    card.dataset.tag=d.tag;
+    var statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
+    var badges='<div class="cbadges">'+
+      (d.nfpa?'<span class="card-star">★</span>':'')+
+      ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
+      '</div>';
+    var areaLbl='<div style="font-size:8px;color:var(--tx3);margin-bottom:2px">'+r.area.replace(/^PG[.][0-9]+ - /,'')+'</div>';
+    card.innerHTML=areaLbl+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+'<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
+    if(selectMode){
+      card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
+    }else{
+      card.onclick=function(rd){return function(){
+        var sub=H[rd.area]&&H[rd.area][rd.equip]&&H[rd.area][rd.equip][rd.sub]?H[rd.area][rd.equip][rd.sub]:null;
+        var devsSub=sub?Object.values(sub).flat():[rd.d];
+        ST.area=rd.area;ST.equip=rd.equip;ST.sub=rd.sub;
+        ST.devs=devsSub;
+        ST.idx=ST.devs.findIndex(function(x){return x.tag===rd.d.tag;});
+        if(ST.idx<0){ST.devs=[rd.d];ST.idx=0;}
+        openM(ST.idx);
+      };}(r);
+    }
+    gw.appendChild(card);
+  });
+}
+
+
 function clearDashFilter(){
-  // Remove header bar
-  const gw=document.getElementById('gw');
-  if(gw&&gw.parentNode._filterHdr){
-    gw.parentNode.removeChild(gw.parentNode._filterHdr);
-    gw.parentNode._filterHdr=null;
-  }
-  // Re-render normally
+  window._filterResults=null;window._filterLabel=null;ST.devs=[];
+  var oldHdr=document.getElementById('filterHdr');if(oldHdr)oldHdr.remove();
+  var gw=document.getElementById('gw');
   if(ST.sub)renderGrid();
-  else gw.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">Select a sub-equipment group</div></div>';
+  else if(gw)gw.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">Select a sub-equipment group</div></div>';
 }
 
 
@@ -2442,7 +2446,7 @@ initApp();
       <div class="mtag" id="bulkTitle">Multiple Devices</div>
       <div class="mdesc" id="bulkDesc" style="font-size:11px;color:var(--tx2)"></div>
     </div>
-    <div class="mbody" id="bulkBody"></div>
+    <div class="mbody" id="bulkBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     <div class="mftr">
       <div style="font-size:10px;color:var(--tx3);font-family:DM Mono,monospace;flex:1" id="bulkInfo"></div>
       <button class="btn" onclick="closeBulkEdit()">Cancel</button>
