@@ -541,7 +541,6 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <div class="nfpa-sec-hdr">
           <span class="nfpa-sec-icon">★</span>
           <span class="nfpa-sec-title">NFPA 85 — Safety Commissioning Checklist</span>
-          <span class="nfpa-timer" id="nfpaTimerDisp">5:00</span>
         </div>
         <div class="nfpa-progress-bar-wrap">
           <div class="nfpa-progress-track"><div class="nfpa-progress-fill" id="nfpaProgressFill" style="width:0%"></div></div>
@@ -707,16 +706,10 @@ let INST_BY_TYPE={
 let nfpaActiveTag=null;
 
 const NFPA_STEPS=[
-  {id:'nfpa1',l:'BMS verified operational',h:'Confirm BMS panel powered, all I/O functional, safety logic loaded and active'},
-  {id:'nfpa2',l:'Fuel supply pressure within operating range',h:'Check supply pressure at burner header. Confirm within design spec before any ignition attempt'},
-  {id:'nfpa3',l:'SSOV proven closed on loss of flame signal',h:'Simulate loss of flame — verify SSOV closes within required response time per NFPA 85 Sec 8.7'},
-  {id:'nfpa4',l:'High/low fuel pressure switches tested at setpoint',h:'Adjust setpoint temporarily to cause trip. Verify BMS response. Restore original setpoint'},
-  {id:'nfpa5',l:'Purge cycle timed and verified (min 4 air changes)',h:'Confirm pre-ignition purge meets NFPA 85 minimum. Document purge time'},
-  {id:'nfpa6',l:'Pilot ignition proven — flame detection confirmed',h:'Ignite pilot, confirm UV/IR flame detector responds within 4 seconds per NFPA 85'},
-  {id:'nfpa7',l:'Main flame established and proven stable',h:'Light main burner from pilot. Confirm stable flame signal. Record scanner output'},
-  {id:'nfpa8',l:'Safety interlock functional test complete',h:'Test all interlocks: high temp, low airflow, door open. Each must cause safe shutdown'},
-  {id:'nfpa9',l:'Leak test on all fuel gas connections confirmed',h:'Pressure test all connections. No leakage permitted per NFPA 85 Sec 8.4'},
-  {id:'nfpa10',l:'Documentation signed and retained on site',h:'Complete NFPA 85 commissioning record. Retain for AHJ inspection'},
+  {id:'nfpa1',l:'Safety shut-off valve (SSOV) proven closed',h:'Simulate loss of flame — verify SSOV closes and BMS trips correctly per NFPA 85 Sec 8.7'},
+  {id:'nfpa2',l:'High/low fuel pressure switches tested at setpoint',h:'Adjust setpoint to cause trip, verify BMS response, restore setpoint and confirm reset'},
+  {id:'nfpa3',l:'Safety interlocks functional test complete',h:'Test all interlocks: high temp, low airflow, flame detector. Each must cause safe shutdown'},
+  {id:'nfpa4',l:'Fuel gas leak test confirmed — no leakage',h:'Pressure test all fuel gas connections. Zero leakage permitted per NFPA 85 Sec 8.4'},
 ];
 
 const GROUPS=[
@@ -1860,34 +1853,8 @@ function nfpaAllDone(tag){
   const d=DS[tag]||{};
   return NFPA_STEPS.every(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail');
 }
-function startNFPATimer(){
-  let secs=300;
-  clearInterval(window._nfpaTimer);
-  window._nfpaTimer=setInterval(()=>{
-    secs--;
-    const el=document.getElementById('nfpaTimerDisp');
-    if(el){
-      const m=Math.floor(secs/60),s=secs%60;
-      el.textContent=m+':'+(s<10?'0':'')+s;
-      if(secs<=60)el.classList.add('warn');else el.classList.remove('warn');
-      if(secs<=0){clearInterval(window._nfpaTimer);el.textContent='0:00';}
-    }
-  },1000);
-}
-function stopNFPATimer(){clearInterval(window._nfpaTimer);}
-function setNFPAEvt(btn){setNFPA(btn.dataset.sid,btn.dataset.val,btn);}
-function setNFPA(stepId,val,btn){
-  const tag=nfpaActiveTag;if(!tag)return;
-  ensDS(tag);
-  const key='NFPA_'+stepId;
-  DS[tag][key]=DS[tag][key]===val?'':val;
-  const btns=btn.closest('.nfpa-chk').querySelectorAll('.nfpa-btn');
-  btns.forEach(b=>b.className='nfpa-btn');
-  if(DS[tag][key]){btn.classList.add(DS[tag][key]==='pass'?'pass':'fail');}
-  const done=NFPA_STEPS.filter(s=>DS[tag]['NFPA_'+s.id]==='pass'||DS[tag]['NFPA_'+s.id]==='fail').length;
-  const pl=document.getElementById('nfpaProgressLbl');
-  if(pl)pl.textContent=done+'/'+NFPA_STEPS.length+' completed';
-}
+function startNFPATimer(){}
+function stopNFPATimer(){}
 function renderNFPASection(tag){
   ensDS(tag);const d=DS[tag]||{};
   const total=NFPA_STEPS.length;
