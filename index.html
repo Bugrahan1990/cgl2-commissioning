@@ -145,7 +145,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .mtag{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--blue);margin-bottom:3px}
 .mdesc{font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .mbadge{font-size:9px;padding:2px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bdr);color:var(--tx3);font-family:'DM Mono',monospace}
-.mbody-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}.mbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mbody-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}.mbody{flex:1}
 
 .grp{padding:12px 20px}.grp+.grp{border-top:1px solid var(--bdr)}
 .gh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -541,7 +541,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <div class="nfpa-sec-hdr">
           <span class="nfpa-sec-icon">★</span>
           <span class="nfpa-sec-title">NFPA 85 — Safety Commissioning Checklist</span>
-          
+          <span class="nfpa-timer" id="nfpaTimerDisp">5:00</span>
         </div>
         <div class="nfpa-progress-bar-wrap">
           <div class="nfpa-progress-track"><div class="nfpa-progress-fill" id="nfpaProgressFill" style="width:0%"></div></div>
@@ -1475,11 +1475,18 @@ function renderDash(){
     eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>isDone(d.tag)).length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
   }));
   const tMap={}; // by device type
+  const mMap={}; // by model
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
     if(!tMap[d.type])tMap[d.type]={done:0,wip:0,tot:0};tMap[d.type].tot++;
     const st=getS(d.tag);
     if(isDone(d.tag))tMap[d.type].done++;
     if(st==='In Progress')tMap[d.type].wip++;
+    if(d.model){
+      if(!mMap[d.model])mMap[d.model]={done:0,wip:0,tot:0,type:d.type};
+      mMap[d.model].tot++;
+      if(isDone(d.tag))mMap[d.model].done++;
+      if(st==='In Progress')mMap[d.model].wip++;
+    }
   })));
 
   // ── Fail-reason map (In Progress devices, grouped by what FAILED) ──────
@@ -1545,6 +1552,11 @@ function renderDash(){
 
   // ── Small multiples: By Device Type ───────────────────────────────────
   html+=biPanel('By Device Type','',biTypeGrid(tMap));
+
+  // ── Small multiples: By Device Model ─────────────────────────────────
+  if(Object.keys(mMap).length){
+    html+=biPanel('By Device Model','click any model to filter devices',biModelGrid(mMap));
+  }
 
   // ── Blocked-by chart (full text, no truncation) ──────────────────────
   const failEntries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
@@ -1699,7 +1711,7 @@ function biTypeGrid(tMap){
     const doneLen=circ*(donePct/100);
     const wipLen=circ*(wipPct/100);
     const color=donePct<25?'var(--R)':donePct<60?'var(--A)':'var(--G)';
-    html+=`<div class="bi-type-card">
+    html+=`<div class="bi-type-card" onclick="filterByType('${type}')" style="cursor:pointer" title="Show all ${type} devices">
       <svg width="56" height="56" viewBox="0 0 56 56">
         <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="6"/>
         <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--WIP)" stroke-width="6"
@@ -1710,6 +1722,34 @@ function biTypeGrid(tMap){
       </svg>
       <div class="bi-type-name">${type}</div>
       <div class="bi-type-count">${v.done} done${v.wip?' · '+v.wip+' WIP':''}</div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+// ── Model grid ──────────────────────────────────────────────────────────
+function biModelGrid(mMap){
+  const entries=Object.entries(mMap).sort((a,b)=>b[1].tot-a[1].tot);
+  let html='<div class="bi-type-grid">';
+  entries.forEach(([model,v])=>{
+    const donePct=v.tot?Math.round(v.done/v.tot*100):0;
+    const wipPct=v.tot?Math.round(v.wip/v.tot*100):0;
+    const r=22,circ=2*Math.PI*r;
+    const doneLen=circ*(donePct/100);
+    const wipLen=circ*(wipPct/100);
+    const color=donePct<25?'var(--R)':donePct<60?'var(--A)':'var(--G)';
+    html+=`<div class="bi-type-card" onclick="filterByModel('${model.replace(/'/g,'&#39;')}')" style="cursor:pointer" title="Show all ${model} devices">
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="6"/>
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--WIP)" stroke-width="6"
+          stroke-dasharray="${wipLen} ${circ-wipLen}" stroke-dashoffset="${-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
+        <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+          stroke-dasharray="${doneLen} ${circ-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
+        <text x="28" y="32" text-anchor="middle" font-size="11" font-weight="700" font-family="'DM Mono',monospace" fill="${color}">${donePct}%</text>
+      </svg>
+      <div class="bi-type-name" style="font-size:8px">${model}</div>
+      <div class="bi-type-count">${v.done}/${v.tot}${v.wip?' · '+v.wip+' WIP':''}</div>
     </div>`;
   });
   html+='</div>';
@@ -1820,8 +1860,21 @@ function nfpaAllDone(tag){
   const d=DS[tag]||{};
   return NFPA_STEPS.every(s=>d['NFPA_'+s.id]==='pass'||d['NFPA_'+s.id]==='fail');
 }
-function startNFPATimer(){}
-function stopNFPATimer(){}
+function startNFPATimer(){
+  let secs=300;
+  clearInterval(window._nfpaTimer);
+  window._nfpaTimer=setInterval(()=>{
+    secs--;
+    const el=document.getElementById('nfpaTimerDisp');
+    if(el){
+      const m=Math.floor(secs/60),s=secs%60;
+      el.textContent=m+':'+(s<10?'0':'')+s;
+      if(secs<=60)el.classList.add('warn');else el.classList.remove('warn');
+      if(secs<=0){clearInterval(window._nfpaTimer);el.textContent='0:00';}
+    }
+  },1000);
+}
+function stopNFPATimer(){clearInterval(window._nfpaTimer);}
 function setNFPAEvt(btn){setNFPA(btn.dataset.sid,btn.dataset.val,btn);}
 function setNFPA(stepId,val,btn){
   const tag=nfpaActiveTag;if(!tag)return;
@@ -2229,6 +2282,110 @@ async function saveBulkEdit(){
 }
 
 function closeBulkEdit(){document.getElementById('bulkOv').classList.remove('open');}
+
+
+// ── DASHBOARD FILTER FUNCTIONS ─────────────────────────────────────────────
+function filterByType(type){
+  // Switch to devices tab and show search results for this device type
+  switchTab('map');
+  // Find all devices of this type and show them as search results
+  const results=[];
+  Object.entries(H).forEach(([area,equips])=>
+    Object.entries(equips).forEach(([equip,subs])=>
+      Object.entries(subs).forEach(([sub,devs])=>
+        devs.forEach((d,i)=>{
+          if((d.type||'')===type) results.push({d,area,equip,sub,idx:ST.devs.findIndex(x=>x.tag===d.tag)});
+        })
+      )
+    )
+  );
+  // Show in grid as cross-area search results
+  showFilteredResults(results,'Device Type: '+type);
+}
+
+function filterByModel(model){
+  switchTab('map');
+  const results=[];
+  Object.entries(H).forEach(([area,equips])=>
+    Object.entries(equips).forEach(([equip,subs])=>
+      Object.entries(subs).forEach(([sub,devs])=>
+        devs.forEach((d,i)=>{
+          if((d.model||'')===model) results.push({d,area,equip,sub});
+        })
+      )
+    )
+  );
+  showFilteredResults(results,'Model: '+model);
+}
+
+function showFilteredResults(results,label){
+  // Navigate to the first result's area/equip/sub so nav is valid
+  if(!results.length){showT('No devices found','err');return;}
+
+  // Use the first result to seed ST so renderHead/Nav work
+  const first=results[0];
+  ST.area=first.area;ST.equip=first.equip;ST.sub=first.sub;
+  ST.devs=results.map(r=>r.d);
+
+  const gw=document.getElementById('gw');
+  if(!gw)return;
+  gw.innerHTML='';
+
+  // Show a header bar
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:8px 14px;background:var(--lblue);border-bottom:1px solid var(--bdr);font-size:11px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px;flex-shrink:0';
+  hdr.innerHTML='<span style="flex:1">'+label+' — '+results.length+' devices</span>'+
+    '<button onclick="clearDashFilter()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">✕ Clear</button>';
+
+  // Insert before gw
+  gw.parentNode.insertBefore(hdr,gw);
+  gw.parentNode._filterHdr=hdr;
+
+  // Render cards
+  results.forEach((r,i)=>{
+    const d=r.d;
+    const s=getS(d.tag);const cs=getCardState(d.tag);
+    const cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
+    const card=document.createElement('div');
+    card.className='card '+cls;card.dataset.tag=d.tag;
+    const statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
+    const nfpa=d.nfpa;
+    const badges='<div class="cbadges">'+
+      (nfpa?'<span class="card-star" title="NFPA 85">★</span>':'')+
+      ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
+      '</div>';
+    // Small area label
+    const areaLbl='<div style="font-size:8px;color:var(--tx3);margin-bottom:2px">'+r.area.replace(/^PG\.\d+ - /,'')+'</div>';
+    card.innerHTML=areaLbl+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+
+      '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
+    card.onclick=()=>{
+      ST.area=r.area;ST.equip=r.equip;ST.sub=r.sub;
+      ST.devs=Object.values(H[r.area][r.equip][r.sub]);
+      ST.idx=ST.devs.findIndex(x=>x.tag===d.tag);
+      if(ST.idx<0)ST.idx=0;
+      openM(ST.idx);
+    };
+    gw.appendChild(card);
+  });
+
+  // Show a count in renderHead area
+  const ph=document.getElementById('ph');
+  if(ph){
+    ph.querySelector('.phs').textContent=label+' — '+results.length+' devices';
+  }
+}
+
+function clearDashFilter(){
+  // Remove header bar
+  const gw=document.getElementById('gw');
+  if(gw&&gw.parentNode._filterHdr){
+    gw.parentNode.removeChild(gw.parentNode._filterHdr);
+    gw.parentNode._filterHdr=null;
+  }
+  // Re-render normally
+  if(ST.sub)renderGrid();
+  else gw.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">Select a sub-equipment group</div></div>';
+}
 
 
 initApp();
