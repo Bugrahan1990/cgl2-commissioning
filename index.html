@@ -2294,7 +2294,7 @@ function renderFilteredGrid(){
     areaGroup[aKey][sKey].push(r);
   });
 
-  areaOrder.forEach(function(aKey){
+  areaOrder.sort().forEach(function(aKey){
     var sections=areaGroup[aKey];
     var aName=aKey.replace(/^PG[.][0-9]+ - /,'');
     var aTotal=Object.values(sections).reduce(function(n,s){return n+s.length;},0);
@@ -2318,7 +2318,8 @@ function renderFilteredGrid(){
       sHdr.textContent=sKey+' ('+group.length+')';
       gw.appendChild(sHdr);
 
-      // Cards
+      // Cards — sorted by tag number
+      group.sort(function(a,b){return a.d.tag<b.d.tag?-1:a.d.tag>b.d.tag?1:0;});
       group.forEach(function(r){
         var d=r.d;
         var s=getS(d.tag);var cs=getCardState(d.tag);
