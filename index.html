@@ -2269,7 +2269,6 @@ function renderFilteredGrid(){
   var gw=document.getElementById('gw');
   if(!gw)return;
   gw.innerHTML='';
-
   var oldHdr=document.getElementById('filterHdr');
   if(oldHdr)oldHdr.remove();
 
@@ -2283,83 +2282,112 @@ function renderFilteredGrid(){
     'var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">\u2715 Clear</button>';
   gw.parentNode.insertBefore(hdr,gw);
 
-  // Group: Area -> Section -> [results]
-  var areaGroup={};   // area -> { section -> [r] }
-  var areaOrder=[];
+  // Build tree: Area -> Equip -> Sub -> [results]
+  var tree={};
+  var aKeys=[],eKeys={},sKeys={};
   results.forEach(function(r){
-    var aKey=r.area;
-    var sKey=r.d.section||r.sub||'General';
-    if(!areaGroup[aKey]){areaGroup[aKey]={};areaOrder.push(aKey);}
-    if(!areaGroup[aKey][sKey])areaGroup[aKey][sKey]=[];
-    areaGroup[aKey][sKey].push(r);
+    var a=r.area,e=r.equip,s=r.sub;
+    if(!tree[a]){tree[a]={};aKeys.push(a);}
+    if(!tree[a][e]){tree[a][e]={};if(!eKeys[a])eKeys[a]=[];eKeys[a].push(e);}
+    var es=a+'||'+e;
+    if(!tree[a][e][s]){tree[a][e][s]=[];if(!sKeys[es])sKeys[es]=[];sKeys[es].push(s);}
+    tree[a][e][s].push(r);
   });
 
-  areaOrder.sort().forEach(function(aKey){
-    var sections=areaGroup[aKey];
-    var aName=aKey.replace(/^PG[.][0-9]+ - /,'');
-    var aTotal=Object.values(sections).reduce(function(n,s){return n+s.length;},0);
+  // Sort areas by PG number (26, 28, 37...)
+  aKeys.sort(function(a,b){
+    return (parseFloat(a.replace(/^PG\./,''))||0)-(parseFloat(b.replace(/^PG\./,''))||0);
+  });
 
-    // Area header
+  aKeys.forEach(function(a){
+    var aName=a.replace(/^PG[.][0-9.]+ - /,'');
+    var aTotal=Object.values(tree[a]).reduce(function(n,e){
+      return n+Object.values(e).reduce(function(m,s){return m+s.length;},0);
+    },0);
+
+    // Area header — navy
     var aHdr=document.createElement('div');
     aHdr.style.cssText='padding:7px 14px 5px;background:var(--navy);color:#fff;'+
       'font-size:11px;font-weight:700;letter-spacing:.4px;flex-shrink:0';
     aHdr.textContent=aName+' \u2014 '+aTotal+' device'+(aTotal!==1?'s':'');
     gw.appendChild(aHdr);
 
-    // Sections within area
-    Object.keys(sections).sort().forEach(function(sKey){
-      var group=sections[sKey];
+    // Sort equips by leading number (501, 502...)
+    (eKeys[a]||[]).sort(function(a,b){
+      return (parseInt(a)||0)-(parseInt(b)||0);
+    }).forEach(function(e){
+      var eName=e.replace(/^[0-9]+ - /,'');
+      var eTotal=Object.values(tree[a][e]).reduce(function(n,s){return n+s.length;},0);
 
-      // Section sub-header
-      var sHdr=document.createElement('div');
-      sHdr.style.cssText='padding:4px 14px 4px 20px;background:var(--sur2);border-bottom:1px solid var(--bdr);'+
-        'border-top:1px solid var(--bdr);font-size:9px;font-weight:700;color:var(--tx2);'+
-        'text-transform:uppercase;letter-spacing:.6px;flex-shrink:0';
-      sHdr.textContent=sKey+' ('+group.length+')';
-      gw.appendChild(sHdr);
+      // Equipment header — blue
+      var eHdr=document.createElement('div');
+      eHdr.style.cssText='padding:5px 14px 4px 16px;background:var(--blue);color:#fff;'+
+        'font-size:10px;font-weight:600;flex-shrink:0';
+      eHdr.textContent=eName+' ('+eTotal+')';
+      gw.appendChild(eHdr);
 
-      // Cards — sorted by tag number
-      group.sort(function(a,b){return a.d.tag<b.d.tag?-1:a.d.tag>b.d.tag?1:0;});
-      group.forEach(function(r){
-        var d=r.d;
-        var s=getS(d.tag);var cs=getCardState(d.tag);
-        var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
-        var card=document.createElement('div');
-        card.className='card '+cls+(selectMode?' sel-mode':'');
-        if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
-        card.dataset.tag=d.tag;
-        var statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
-        var badges='<div class="cbadges">'+
-          (d.nfpa?'<span class="card-star">\u2605</span>':'')+
-          ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?
-            '<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+
-            '" onclick="openInstEvt(this,event)">\uD83D\uDCD6</span>':'')+
-          '</div>';
-        var secLine=d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
-        var scsLine=d.scs&&String(d.scs).indexOf('w/')!==0?'<div class="cscs">'+d.scs+'</div>':'';
-        card.innerHTML=secLine+scsLine+
-          '<div class="ctag">'+d.tag+'</div>'+
-          '<div class="cdesc">'+d.desc+'</div>'+
-          badges+
-          '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
-        if(selectMode){
-          card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
-        }else{
-          card.onclick=function(rd){return function(){
-            var devsSub=H[rd.area]&&H[rd.area][rd.equip]&&H[rd.area][rd.equip][rd.sub]
-              ?Object.values(H[rd.area][rd.equip][rd.sub]).flat():[rd.d];
-            ST.area=rd.area;ST.equip=rd.equip;ST.sub=rd.sub;
-            ST.devs=devsSub;
-            ST.idx=ST.devs.findIndex(function(x){return x.tag===rd.d.tag;});
-            if(ST.idx<0){ST.devs=[rd.d];ST.idx=0;}
-            openM(ST.idx);
-          };}(r);
-        }
-        gw.appendChild(card);
+      // Sort subs alphabetically (same order as nav)
+      var es=a+'||'+e;
+      (sKeys[es]||[]).sort().forEach(function(s){
+        var group=tree[a][e][s];
+
+        // Sub-equipment header — light grey, indented
+        var sHdr=document.createElement('div');
+        sHdr.style.cssText='padding:3px 14px 3px 24px;background:var(--sur2);'+
+          'border-bottom:1px solid var(--bdr);border-top:1px solid var(--bdr);'+
+          'font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;'+
+          'letter-spacing:.5px;flex-shrink:0';
+        sHdr.textContent=s+' ('+group.length+')';
+        gw.appendChild(sHdr);
+
+        // Sort cards: section first, then tag — same as renderGrid
+        group.sort(function(a,b){
+          var sd=(a.d.section||'').localeCompare(b.d.section||'');
+          return sd!==0?sd:a.d.tag.localeCompare(b.d.tag);
+        });
+
+        group.forEach(function(r){
+          var d=r.d;
+          var st=getS(d.tag);var cs=getCardState(d.tag);
+          var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(st);
+          var card=document.createElement('div');
+          card.className='card '+cls+(selectMode?' sel-mode':'');
+          if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
+          card.dataset.tag=d.tag;
+          var statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':st;
+          var badges='<div class="cbadges">'+
+            (d.nfpa?'<span class="card-star">\u2605</span>':'')+
+            ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?
+              '<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+
+              '" onclick="openInstEvt(this,event)">\u{1F4D6}</span>':'')+
+            '</div>';
+          var secLine=d.section?'<div class="cscs" style="color:var(--tx3)">'+d.section+'</div>':'';
+          var scsLine=d.scs&&String(d.scs).indexOf('w/')!==0?'<div class="cscs">'+d.scs+'</div>':'';
+          card.innerHTML=secLine+scsLine+
+            '<div class="ctag">'+d.tag+'</div>'+
+            '<div class="cdesc">'+d.desc+'</div>'+
+            badges+
+            '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
+          if(selectMode){
+            card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
+          }else{
+            card.onclick=function(rd){return function(){
+              var devsSub=H[rd.area]&&H[rd.area][rd.equip]&&H[rd.area][rd.equip][rd.sub]
+                ?Object.values(H[rd.area][rd.equip][rd.sub]).flat():[rd.d];
+              ST.area=rd.area;ST.equip=rd.equip;ST.sub=rd.sub;
+              ST.devs=devsSub;
+              ST.idx=ST.devs.findIndex(function(x){return x.tag===rd.d.tag;});
+              if(ST.idx<0){ST.devs=[rd.d];ST.idx=0;}
+              openM(ST.idx);
+            };}(r);
+          }
+          gw.appendChild(card);
+        });
       });
     });
   });
 }
+
 
 
 
