@@ -1377,11 +1377,6 @@ function renderM(){
 async function saveClose(){
   const dev=ST.devs[ST.idx];
   saveForm(dev.tag);
-  if(DS[dev.tag].Comm_Status==='Commissioned'&&dev.nfpa&&!nfpaAllDone(dev.tag)){
-    showT('★ Complete all 10 NFPA 85 steps before marking Commissioned','err');
-    document.getElementById('nfpaSection').scrollIntoView({behavior:'smooth',block:'start'});
-    return;
-  }
   stopNFPATimer();
   Object.assign(DS[dev.tag],{
     Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
@@ -1468,18 +1463,11 @@ function renderDash(){
     eMap[eq].tot+=devs.length;eMap[eq].done+=devs.filter(d=>isDone(d.tag)).length;eMap[eq].wip+=devs.filter(d=>getS(d.tag)==='In Progress').length;
   }));
   const tMap={}; // by device type
-  const mMap={}; // by model
   Object.values(H).forEach(equips=>Object.values(equips).forEach(subs=>Object.values(subs).flat().forEach(d=>{
     if(!tMap[d.type])tMap[d.type]={done:0,wip:0,tot:0};tMap[d.type].tot++;
     const st=getS(d.tag);
     if(isDone(d.tag))tMap[d.type].done++;
     if(st==='In Progress')tMap[d.type].wip++;
-    if(d.model){
-      if(!mMap[d.model])mMap[d.model]={done:0,wip:0,tot:0,type:d.type};
-      mMap[d.model].tot++;
-      if(isDone(d.tag))mMap[d.model].done++;
-      if(st==='In Progress')mMap[d.model].wip++;
-    }
   })));
 
   // ── Fail-reason map (In Progress devices, grouped by what FAILED) ──────
@@ -1546,10 +1534,6 @@ function renderDash(){
   // ── Small multiples: By Device Type ───────────────────────────────────
   html+=biPanel('By Device Type','',biTypeGrid(tMap));
 
-  // ── Small multiples: By Device Model ─────────────────────────────────
-  if(Object.keys(mMap).length){
-    html+=biPanel('By Device Model','click any model to filter devices',biModelGrid(mMap));
-  }
 
   // ── Blocked-by chart (full text, no truncation) ──────────────────────
   const failEntries=Object.entries(failMap).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
@@ -1721,33 +1705,6 @@ function biTypeGrid(tMap){
   return html;
 }
 
-// ── Model grid ──────────────────────────────────────────────────────────
-function biModelGrid(mMap){
-  const entries=Object.entries(mMap).sort((a,b)=>b[1].tot-a[1].tot);
-  let html='<div class="bi-type-grid">';
-  entries.forEach(([model,v])=>{
-    const donePct=v.tot?Math.round(v.done/v.tot*100):0;
-    const wipPct=v.tot?Math.round(v.wip/v.tot*100):0;
-    const r=22,circ=2*Math.PI*r;
-    const doneLen=circ*(donePct/100);
-    const wipLen=circ*(wipPct/100);
-    const color=donePct<25?'var(--R)':donePct<60?'var(--A)':'var(--G)';
-    html+=`<div class="bi-type-card" onclick="filterByModel('${model.replace(/'/g,'&#39;')}')" style="cursor:pointer" title="Show all ${model} devices">
-      <svg width="56" height="56" viewBox="0 0 56 56">
-        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--bdr)" stroke-width="6"/>
-        <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--WIP)" stroke-width="6"
-          stroke-dasharray="${wipLen} ${circ-wipLen}" stroke-dashoffset="${-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
-        <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6"
-          stroke-dasharray="${doneLen} ${circ-doneLen}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
-        <text x="28" y="32" text-anchor="middle" font-size="11" font-weight="700" font-family="'DM Mono',monospace" fill="${color}">${donePct}%</text>
-      </svg>
-      <div class="bi-type-name" style="font-size:8px">${model}</div>
-      <div class="bi-type-count">${v.done}/${v.tot}${v.wip?' · '+v.wip+' WIP':''}</div>
-    </div>`;
-  });
-  html+='</div>';
-  return html;
-}
 
 // ── Blocked-by list — full text wrap, horizontal bar, no truncation ────
 function biBlockedList(entries,noFailReason){
@@ -2309,45 +2266,96 @@ function renderFilteredGrid(){
   var gw=document.getElementById('gw');
   if(!gw)return;
   gw.innerHTML='';
+
   var oldHdr=document.getElementById('filterHdr');
   if(oldHdr)oldHdr.remove();
+
+  // Filter header
   var hdr=document.createElement('div');
   hdr.id='filterHdr';
-  hdr.style.cssText='padding:8px 14px;background:var(--lblue);border-bottom:1px solid var(--bdr);font-size:11px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:8px;flex-shrink:0';
-  hdr.innerHTML='<span style="flex:1">'+label+' — '+results.length+' devices</span>'+
-    '<button onclick="clearDashFilter()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">✕ Clear</button>';
+  hdr.style.cssText='padding:8px 14px;background:var(--lblue);border-bottom:1px solid var(--bdr);'+
+    'font-size:11px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:8px;flex-shrink:0';
+  hdr.innerHTML='<span style="flex:1">'+label+' \u2014 '+results.length+' devices</span>'+
+    '<button onclick="clearDashFilter()" style="padding:4px 10px;border-radius:6px;border:1px solid '+
+    'var(--bdr2);background:var(--sur);font-size:10px;cursor:pointer;font-family:inherit">\u2715 Clear</button>';
   gw.parentNode.insertBefore(hdr,gw);
+
+  // Group: Area -> Section -> [results]
+  var areaGroup={};   // area -> { section -> [r] }
+  var areaOrder=[];
   results.forEach(function(r){
-    var d=r.d;
-    var s=getS(d.tag);var cs=getCardState(d.tag);
-    var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
-    var card=document.createElement('div');
-    card.className='card '+cls+(selectMode?' sel-mode':'');
-    if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
-    card.dataset.tag=d.tag;
-    var statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
-    var badges='<div class="cbadges">'+
-      (d.nfpa?'<span class="card-star">★</span>':'')+
-      ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?'<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+'" onclick="openInstEvt(this,event)">📖</span>':'')+
-      '</div>';
-    var areaLbl='<div style="font-size:8px;color:var(--tx3);margin-bottom:2px">'+r.area.replace(/^PG[.][0-9]+ - /,'')+'</div>';
-    card.innerHTML=areaLbl+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div>'+badges+'<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
-    if(selectMode){
-      card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
-    }else{
-      card.onclick=function(rd){return function(){
-        var sub=H[rd.area]&&H[rd.area][rd.equip]&&H[rd.area][rd.equip][rd.sub]?H[rd.area][rd.equip][rd.sub]:null;
-        var devsSub=sub?Object.values(sub).flat():[rd.d];
-        ST.area=rd.area;ST.equip=rd.equip;ST.sub=rd.sub;
-        ST.devs=devsSub;
-        ST.idx=ST.devs.findIndex(function(x){return x.tag===rd.d.tag;});
-        if(ST.idx<0){ST.devs=[rd.d];ST.idx=0;}
-        openM(ST.idx);
-      };}(r);
-    }
-    gw.appendChild(card);
+    var aKey=r.area;
+    var sKey=r.d.section||r.sub||'General';
+    if(!areaGroup[aKey]){areaGroup[aKey]={};areaOrder.push(aKey);}
+    if(!areaGroup[aKey][sKey])areaGroup[aKey][sKey]=[];
+    areaGroup[aKey][sKey].push(r);
+  });
+
+  areaOrder.forEach(function(aKey){
+    var sections=areaGroup[aKey];
+    var aName=aKey.replace(/^PG[.][0-9]+ - /,'');
+    var aTotal=Object.values(sections).reduce(function(n,s){return n+s.length;},0);
+
+    // Area header
+    var aHdr=document.createElement('div');
+    aHdr.style.cssText='padding:7px 14px 5px;background:var(--navy);color:#fff;'+
+      'font-size:11px;font-weight:700;letter-spacing:.4px;flex-shrink:0';
+    aHdr.textContent=aName+' \u2014 '+aTotal+' device'+(aTotal!==1?'s':'');
+    gw.appendChild(aHdr);
+
+    // Sections within area
+    Object.keys(sections).sort().forEach(function(sKey){
+      var group=sections[sKey];
+
+      // Section sub-header
+      var sHdr=document.createElement('div');
+      sHdr.style.cssText='padding:4px 14px 4px 20px;background:var(--sur2);border-bottom:1px solid var(--bdr);'+
+        'border-top:1px solid var(--bdr);font-size:9px;font-weight:700;color:var(--tx2);'+
+        'text-transform:uppercase;letter-spacing:.6px;flex-shrink:0';
+      sHdr.textContent=sKey+' ('+group.length+')';
+      gw.appendChild(sHdr);
+
+      // Cards
+      group.forEach(function(r){
+        var d=r.d;
+        var s=getS(d.tag);var cs=getCardState(d.tag);
+        var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
+        var card=document.createElement('div');
+        card.className='card '+cls+(selectMode?' sel-mode':'');
+        if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
+        card.dataset.tag=d.tag;
+        var statusLbl=cs==='unsent'?'Unsent':cs==='sent'?'Sent':s;
+        var badges='<div class="cbadges">'+
+          (d.nfpa?'<span class="card-star">\u2605</span>':'')+
+          ((INST_BY_MODEL[d.model]||INST_BY_TYPE[d.type])?
+            '<span class="cinst" data-tag="'+d.tag+'" data-type="'+d.type+
+            '" onclick="openInstEvt(this,event)">\uD83D\uDCD6</span>':'')+
+          '</div>';
+        card.innerHTML=
+          '<div class="ctag">'+d.tag+'</div>'+
+          '<div class="cdesc">'+d.desc+'</div>'+
+          badges+
+          '<div class="cfoot"><span class="cst">'+statusLbl+'</span></div>';
+        if(selectMode){
+          card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
+        }else{
+          card.onclick=function(rd){return function(){
+            var devsSub=H[rd.area]&&H[rd.area][rd.equip]&&H[rd.area][rd.equip][rd.sub]
+              ?Object.values(H[rd.area][rd.equip][rd.sub]).flat():[rd.d];
+            ST.area=rd.area;ST.equip=rd.equip;ST.sub=rd.sub;
+            ST.devs=devsSub;
+            ST.idx=ST.devs.findIndex(function(x){return x.tag===rd.d.tag;});
+            if(ST.idx<0){ST.devs=[rd.d];ST.idx=0;}
+            openM(ST.idx);
+          };}(r);
+        }
+        gw.appendChild(card);
+      });
+    });
   });
 }
+
+
 
 
 function clearDashFilter(){
@@ -2426,11 +2434,6 @@ initApp();
 </htmlasync function saveClose(){
   const dev=ST.devs[ST.idx];
   saveForm(dev.tag);
-  if(DS[dev.tag].Comm_Status==='Commissioned'&&dev.nfpa&&!nfpaAllDone(dev.tag)){
-    showT('★ Complete all 10 NFPA 85 steps before marking Commissioned','err');
-    document.getElementById('nfpaSection').scrollIntoView({behavior:'smooth',block:'start'});
-    return;
-  }
   stopNFPATimer();
   Object.assign(DS[dev.tag],{
     Tag_Number:dev.tag,Device_Type:dev.type,Description:dev.desc,
