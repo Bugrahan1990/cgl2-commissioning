@@ -522,13 +522,13 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <button onclick="openBulkEdit()" style="padding:5px 12px;border-radius:6px;border:none;background:#2E75B6;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Edit All</button>
         <button onclick="toggleSelectMode()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">&#10005; Done</button>
       </div>
-      <div id="statusFilterBar" style="display:none;padding:6px 10px;background:var(--sur);border-bottom:1px solid var(--bdr);display:none;gap:5px;flex-wrap:wrap;flex-shrink:0;align-items:center">
+      <div id="statusFilterBar" style="display:none;padding:6px 10px;background:var(--sur);border-bottom:1px solid var(--bdr);gap:5px;flex-wrap:wrap;flex-shrink:0;align-items:center">
         <span style="font-size:9px;color:var(--tx3);font-weight:600;margin-right:2px">FILTER</span>
-        <button class="sfbtn" onclick="setStatusFilter(null)">All</button>
-        <button class="sfbtn" onclick="setStatusFilter('Commissioned')">&#10003; Commissioned</button>
-        <button class="sfbtn" onclick="setStatusFilter('In Progress')">&#9733; In Progress</button>
-        <button class="sfbtn" onclick="setStatusFilter('Not Started')">&#9675; Not Started</button>
-        <button class="sfbtn" onclick="setStatusFilter('N/A')">N/A</button>
+        <button class="sfbtn active" data-val="" onclick="setStatusFilter(null)">All</button>
+        <button class="sfbtn" data-val="Commissioned" onclick="setStatusFilter('Commissioned')">&#10003; Commissioned</button>
+        <button class="sfbtn" data-val="In Progress" onclick="setStatusFilter('In Progress')">&#9733; In Progress</button>
+        <button class="sfbtn" data-val="Not Started" onclick="setStatusFilter('Not Started')">&#9675; Not Started</button>
+        <button class="sfbtn" data-val="N/A" onclick="setStatusFilter('N/A')">N/A</button>
       </div>
       <div class="gw" id="gw">
         <div class="empty">
@@ -603,6 +603,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 // ── GITHUB CONFIG ─────────────────────────────────────────────────────────
 // Update this with your actual GitHub Pages URL after uploading status.json
 const STATUS_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/status.json';
+const HISTORY_URL = 'https://raw.githubusercontent.com/bugrahan1990/cgl2-commissioning/main/history.json';
 
 // ── DEVICE DATA ───────────────────────────────────────────────────────────
 let H={};
@@ -824,6 +825,7 @@ async function initApp(){
   await openDB();
   const all=await dbGetAll();
   all.forEach(r=>{DS[r.Tag_Number]=r;});
+  loadHistory();
   // Restore last saved tag for copy feature
   try{const ls=sessionStorage.getItem('CGL2_lastSaved');if(ls)lastSavedTag=ls;}catch(e){}
   updProg();updPendLbl();
@@ -1249,6 +1251,7 @@ function renderHead(){
 }
 
 function renderGrid(){
+  showStatusBar(!!(ST.devs&&ST.devs.length));
   const gw=document.getElementById('gw');gw.innerHTML='';
   const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
 
@@ -2437,8 +2440,10 @@ function renderFilteredGrid(){
 function clearDashFilter(){
   window._filterResults=null;window._filterLabel=null;ST.devs=[];
   var oldHdr=document.getElementById('filterHdr');if(oldHdr)oldHdr.remove();
+  showStatusBar(false);
   var gw=document.getElementById('gw');
-  if(ST.sub)renderGrid();
+  if(ST.devs&&ST.devs.length)renderGrid();
+  else if(ST.sub){ST.devs=Object.values(H[ST.area][ST.equip][ST.sub]).flat();renderGrid();}
   else if(gw)gw.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">Select a sub-equipment group</div></div>';
 }
 
@@ -2471,13 +2476,10 @@ function clearDashFilter(){
 
 function setStatusFilter(val){
   activeStatusFilter=val;
-  // Update button states
   document.querySelectorAll('.sfbtn').forEach(function(b){
-    var bVal=b.textContent.trim();
-    var match=(val===null&&bVal==='All')||(val==='Commissioned'&&bVal.includes('Commissioned'))||
-      (val==='In Progress'&&bVal.includes('In Progress'))||(val==='Not Started'&&bVal.includes('Not Started'))||
-      (val==='N/A'&&bVal==='N/A');
-    b.classList.toggle('active',match);
+    var bv=b.dataset.val;
+    var active=(val===null&&bv==='')||(val!==null&&bv===val);
+    b.classList.toggle('active',active);
   });
   if(window._filterResults)renderFilteredGrid();
   else renderGrid();
@@ -2486,6 +2488,130 @@ function setStatusFilter(val){
 function showStatusBar(show){
   var bar=document.getElementById('statusFilterBar');
   if(bar)bar.style.display=show?'flex':'none';
+}
+
+
+// ── WEEKLY PROGRESS CHART ──────────────────────────────────────────────────
+let HISTORY = null;
+
+async function loadHistory(){
+  try{
+    const r = await fetch(HISTORY_URL + '?nc=' + Date.now());
+    if(r.ok) HISTORY = await r.json();
+  }catch(e){ HISTORY = null; }
+}
+
+function getWeekLabel(dateStr){
+  const d = new Date(dateStr);
+  // Week number within project (week 1 = first week we have data)
+  return dateStr.substring(5); // MM-DD format for brevity
+}
+
+function renderWeeklyChart(){
+  const el = document.getElementById('weeklyChart');
+  if(!el) return;
+
+  // Build weekly data from two sources:
+  // 1. snapshots: daily totals (use to compute weekly deltas)
+  // 2. by_date: actual per-day commissioning counts from Comm_Date field
+
+  const byDate = (HISTORY && HISTORY.by_date) || {};
+  const snapshots = (HISTORY && HISTORY.snapshots) || [];
+
+  // If no data yet, show placeholder
+  if(!snapshots.length && !Object.keys(byDate).length){
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--tx3);font-size:12px">'+
+      'Weekly progress data will appear here after the first daily export.<br>'+
+      'Run export_status.py daily to build up history.</div>';
+    return;
+  }
+
+  // Group by ISO week (Monday-based)
+  function isoWeek(dateStr){
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - day);
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    return d.getFullYear() + '-W' + String(Math.ceil((((d - yearStart) / 86400000) + 1) / 7)).padStart(2,'0');
+  }
+
+  // Use by_date if available (more accurate — actual Comm_Date from engineers)
+  // Fall back to snapshot deltas
+  let weeklyCommissioned = {};
+  let weeklyWIP = {};
+
+  if(Object.keys(byDate).length){
+    Object.entries(byDate).forEach(([dt, count]) => {
+      const wk = isoWeek(dt);
+      weeklyCommissioned[wk] = (weeklyCommissioned[wk] || 0) + count;
+    });
+  } else {
+    // Compute weekly delta from snapshots
+    let prev = 0;
+    snapshots.forEach(snap => {
+      const wk = isoWeek(snap.date);
+      const delta = Math.max(0, snap.commissioned - prev);
+      weeklyCommissioned[wk] = (weeklyCommissioned[wk] || 0) + delta;
+      weeklyWIP[wk] = snap.in_progress;
+      prev = snap.commissioned;
+    });
+  }
+
+  const weeks = Object.keys(weeklyCommissioned).sort();
+  if(!weeks.length){
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--tx3);font-size:12px">No commissioning dates recorded yet.</div>';
+    return;
+  }
+
+  const maxVal = Math.max(...Object.values(weeklyCommissioned), 1);
+
+  // Running total line
+  let running = 0;
+  const totals = weeks.map(w => { running += weeklyCommissioned[w]; return running; });
+  const maxTotal = Math.max(...totals, 1);
+
+  let html2 = '<div style="padding:14px 16px 4px;font-size:10px;font-weight:700;color:var(--tx2);'+
+    'text-transform:uppercase;letter-spacing:.6px">Weekly Commissioning Progress</div>';
+
+  // Bar chart
+  html2 += '<div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:6px">';
+
+  weeks.forEach((wk, i) => {
+    const count = weeklyCommissioned[wk];
+    const pct = Math.round(count / maxVal * 100);
+    const total = totals[i];
+    const wkShort = wk.replace(/^[0-9]{4}-/,''); // W01, W02...
+    html2 +=
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<div style="width:32px;font-size:9px;color:var(--tx3);font-family:DM Mono,monospace;flex-shrink:0;text-align:right">'+wkShort+'</div>'+
+        '<div style="flex:1;background:var(--bg);border-radius:4px;height:20px;position:relative;overflow:hidden">'+
+          '<div style="height:100%;width:'+pct+'%;background:var(--G);border-radius:4px;transition:width .4s ease;min-width:'+(count?2:0)+'px"></div>'+
+          '<div style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;color:'+(pct>50?'#fff':'var(--G)')+'">'+
+            (count?'+'+count:'')+'</div>'+
+        '</div>'+
+        '<div style="width:38px;font-size:9px;color:var(--tx3);font-family:DM Mono,monospace;flex-shrink:0">'+total+'</div>'+
+      '</div>';
+  });
+
+  html2 += '</div>';
+
+  // Summary row
+  const totalComm = totals[totals.length-1] || 0;
+  const avgPerWeek = weeks.length ? Math.round(totalComm / weeks.length) : 0;
+  const remaining = (HISTORY && HISTORY.snapshots.length ? HISTORY.snapshots[HISTORY.snapshots.length-1].not_started : 0);
+  const weeksLeft = avgPerWeek ? Math.ceil(remaining / avgPerWeek) : '?';
+
+  html2 += '<div style="padding:8px 16px 14px;display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid var(--bdr)">';
+  html2 += '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--G)">'+avgPerWeek+'</div>'+
+    '<div style="font-size:9px;color:var(--tx3)">avg/week</div></div>';
+  html2 += '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--navy)">'+weeks.length+'</div>'+
+    '<div style="font-size:9px;color:var(--tx3)">weeks tracked</div></div>';
+  html2 += '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--A)">'+weeksLeft+'</div>'+
+    '<div style="font-size:9px;color:var(--tx3)">weeks to finish*</div></div>';
+  html2 += '</div>';
+  html2 += '<div style="padding:0 16px 10px;font-size:9px;color:var(--tx3)">* at current pace. Right column = running total commissioned.</div>';
+
+  el.innerHTML = html2;
 }
 
 
