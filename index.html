@@ -1587,10 +1587,14 @@ function renderDash(){
   const exportBtn=failEntries.length?'<button class="bi-export-btn" onclick="exportBlockedByCSV()">⬇ Export</button>':'';
   html+=biPanel('In Progress — Blocked By',inProgress+' WIP total',biBlockedList(failEntries,noFailReason),exportBtn);
 
+  // Weekly progress chart placeholder (filled by renderWeeklyChart)
+  html+='<div id="weeklyChart" style="background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);margin:0 14px 14px;overflow:hidden"></div>';
+
   html+=`<div class="dash-updated">Last updated: ${new Date().toLocaleString()} &middot; ${sentCnt} sent &middot; ${unsent} unsent</div>`;
   html+='</div>';
 
   dp.innerHTML=html;
+  renderWeeklyChart();
 }
 
 // ── KPI mini card ──────────────────────────────────────────────────────
@@ -2517,10 +2521,21 @@ function renderWeeklyChart(){
   const snapshots = (HISTORY && HISTORY.snapshots) || [];
 
   // If no data yet, show placeholder
+  // Even without history.json, show current totals as a starting point
   if(!snapshots.length && !Object.keys(byDate).length){
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--tx3);font-size:12px">'+
-      'Weekly progress data will appear here after the first daily export.<br>'+
-      'Run export_status.py daily to build up history.</div>';
+    // Build a single "current" bar from DS status counts
+    const done=Object.values(DS).filter(d=>d.Comm_Status==='Commissioned').length;
+    const wip=Object.values(DS).filter(d=>d.Comm_Status==='In Progress').length;
+    const today=new Date().toISOString().substring(0,10);
+    el.innerHTML=
+      '<div style="padding:14px 16px 4px;font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px">Weekly Commissioning Progress</div>'+
+      '<div style="padding:12px 16px;color:var(--tx3);font-size:11px">'+
+        '<div style="margin-bottom:8px">No history file yet — chart will build up as you run <b>export_status.py</b> daily.</div>'+
+        '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+          '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--G)">'+done+'</div><div style="font-size:9px;color:var(--tx3)">commissioned</div></div>'+
+          '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--A)">'+wip+'</div><div style="font-size:9px;color:var(--tx3)">in progress</div></div>'+
+        '</div>'+
+      '</div>';
     return;
   }
 
