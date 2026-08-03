@@ -459,6 +459,10 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
 .card.selected::after{background:var(--blue);border-color:var(--blue);content:'✓';display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;pointer-events:none}
 .card.selected{border-color:var(--blue);box-shadow:0 0 0 2px rgba(46,117,182,.2)}
 
+
+.sfbtn{padding:4px 10px;border-radius:99px;border:1px solid var(--bdr2);background:var(--bg);
+  font-size:10px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--tx2);white-space:nowrap}
+.sfbtn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 </style>
 </head>
 <body>
@@ -497,7 +501,8 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
     <div class="nav" id="navPanel">
     <div class="nav-resize" id="navResize"></div>
       <div class="nh">
-        <div class="nt">Navigation</div>
+        <div class="nt" onclick="selectAll()" style="cursor:pointer" title="Show all devices">Navigation</div>
+        <button onclick="selectAll()" style="font-size:9px;padding:3px 8px;border-radius:5px;border:1px solid var(--bdr2);background:var(--bg);color:var(--tx2);cursor:pointer;font-family:inherit;white-space:nowrap" title="Show all 2286 devices">All</button>
         <input class="ns" id="ns" placeholder="Search..." oninput="renderNav()">
       </div>
       <div class="nl" id="nl"></div>
@@ -516,6 +521,14 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <button onclick="selNone()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">None</button>
         <button onclick="openBulkEdit()" style="padding:5px 12px;border-radius:6px;border:none;background:#2E75B6;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Edit All</button>
         <button onclick="toggleSelectMode()" style="padding:5px 10px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;font-family:inherit">&#10005; Done</button>
+      </div>
+      <div id="statusFilterBar" style="display:none;padding:6px 10px;background:var(--sur);border-bottom:1px solid var(--bdr);display:none;gap:5px;flex-wrap:wrap;flex-shrink:0;align-items:center">
+        <span style="font-size:9px;color:var(--tx3);font-weight:600;margin-right:2px">FILTER</span>
+        <button class="sfbtn" onclick="setStatusFilter(null)">All</button>
+        <button class="sfbtn" onclick="setStatusFilter('Commissioned')">&#10003; Commissioned</button>
+        <button class="sfbtn" onclick="setStatusFilter('In Progress')">&#9733; In Progress</button>
+        <button class="sfbtn" onclick="setStatusFilter('Not Started')">&#9675; Not Started</button>
+        <button class="sfbtn" onclick="setStatusFilter('N/A')">N/A</button>
       </div>
       <div class="gw" id="gw">
         <div class="empty">
@@ -736,6 +749,8 @@ const GROUPS=[
   ]},
 ];
 const ACHK=GROUPS.flatMap(g=>g.items.map(i=>i.id));
+let activeStatusFilter=null;  // null=all, or 'Commissioned','In Progress','Not Started','N/A'
+
 let lastSavedTag=null;    // last successfully saved device tag (for copy feature)
 let selectMode=false;     // true when multi-select is active
 const selectedTags=new Set(); // tags currently selected
@@ -1152,7 +1167,7 @@ function renderNav(){
     const ai=document.createElement('div');
     ai.className='ai'+(OA[area]?' open':'');
     ai.innerHTML='<div class="ar"><span class="an">'+area+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="apct">'+done+'/'+allD.length+' &nbsp;'+pct+'%'+(wipPct?' <span class="wip-tag">+'+wipPct+'%</span>':'')+'</span><span class="aa">&#9658;</span></span></div><div class="ap"><div class="apf" style="width:'+pct+'%"></div><div class="apf-wip" style="width:'+wipPct+'%;left:'+pct+'%"></div></div>';
-    ai.onclick=()=>{OA[area]=!OA[area];renderNav();};
+    ai.onclick=()=>{OA[area]=!OA[area];selectArea(area);};
     el.appendChild(ai);
     if(!OA[area]&&!q) return;
     Object.entries(equips).forEach(([equip,subs])=>{
@@ -1167,7 +1182,7 @@ function renderNav(){
       const ei=document.createElement('div');
       ei.className='ei'+(OE[eKey]?' open':'');
       ei.innerHTML='<div class="er"><span class="en">'+equip+'</span><span style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span class="epct">'+eDone+'/'+eDevs.length+' &nbsp;'+ePct+'%'+(eWipPct?' <span class="wip-tag">+'+eWipPct+'%</span>':'')+'</span><span class="ea">&#9658;</span></span></div><div class="ep"><div class="epf" style="width:'+ePct+'%"></div><div class="epf-wip" style="width:'+eWipPct+'%;left:'+ePct+'%"></div></div>';
-      ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];renderNav();};
+      ei.onclick=e=>{e.stopPropagation();OE[eKey]=!OE[eKey];selectEquip(area,equip);};
       el.appendChild(ei);
       if(!OE[eKey]&&!q) return;
       Object.entries(subs).forEach(([sub,devs])=>{
@@ -1187,11 +1202,29 @@ function renderNav(){
   });
 }
 
-function selectSub(area,equip,sub,devs){
-  ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;
-  // Clear search when navigating
+function selectArea(area){
+  ST.area=area;ST.equip='';ST.sub='';ST.level='area';
+  ST.devs=Object.values(H[area]).flatMap(e=>Object.values(e).flat());
   const srch=document.getElementById('devSearch');
   if(srch&&srch.value){srch.value='';filterGrid();}
+  renderNav();renderHead();renderGrid();
+}
+function selectEquip(area,equip){
+  ST.area=area;ST.equip=equip;ST.sub='';ST.level='equip';
+  ST.devs=Object.values(H[area][equip]).flat();
+  const srch=document.getElementById('devSearch');
+  if(srch&&srch.value){srch.value='';filterGrid();}
+  renderNav();renderHead();renderGrid();
+}
+function selectSub(area,equip,sub,devs){
+  ST.area=area;ST.equip=equip;ST.sub=sub;ST.devs=devs;ST.level='sub';
+  const srch=document.getElementById('devSearch');
+  if(srch&&srch.value){srch.value='';filterGrid();}
+  renderNav();renderHead();renderGrid();
+}
+function selectAll(){
+  ST.area='';ST.equip='';ST.sub='';ST.level='all';
+  ST.devs=Object.values(H).flatMap(a=>Object.values(a).flatMap(e=>Object.values(e).flat()));
   renderNav();renderHead();renderGrid();
 }
 
@@ -1199,9 +1232,12 @@ function renderHead(){
   const c={Commissioned:0,'In Progress':0,'Not Started':0,'N/A':0};let pend=0;
   let sent=0;
   ST.devs.forEach(d=>{const s=getS(d.tag);if(c[s]!==undefined)c[s]++;if(isUnsent(d.tag))pend++;if(isSent(d.tag))sent++;});
+  const level=ST.level||'sub';
+  const title=level==='all'?'All Devices':level==='area'?ST.area.replace(/^PG[.][0-9.]+ - /,''):level==='equip'?ST.equip.replace(/^[0-9]+ - /,''):ST.sub;
+  const sub=level==='all'?ST.devs.length+' devices total':level==='area'?ST.area+' · '+ST.devs.length+' devices':level==='equip'?ST.area.replace(/^PG[.][0-9.]+ - /,'')+' › '+ST.equip.replace(/^[0-9]+ - /,'')+' · '+ST.devs.length+' devices':ST.area.replace(/^PG[.][0-9.]+ - /,'')+' › '+ST.equip.replace(/^[0-9]+ - /,'')+' · '+ST.devs.length+' devices';
   document.getElementById('ph').innerHTML=
-    '<div class="pht">'+ST.sub+'</div>'+
-    '<div class="phs">'+ST.area+' &rsaquo; '+ST.equip+' &middot; '+ST.devs.length+' devices</div>'+
+    '<div class="pht">'+title+'</div>'+
+    '<div class="phs">'+sub+'</div>'+
     '<div class="phc">'+
     (c.Commissioned?'<div class="chip g"><div class="cd" style="background:var(--G)"></div>'+c.Commissioned+' Done</div>':'')+
     (sent?'<div class="chip" style="background:var(--lblue);border-color:#90c0e0"><div class="cd" style="background:var(--blue)"></div>'+sent+' Sent</div>':'')+
@@ -1217,8 +1253,11 @@ function renderGrid(){
   const grid=document.createElement('div');grid.className='grid';gw.appendChild(grid);
 
   // Group by device TYPE only — section shown on each card
+  const filteredDevs=activeStatusFilter
+    ?ST.devs.filter(d=>getS(d.tag)===activeStatusFilter)
+    :ST.devs;
   const byType={};
-  ST.devs.forEach((d,i)=>{
+  filteredDevs.forEach((d,i)=>{
     const t=d.type||(d.tag.match(/-(\w+)-\d+$/)||[])[1]||'Other';
     if(!byType[t])byType[t]=[];
     byType[t].push({d,i});
@@ -2264,8 +2303,10 @@ function showFilteredResults(results,label){
 }
 
 function renderFilteredGrid(){
+  showStatusBar(true);
   var results=window._filterResults||[];
   var label=window._filterLabel||'';
+  var dispResults=activeStatusFilter?results.filter(function(r){return getS(r.d.tag)===activeStatusFilter;}):results;
   var gw=document.getElementById('gw');
   if(!gw)return;
   gw.innerHTML='';
@@ -2285,7 +2326,8 @@ function renderFilteredGrid(){
   // Build tree: Area -> Equip -> Sub -> [results]
   var tree={};
   var aKeys=[],eKeys={},sKeys={};
-  results.forEach(function(r){
+  var activeRes=activeStatusFilter?results.filter(function(r){return getS(r.d.tag)===activeStatusFilter;}):results;
+  activeRes.forEach(function(r){
     var a=r.area,e=r.equip,s=r.sub;
     if(!tree[a]){tree[a]={};aKeys.push(a);}
     if(!tree[a][e]){tree[a][e]={};if(!eKeys[a])eKeys[a]=[];eKeys[a].push(e);}
@@ -2426,6 +2468,26 @@ function clearDashFilter(){
   });
   try{var w=localStorage.getItem('CGL2_navW');if(w)nav.style.width=w+'px';}catch(e){}
 })();
+
+function setStatusFilter(val){
+  activeStatusFilter=val;
+  // Update button states
+  document.querySelectorAll('.sfbtn').forEach(function(b){
+    var bVal=b.textContent.trim();
+    var match=(val===null&&bVal==='All')||(val==='Commissioned'&&bVal.includes('Commissioned'))||
+      (val==='In Progress'&&bVal.includes('In Progress'))||(val==='Not Started'&&bVal.includes('Not Started'))||
+      (val==='N/A'&&bVal==='N/A');
+    b.classList.toggle('active',match);
+  });
+  if(window._filterResults)renderFilteredGrid();
+  else renderGrid();
+}
+
+function showStatusBar(show){
+  var bar=document.getElementById('statusFilterBar');
+  if(bar)bar.style.display=show?'flex':'none';
+}
+
 
 initApp();
 </script>
