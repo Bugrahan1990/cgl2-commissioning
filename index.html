@@ -2011,8 +2011,7 @@ function toggleSelectMode(){
     bar.style.display='none';
     if(cnt)cnt.textContent='0 selected';
   }
-  if(window._filterResults)renderFilteredGrid();
-  else if(ST.sub)renderGrid();
+  reRenderCurrent();
 }
 
 function toggleCard(tag){
@@ -2029,10 +2028,17 @@ function toggleCard(tag){
   });
 }
 
+function reRenderCurrent(){
+  if(window._filterResults)renderFilteredGrid();
+  else if(ST.devs&&ST.devs.length)renderGrid();
+}
 function selAll(){
-  ST.devs.forEach(d=>selectedTags.add(d.tag));
+  // Select all currently visible cards (respects active status filter)
+  document.querySelectorAll('#gw .card[data-tag]').forEach(function(c){
+    selectedTags.add(c.dataset.tag);
+    c.classList.add('selected');
+  });
   updSelCount();
-  document.querySelectorAll('#gw .card[data-tag]').forEach(c=>c.classList.add('selected'));
 }
 function selNone(){
   selectedTags.clear();
@@ -2473,8 +2479,7 @@ function setStatusFilter(val){
     var active=(val===null&&bv==='')||(val!==null&&bv===val);
     b.classList.toggle('active',active);
   });
-  if(window._filterResults)renderFilteredGrid();
-  else renderGrid();
+  reRenderCurrent();
 }
 
 function showStatusBar(show){
