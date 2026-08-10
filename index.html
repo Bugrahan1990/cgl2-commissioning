@@ -488,6 +488,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
       <button class="xbtn get" id="btnSync" onclick="smartSync()">&#8595; Sync</button>
       <button class="xbtn export" onclick="openExportSheet()">&#8593; Export</button>
       
+      <button class="xbtn" onclick="exportVisibleXLS()" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)" title="Export visible devices to Excel">&#8595; XLS</button>
       <button class="xbtn" id="btnSelect" onclick="toggleSelectMode()" style="background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx2)">Select</button>
     </div>
   </div>
@@ -2626,6 +2627,141 @@ function renderWeeklyChart(){
 
   el.innerHTML = html2;
 }
+
+
+// ── EXCEL EXPORT OF VISIBLE DEVICES ──────────────────────────────────────
+function exportVisibleXLS(){
+  // Gather currently visible devices in display order
+  const cards=document.querySelectorAll('#gw .card[data-tag]');
+  if(!cards.length){showT('No devices visible to export','err');return;}
+
+  // Build rows from visible cards in render order
+  const rows=[];
+  cards.forEach(function(card){
+    const tag=card.dataset.tag;
+    const dev=ST.devs.find(function(d){return d.tag===tag;});
+    if(!dev&&window._filterResults){
+      // In filtered view, find from filter results
+      var fr=window._filterResults.find(function(r){return r.d.tag===tag;});
+      if(fr)buildXLSRow(fr.d, fr.area, fr.equip, fr.sub, rows);
+    }else if(dev){
+      buildXLSRow(dev, ST.area, ST.equip, ST.sub, rows);
+    }
+  });
+
+  if(!rows.length){showT('No device data to export','err');return;}
+
+  // Build label for filename
+  var label='All';
+  if(window._filterLabel) label=window._filterLabel.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,30);
+  else if(ST.sub) label=ST.sub.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,30);
+  else if(ST.equip) label=ST.equip.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,30);
+  else if(ST.area) label=ST.area.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,30);
+  if(activeStatusFilter) label+='-'+activeStatusFilter.replace(/ /g,'_');
+
+  const now=new Date();
+  const ts=now.toISOString().slice(0,10)+'_'+now.toTimeString().slice(0,5).replace(':','-');
+  const filename='CGL2_'+label+'_'+ts+'.xls';
+
+  // Build HTML table (Excel opens .xls with HTML table natively)
+  var tbl='<table border="1" style="border-collapse:collapse;font-family:Arial;font-size:10pt">';
+
+  // Title row
+  tbl+='<tr><td colspan="19" style="background:#1F4E79;color:#fff;font-weight:bold;font-size:12pt;padding:6px">'+
+    'CGL2 Commissioning Tracker — '+
+    (window._filterLabel||ST.sub||ST.equip||ST.area||'All Devices')+
+    (activeStatusFilter?' ['+activeStatusFilter+']':'')+
+    ' — '+rows.length+' devices — Exported '+now.toLocaleDateString()+'</td></tr>';
+
+  // Header row
+  var hdrs=['Area','Equipment','Sub-Equipment','Section','Tag Number','Type','Description',
+    'SCS Ref','Model','Status','Comm By','Date','Approved By',
+    'Install','Mount','Tag','Air','Wiring','Power','IO','Enclosure','Operation','Auto Seq','Interlock','Settings',
+    'Remarks'];
+  tbl+='<tr>';
+  hdrs.forEach(function(h){
+    tbl+='<td style="background:#2E75B6;color:#fff;font-weight:bold;padding:4px 6px;white-space:nowrap">'+h+'</td>';
+  });
+  tbl+='</tr>';
+
+  // Status colour map
+  var statusColors={
+    'Commissioned':'#e2efda',
+    'In Progress':'#fff2cc',
+    'Not Started':'#f2f2f2',
+    'N/A':'#ddd'
+  };
+
+  rows.forEach(function(r,i){
+    var bg=statusColors[r.status]||'#fff';
+    var rowBg=i%2===0?bg:shadeColor(bg,-5);
+    tbl+='<tr>';
+    [r.area,r.equip,r.sub,r.section,r.tag,r.type,r.desc,
+     r.scs,r.model,r.status,r.commBy,r.date,r.approvedBy,
+     r.chk_dir,r.chk_mech,r.chk_tag,r.chk_air,
+     r.chk_wir,r.chk_pwr,r.chk_io,r.chk_enc,
+     r.chk_op,r.chk_cal,r.chk_int,r.chk_set,
+     r.remarks
+    ].forEach(function(v){
+      tbl+='<td style="padding:3px 5px;background:'+rowBg+';vertical-align:top">'+escXml(v||'')+'</td>';
+    });
+    tbl+='</tr>';
+  });
+  tbl+='</table>';
+
+  var full='<html xmlns:o="urn:schemas-microsoft-com:office:office" '+
+    'xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>'+
+    '<x:ExcelWorksheet><x:Name>CGL2 Devices</x:Name><x:WorksheetOptions><x:DisplayGridlines/>'+
+    '</x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'+
+    '</head><body>'+tbl+'</body></html>';
+
+  var blob=new Blob([full],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+  showT('Exported '+rows.length+' devices to '+filename,'ok');
+}
+
+function buildXLSRow(d, area, equip, sub, rows){
+  var ds=DS[d.tag]||{};
+  rows.push({
+    area:  area.replace(/^PG[.][0-9.]+ - /,''),
+    equip: equip.replace(/^[0-9]+ - /,''),
+    sub:   sub,
+    section: d.section||'',
+    tag:   d.tag,
+    type:  d.type||'',
+    desc:  d.desc||'',
+    scs:   d.scs||'',
+    model: d.model||'',
+    status:    ds.Comm_Status||'Not Started',
+    commBy:    ds.Comm_By||'',
+    date:      ds.Comm_Date||'',
+    approvedBy:ds.Approved_By||'',
+    chk_dir:   ds.CHK_Direction||'',
+    chk_mech:  ds.CHK_Mechanical||'',
+    chk_tag:   ds.CHK_TagLabel||'',
+    chk_air:   ds.CHK_CompressedAir||'',
+    chk_wir:   ds.CHK_Wiring||'',
+    chk_pwr:   ds.CHK_PowerSupply||'',
+    chk_io:    ds.CHK_IO||'',
+    chk_enc:   ds.CHK_Enclosure||'',
+    chk_op:    ds.CHK_OpenClose||'',
+    chk_cal:   ds.CHK_Calibration||'',
+    chk_int:   ds.CHK_Interlock||'',
+    chk_set:   ds.CHK_Settings||'',
+    remarks:   ds.Remarks||'',
+  });
+}
+
+function escXml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function shadeColor(hex,pct){return hex;} // passthrough — optional enhancement
 
 
 initApp();
