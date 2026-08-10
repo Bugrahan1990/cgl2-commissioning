@@ -2676,7 +2676,7 @@ function exportVisibleXLS(){
   // Header row
   var hdrs=['Area','Equipment','Sub-Equipment','Section','Tag Number','Type','Description',
     'SCS Ref','Model','Status','Comm By','Date','Approved By',
-    'Install','Mount','Tag','Air','Wiring','Power','IO','Enclosure','Operation','Auto Seq','Interlock','Settings',
+    'Mechanically Installed','Air Connected','Wired','IO Checked',
     'Remarks'];
   tbl+='<tr>';
   hdrs.forEach(function(h){
@@ -2698,9 +2698,7 @@ function exportVisibleXLS(){
     tbl+='<tr>';
     [r.area,r.equip,r.sub,r.section,r.tag,r.type,r.desc,
      r.scs,r.model,r.status,r.commBy,r.date,r.approvedBy,
-     r.chk_dir,r.chk_mech,r.chk_tag,r.chk_air,
-     r.chk_wir,r.chk_pwr,r.chk_io,r.chk_enc,
-     r.chk_op,r.chk_cal,r.chk_int,r.chk_set,
+     r.chk_mech,r.chk_air,r.chk_wir,r.chk_io,
      r.remarks
     ].forEach(function(v){
       tbl+='<td style="padding:3px 5px;background:'+rowBg+';vertical-align:top">'+escXml(v||'')+'</td>';
@@ -2727,8 +2725,8 @@ function exportVisibleXLS(){
 function buildXLSRow(d, area, equip, sub, rows){
   var ds=DS[d.tag]||{};
   rows.push({
-    area:  area.replace(/^PG[.][0-9.]+ - /,''),
-    equip: equip.replace(/^[0-9]+ - /,''),
+    area:  area,
+    equip: equip,
     sub:   sub,
     section: d.section||'',
     tag:   d.tag,
@@ -2740,18 +2738,10 @@ function buildXLSRow(d, area, equip, sub, rows){
     commBy:    ds.Comm_By||'',
     date:      ds.Comm_Date||'',
     approvedBy:ds.Approved_By||'',
-    chk_dir:   ds.CHK_Direction||'',
     chk_mech:  ds.CHK_Mechanical||'',
-    chk_tag:   ds.CHK_TagLabel||'',
     chk_air:   ds.CHK_CompressedAir||'',
     chk_wir:   ds.CHK_Wiring||'',
-    chk_pwr:   ds.CHK_PowerSupply||'',
     chk_io:    ds.CHK_IO||'',
-    chk_enc:   ds.CHK_Enclosure||'',
-    chk_op:    ds.CHK_OpenClose||'',
-    chk_cal:   ds.CHK_Calibration||'',
-    chk_int:   ds.CHK_Interlock||'',
-    chk_set:   ds.CHK_Settings||'',
     remarks:   ds.Remarks||'',
   });
 }
