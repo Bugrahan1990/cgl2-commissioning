@@ -528,7 +528,7 @@ textarea.fc{resize:none;min-height:55px;font-family:'Inter',sans-serif}
         <button class="sfbtn" data-val="In Progress" onclick="setStatusFilter('In Progress')">&#9733; In Progress</button>
         <button class="sfbtn" data-val="Not Started" onclick="setStatusFilter('Not Started')">&#9675; Not Started</button>
         <button class="sfbtn" data-val="N/A" onclick="setStatusFilter('N/A')">N/A</button>
-        <input id="devSearch" placeholder="&#9906; Search..." oninput="filterGrid()"
+        <input id="devSearch" placeholder="&#9906; Search..." oninput="debounceSearch()"
           style="flex:1;min-width:120px;background:var(--bg);border:1px solid var(--bdr2);
           border-radius:7px;padding:5px 10px;font-size:11px;color:var(--tx);outline:none;
           font-family:Inter,sans-serif;max-width:220px" autocomplete="off">
@@ -1793,60 +1793,99 @@ function biBlockedList(entries,noFailReason){
 }
 
 
+let _searchScope=[];
+let _searchTimer=null;
+
+function buildSearchScope(){
+  _searchScope=[];
+  if(!H)return;
+  Object.keys(H).forEach(function(area){
+    Object.keys(H[area]).forEach(function(equip){
+      Object.keys(H[area][equip]).forEach(function(sub){
+        H[area][equip][sub].forEach(function(d){
+          _searchScope.push({
+            d:d,area:area,equip:equip,sub:sub,
+            hay:(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase()
+          });
+        });
+      });
+    });
+  });
+}
+
+function debounceSearch(){
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(filterGrid,250);
+}
+
 function filterGrid(){
   const q=(document.getElementById('devSearch')?.value||'').toLowerCase().trim();
   const gw=document.getElementById('gw');
+  if(!gw)return;
 
   if(!q){
-    if(ST.sub){renderGrid();}
-    else{gw.innerHTML='<div class="empty"><div class="empty-icon">&#9881;</div><div class="empty-title">Select a Location</div><div class="empty-sub">Or search for a device tag, description or type above.</div></div>';}
+    window._filterResults=null;window._filterLabel=null;
+    const oldHdr=document.getElementById('filterHdr');if(oldHdr)oldHdr.remove();
+    reRenderCurrent();
     return;
   }
 
-  // Search ALWAYS covers every device in the project, regardless of
-  // whatever Area/Equipment/Sub-Equipment is currently selected in the tree.
-  const scope=[];
-  Object.entries(H).forEach(([area,equips])=>
-    Object.entries(equips).forEach(([equip,subs])=>
-      Object.entries(subs).forEach(([sub,devs])=>
-        devs.forEach(d=>scope.push({d,area,equip,sub})))));
-
-  // Match: tag number, description, device type, section, SCS ref
-  // Also support tag prefix: "265" matches all 265xx tags, "26501" matches equipment 501
-  const results=scope.filter(({d})=>{
-    const haystack=(d.tag+' '+d.desc+' '+d.type+' '+(d.section||'')+' '+(d.scs||'')).toLowerCase();
-    return haystack.includes(q);
+  const results=_searchScope.filter(function(item){
+    return item.hay.indexOf(q)!==-1;
   });
+
+  const filtered=activeStatusFilter
+    ?results.filter(function(r){return getS(r.d.tag)===activeStatusFilter;})
+    :results;
 
   gw.innerHTML='';
-  if(!results.length){
-    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div><div class="empty-title">No results for "'+q+'"</div><div class="empty-sub">Try tag number, description or device type.</div></div>';
+  const oldHdr=document.getElementById('filterHdr');if(oldHdr)oldHdr.remove();
+
+  if(!filtered.length){
+    gw.innerHTML='<div class="empty"><div class="empty-icon">&#9906;</div>'+
+      '<div class="empty-title">No results for "'+q+'"</div></div>';
     return;
   }
 
+  const frag=document.createDocumentFragment();
   const grid=document.createElement('div');grid.className='grid';
+
   const hdr=document.createElement('div');
   hdr.style.cssText='grid-column:1/-1;font-size:11px;color:var(--tx2);padding:2px 0 8px;font-family:DM Mono,monospace;border-bottom:1px solid var(--bdr);margin-bottom:4px';
-  hdr.textContent=results.length+' device'+(results.length!==1?'s':'')+' found across the project';
+  hdr.textContent=filtered.length+' device'+(filtered.length!==1?'s':'')+' found';
   grid.appendChild(hdr);
 
-  results.forEach(({d,area,equip,sub})=>{
-    const s=getS(d.tag);const unsent=isUnsent(d.tag);
-    const cls=unsent?'unsynced':sCls(s);
-    const card=document.createElement('div');card.className='card '+cls;
-    const areaShort=area.split(' - ')[1]||area;
-    const loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+areaShort+' › '+sub+'</div>';
-    const scsLine=d.scs&&!d.scs.startsWith('w/')?'<div class="cscs">'+d.scs+'</div>':'';
-    card.innerHTML=loc+scsLine+'<div class="ctag">'+d.tag+'</div><div class="cdesc">'+d.desc+'</div><div class="cfoot"><span class="ctype">'+d.type+'</span><span class="cst">'+(unsent?'Unsent':s)+'</span></div>';
-    card.onclick=()=>{
-      selectSub(area,equip,sub,H[area][equip][sub]);
-      const idx=ST.devs.findIndex(x=>x.tag===d.tag);
-      if(idx>=0)openM(idx);
-    };
+  filtered.forEach(function(item){
+    var d=item.d,area=item.area,equip=item.equip,sub=item.sub;
+    var s=getS(d.tag);var cs=getCardState(d.tag);
+    var cls=cs==='unsent'?'unsynced':cs==='sent'?'sent':sCls(s);
+    var card=document.createElement('div');
+    card.className='card '+cls+(selectMode?' sel-mode':'');
+    if(selectMode&&selectedTags.has(d.tag))card.classList.add('selected');
+    card.dataset.tag=d.tag;
+    var areaShort=area.split(' - ')[1]||area;
+    var loc='<div class="cscs" style="color:var(--tx3);font-size:8px">'+areaShort+' > '+sub+'</div>';
+    var scsLine=d.scs&&String(d.scs).indexOf('w/')!==0?'<div class="cscs">'+d.scs+'</div>':'';
+    card.innerHTML=loc+scsLine+
+      '<div class="ctag">'+d.tag+'</div>'+
+      '<div class="cdesc">'+d.desc+'</div>'+
+      '<div class="cfoot"><span class="cst">'+(cs==='unsent'?'Unsent':cs==='sent'?'Sent':s)+'</span></div>';
+    if(selectMode){
+      card.onclick=function(tag){return function(e){e.stopPropagation();toggleCard(tag);};}(d.tag);
+    }else{
+      card.onclick=function(r){return function(){
+        selectSub(r.area,r.equip,r.sub,H[r.area][r.equip][r.sub]);
+        var idx=ST.devs.findIndex(function(x){return x.tag===r.d.tag;});
+        if(idx>=0)openM(idx);
+      };}(item);
+    }
     grid.appendChild(card);
   });
-  gw.appendChild(grid);
+
+  frag.appendChild(grid);
+  gw.appendChild(frag);
 }
+
 
 
 
