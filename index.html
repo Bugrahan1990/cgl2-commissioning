@@ -620,6 +620,7 @@ async function loadDevices(){
       const cached=JSON.parse(c);H=cached.hierarchy;DEVICES_VERSION=cached.version||0;
       if(cached.model_instructions)INST_BY_MODEL=cached.model_instructions;
       if(cached.type_instructions)INST_BY_TYPE=cached.type_instructions;
+      buildSearchScope();
       renderNav();updProg();
       showLoadStatus('Device list ready (v'+DEVICES_VERSION+' · '+cached.total+' devices)',true);
     }
@@ -635,6 +636,7 @@ async function loadDevices(){
       H=data.hierarchy;DEVICES_VERSION=newVer;
       if(data.model_instructions)INST_BY_MODEL=data.model_instructions;
       if(data.type_instructions)INST_BY_TYPE=data.type_instructions;
+      buildSearchScope();
       try{sessionStorage.setItem('CGL2_devices',JSON.stringify(data));}catch(e){}
       renderNav();updProg();if(ST.sub){renderHead();renderGrid();}
       showLoadStatus('Device list v'+newVer+' · '+data.total+' devices',true);
